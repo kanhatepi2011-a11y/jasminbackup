@@ -1,8 +1,6 @@
 import crypto from "crypto";
+import { HttpsProxyAgent } from "https-proxy-agent";
 
-// KHPay supports a single unified KHQR code that is scannable by any
-// Cambodian bank app (ABA Pay, ACLEDA Pay, Wing, TrueMoney, Sathapana,
-// Prince Bank, etc.). We only keep MANUAL as an admin override method.
 export type PaymentMethod = "KHPAY" | "MANUAL";
 
 export interface InitiatePaymentArgs {
@@ -34,6 +32,8 @@ function cleanBaseUrl(value?: string): string {
 
 const KHPAY_BASE = cleanBaseUrl(process.env.KHPAY_BASE_URL) || "https://khpay.site/api/v1";
 const KHPAY_KEY = cleanEnv(process.env.KHPAY_API_KEY);
+const FIXIE_URL = process.env.FIXIE_URL;
+const proxyAgent = FIXIE_URL ? new HttpsProxyAgent(FIXIE_URL) : undefined;
 
 export function isPaymentSimulationMode(): boolean {
   return cleanEnv(process.env.PAYMENT_SIMULATION_MODE).toLowerCase() === "true" || !KHPAY_KEY;
@@ -55,8 +55,6 @@ export async function initiatePayment(
   try {
     return await initiateKhpay(args);
   } catch (error) {
-    // Optional safety valve for preview/demo deployments only.
-    // Do NOT enable this for real production payments because it creates SIM-* orders.
     if (cleanEnv(process.env.KHPAY_FALLBACK_TO_SIMULATION).toLowerCase() === "true") {
       console.warn("[khpay] gateway failed; using simulation fallback:", error);
       return simulatePayment(args);
@@ -119,17 +117,9 @@ function formatKhpayError(status: number, payload: any): string {
   return remoteMessage || `HTTP ${status}`;
 }
 
-/**
- * KHPay KHQR integration.
- * Docs: https://khpay.site/api-documentation
- * Endpoint: POST /api/v1/qr/generate
- * Auth: Authorization: Bearer ak_xxx
- */
 async function initiateKhpay(args: InitiatePaymentArgs): Promise<PaymentInitResult> {
   if (!KHPAY_KEY) return simulatePayment(args);
 
-  // KHPay rejects private/internal URLs. Omit them entirely when they point
-  // at localhost/private IPs. Payment status is resolved via polling too.
   const isPublicUrl = (u?: string) =>
     !!u &&
     /^https?:\/\//i.test(u) &&
@@ -159,6 +149,8 @@ async function initiateKhpay(args: InitiatePaymentArgs): Promise<PaymentInitResu
     },
     body: JSON.stringify(body),
     cache: "no-store",
+    // @ts-ignore
+    agent: proxyAgent,
   });
 
   const json = await readJsonOrText(res);
@@ -179,9 +171,6 @@ async function initiateKhpay(args: InitiatePaymentArgs): Promise<PaymentInitResu
   };
 }
 
-/**
- * Poll a KHPay transaction status. Fallback to the webhook.
- */
 export async function fetchKhpayStatus(transactionId: string): Promise<{
   status: string;
   paid: boolean;
@@ -196,6 +185,8 @@ export async function fetchKhpayStatus(transactionId: string): Promise<{
       Accept: "application/json",
     },
     cache: "no-store",
+    // @ts-ignore
+    agent: proxyAgent,
   });
 
   const json = await readJsonOrText(res);
@@ -213,10 +204,6 @@ export async function fetchKhpayStatus(transactionId: string): Promise<{
   };
 }
 
-/**
- * Verify a KHPay webhook signature.
- * Header: X-Webhook-Signature: sha256=<hex>
- */
 export function verifyWebhook(
   _method: PaymentMethod,
   rawBody: string,

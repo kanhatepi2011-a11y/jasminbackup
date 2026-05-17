@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import nodeFetch from "node-fetch";
 import { HttpsProxyAgent } from "https-proxy-agent";
 
 export type PaymentMethod = "KHPAY" | "MANUAL";
@@ -34,6 +35,10 @@ const KHPAY_BASE = cleanBaseUrl(process.env.KHPAY_BASE_URL) || "https://khpay.si
 const KHPAY_KEY = cleanEnv(process.env.KHPAY_API_KEY);
 const FIXIE_URL = process.env.FIXIE_URL;
 const proxyAgent = FIXIE_URL ? new HttpsProxyAgent(FIXIE_URL) : undefined;
+
+// Use node-fetch with proxy so the request routes through Fixie's static IP
+const khpayFetch = (url: string, options: any): Promise<Response> =>
+  nodeFetch(url, { ...options, agent: proxyAgent }) as unknown as Promise<Response>;
 
 export function isPaymentSimulationMode(): boolean {
   return cleanEnv(process.env.PAYMENT_SIMULATION_MODE).toLowerCase() === "true" || !KHPAY_KEY;
@@ -140,7 +145,7 @@ async function initiateKhpay(args: InitiatePaymentArgs): Promise<PaymentInitResu
   if (isPublicUrl(args.cancelUrl)) body.cancel_url = args.cancelUrl;
   if (isPublicUrl(args.callbackUrl)) body.callback_url = args.callbackUrl;
 
-  const res = await fetch(`${KHPAY_BASE}/qr/generate`, {
+  const res = await khpayFetch(`${KHPAY_BASE}/qr/generate`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${KHPAY_KEY}`,
@@ -148,9 +153,6 @@ async function initiateKhpay(args: InitiatePaymentArgs): Promise<PaymentInitResu
       Accept: "application/json",
     },
     body: JSON.stringify(body),
-    cache: "no-store",
-    // @ts-ignore
-    agent: proxyAgent,
   });
 
   const json = await readJsonOrText(res);
@@ -179,14 +181,11 @@ export async function fetchKhpayStatus(transactionId: string): Promise<{
 } | null> {
   if (isPaymentSimulationMode() || !KHPAY_KEY || transactionId.startsWith("SIM-")) return null;
 
-  const res = await fetch(`${KHPAY_BASE}/qr/check/${encodeURIComponent(transactionId)}`, {
+  const res = await khpayFetch(`${KHPAY_BASE}/qr/check/${encodeURIComponent(transactionId)}`, {
     headers: {
       Authorization: `Bearer ${KHPAY_KEY}`,
       Accept: "application/json",
     },
-    cache: "no-store",
-    // @ts-ignore
-    agent: proxyAgent,
   });
 
   const json = await readJsonOrText(res);

@@ -14,11 +14,14 @@ function getSecret() {
 }
 
 function getClientIP(req: NextRequest): string {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown"
-  );
+  // Vercel puts the real client IP in x-forwarded-for as the LAST entry
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const parts = forwarded.split(",").map(s => s.trim());
+    // Last IP is the real client on Vercel
+    return parts[parts.length - 1];
+  }
+  return req.headers.get("x-real-ip") ?? "unknown";
 }
 
 export async function middleware(req: NextRequest) {

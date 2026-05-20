@@ -36,9 +36,26 @@ const KHPAY_KEY = cleanEnv(process.env.KHPAY_API_KEY);
 const FIXIE_URL = process.env.FIXIE_URL;
 const proxyAgent = FIXIE_URL ? new HttpsProxyAgent(FIXIE_URL) : undefined;
 
-// Use node-fetch with proxy so the request routes through Fixie's static IP
+// Browser-like headers to bypass Cloudflare bot protection
+const BROWSER_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Accept-Language": "en-US,en;q=0.9",
+  "Accept-Encoding": "gzip, deflate, br",
+  "Cache-Control": "no-cache",
+  "Pragma": "no-cache",
+  "Connection": "keep-alive",
+};
+
+// Use node-fetch with proxy + browser headers
 const khpayFetch = (url: string, options: any): Promise<Response> =>
-  nodeFetch(url, { ...options, agent: proxyAgent }) as unknown as Promise<Response>;
+  nodeFetch(url, {
+    ...options,
+    agent: proxyAgent,
+    headers: {
+      ...BROWSER_HEADERS,
+      ...(options.headers || {}),
+    },
+  }) as unknown as Promise<Response>;
 
 export function isPaymentSimulationMode(): boolean {
   return cleanEnv(process.env.PAYMENT_SIMULATION_MODE).toLowerCase() === "true" || !KHPAY_KEY;
@@ -145,6 +162,9 @@ async function initiateKhpay(args: InitiatePaymentArgs): Promise<PaymentInitResu
   if (isPublicUrl(args.cancelUrl)) body.cancel_url = args.cancelUrl;
   if (isPublicUrl(args.callbackUrl)) body.callback_url = args.callbackUrl;
 
+  console.log("[khpay] initiating to:", KHPAY_BASE);
+  console.log("[khpay] proxy:", FIXIE_URL ? "Fixie ON" : "Direct (no proxy)");
+
   const res = await khpayFetch(`${KHPAY_BASE}/qr/generate`, {
     method: "POST",
     headers: {
@@ -154,6 +174,8 @@ async function initiateKhpay(args: InitiatePaymentArgs): Promise<PaymentInitResu
     },
     body: JSON.stringify(body),
   });
+
+  console.log("[khpay] response status:", res.status);
 
   const json = await readJsonOrText(res);
   if (!res.ok || !json?.success) {

@@ -34,7 +34,7 @@ interface Game {
 
 export default function TopUpForm({ game, products }: { game: Game; products: Product[] }) {
   const { format, currency, toKhr } = useCurrency();
-  const [selected, setSelected] = useState<string | null>(products[0]?.id ?? null);
+  const [selected, setSelected] = useState<string | null>(null);
   const [uid, setUid] = useState("");
   const [serverId, setServerId] = useState(
     ZONE_ID_SLUGS.has(game.slug) ? "" : (game.servers[0] ?? "")
@@ -109,10 +109,12 @@ export default function TopUpForm({ game, products }: { game: Game; products: Pr
 
   const selectedProduct = products.find((p) => p.id === selected);
   const needsServer = game.requiresServer || useZoneField;
+  const needsNickname = supportsLookup;
   const canSubmit =
     !!selected &&
     isValidUid(uid) &&
-    (!needsServer || serverId.trim().length > 0);
+    (!needsServer || serverId.trim().length > 0) &&
+    (!needsNickname || nicknameStatus === "verified");
 
   async function applyPromo() {
     if (!promoInput.trim() || !selectedProduct) return;
@@ -276,9 +278,9 @@ export default function TopUpForm({ game, products }: { game: Game; products: Pr
                     </span>
                   )}
                   {nicknameStatus === "not_found" && (
-                    <span className="inline-flex items-center gap-2 rounded-lg border border-yellow-600 bg-yellow-100 px-3 py-1.5 text-sm text-yellow-600">
+                    <span className="inline-flex items-center gap-2 rounded-lg border border-red-500 bg-red-50 px-3 py-1.5 text-sm text-red-600">
                       <AlertCircle className="h-4 w-4" strokeWidth={2} />
-                      គណនីរកមិនឃើញ
+                      គណនីរកមិនឃើញ — សូមពិនិត្យ ID ម្តងទៀត
                     </span>
                   )}
                 </div>
@@ -514,7 +516,7 @@ export default function TopUpForm({ game, products }: { game: Game; products: Pr
                       <span className="font-mono text-xs">{uid}{serverId ? ` (${serverId})` : ""}</span>
                     </div>
                   )}
-                  {nickname && (
+                  {nickname && nickname !== uid.trim() && (
                     <div className="flex justify-between text-sm">
                       <span className="text-pink-500">playerឈ្មោះ:</span>
                       <span className="text-green-600 font-medium text-xs">{nickname}</span>
@@ -562,10 +564,18 @@ export default function TopUpForm({ game, products }: { game: Game; products: Pr
                 </div>
               )}
 
+              {/* Hint messages when button is disabled */}
+              {!selected && (
+                <p className="mt-4 text-xs text-pink-400 text-center">👆 សូមជ្រើសរើសកញ្ចប់មុន</p>
+              )}
+              {selected && needsNickname && nicknameStatus !== "verified" && isValidUid(uid) && (
+                <p className="mt-4 text-xs text-pink-400 text-center">🔍 សូមពិនិត្យឈ្មោះ Player មុន</p>
+              )}
+
               <button
                 type="submit"
                 disabled={!canSubmit || submitting}
-                className="btn-primary w-full text-base mt-5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                className="btn-primary w-full text-base mt-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
                 {submitting ? "Creating order..." : "Pay Now"}
                 {!submitting && <ArrowRight className="h-5 w-5" strokeWidth={2.5} />}
@@ -615,6 +625,14 @@ export default function TopUpForm({ game, products }: { game: Game; products: Pr
           <div className="mb-4 rounded-lg border border-red-600 bg-red-100 p-3 text-sm text-red-600">
             {error}
           </div>
+        )}
+
+        {/* Mobile hint messages */}
+        {!selected && (
+          <p className="mb-2 text-xs text-pink-400 text-center">👆 សូមជ្រើសរើសកញ្ចប់មុន</p>
+        )}
+        {selected && needsNickname && nicknameStatus !== "verified" && isValidUid(uid) && (
+          <p className="mb-2 text-xs text-pink-400 text-center">🔍 សូមពិនិត្យឈ្មោះ Player មុន</p>
         )}
 
         <button

@@ -21,26 +21,31 @@ function getClientIP(req: NextRequest): string {
   );
 }
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const ip = getClientIP(req);
 
-  // 1. Optional IP whitelist
+  // 1. Block everyone except allowed IP (applies to ALL /admin pages including login)
   if (ALLOWED_IP && ip !== ALLOWED_IP) {
     return new NextResponse("404 Not Found", { status: 404 });
   }
 
-  // 2. Always allow the login page and auth API
-  if (pathname === ADMIN_LOGIN_PATH || pathname.startsWith("/api/admin/auth")) {
+  // 2. Always allow auth API
+  if (pathname.startsWith("/api/admin/auth")) {
     return NextResponse.next();
   }
 
-  // 3. If a custom login path is set, hide the default /admin/login
+  // 3. Allow the login page (only reachable if IP passed step 1)
+  if (pathname === ADMIN_LOGIN_PATH) {
+    return NextResponse.next();
+  }
+
+  // 4. Hide default /admin/login if custom path is set
   if (ADMIN_LOGIN_PATH !== "/admin/login" && pathname === "/admin/login") {
     return new NextResponse("404 Not Found", { status: 404 });
   }
 
-  // 4. Verify JWT
+  // 5. Verify JWT
   const token  = req.cookies.get(SESSION_COOKIE)?.value;
   const secret = getSecret();
 

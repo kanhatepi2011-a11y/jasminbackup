@@ -157,11 +157,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const nickname = await lookupRapidApi(
+  const rawNickname = await lookupRapidApi(
     cfg.endpoint,
     uid.trim(),
     cfg.needsServer ? server?.trim() : undefined
   );
+
+  // ✅ បើ API echo UID ត្រឡប់ជា nickname → treat as not found
+  const nickname =
+    rawNickname && rawNickname.trim().toLowerCase() !== uid.trim().toLowerCase()
+      ? rawNickname
+      : null;
 
   return NextResponse.json({
     nickname,

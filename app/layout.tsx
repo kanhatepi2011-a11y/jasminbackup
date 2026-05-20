@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { CurrencyProvider } from "@/lib/currency";
 import RouteProgress from "@/components/RouteProgress";
 import AnnouncementBar from "@/components/AnnouncementBar";
+
 export const metadata: Metadata = {
   title: "JASMINTOPUP",
   description:
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
     "Cambodia top up",
   ],
   openGraph: {
-    title: "JASMISTOPUP",
+    title: "JASMINTOPUP",
     description: "Instant game top-ups with KHQR",
     type: "website",
   },
@@ -30,7 +31,9 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const settings = await prisma.settings.findUnique({ where: { id: 1 } }).catch(() => null);
+  const settings = await prisma.settings
+    .findUnique({ where: { id: 1 } })
+    .catch(() => null);
   const exchangeRate = settings?.exchangeRate ?? 4100;
 
   return (

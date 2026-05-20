@@ -199,3 +199,14 @@ model BlockedIdentity {
 
   @@unique([type, value])
 }
+
+
+model AdminAuthLock {
+  id          String    @id @default(cuid())
+  identifier  String    @unique
+  failCount   Int       @default(0)
+  lockedUntil DateTime?
+  forever     Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}

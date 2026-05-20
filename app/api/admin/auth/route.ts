@@ -1,9 +1,10 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 import { prisma } from "@/lib/prisma";
-import { signAdminToken, buildAuthCookie, buildClearCookie } from "@/lib/auth";
+import { buildClearCookie } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -13,21 +14,29 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
-type AttemptRecord = {
-  failCount: number;
-  lockedUntil: number | null;
-  bannedForever: boolean;
-};
+const PENDING_2FA_COOKIE = "admin_2fa_pending";
+const DEFAULT_2FA_TTL_SECONDS = 5 * 60;
 
-const attemptStore = new Map<string, AttemptRecord>();
-const LOCKOUT_MS = 5 * 60 * 1000;
+function getAdminJwtSecret() {
+  const secret = process.env.ADMIN_JWT_SECRET;
 
-function getAttempt(email: string): AttemptRecord {
-  return attemptStore.get(email) ?? {
-    failCount: 0,
-    lockedUntil: null,
-    bannedForever: false,
-  };
+  if (!secret) {
+    throw new Error("ADMIN_JWT_SECRET is not set");
+  }
+
+  return secret;
+}
+
+function get2FATtlSeconds() {
+  const ttl = Number(
+    process.env.ADMIN_2FA_TTL_SECONDS || DEFAULT_2FA_TTL_SECONDS
+  );
+
+  if (!Number.isFinite(ttl) || ttl <= 0) {
+    return DEFAULT_2FA_TTL_SECONDS;
+  }
+
+  return Math.floor(ttl);
 }
 
 export async function POST(req: NextRequest) {
@@ -38,94 +47,125 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid credentials" },
-        { status: 400 }
+        {
+          status: 400,
+          headers: {
+            "Cache-Control": "no-store",
+          },
+        }
       );
     }
 
-    const email = parsed.data.email.toLowerCase();
-    const attempt = getAttempt(email);
+    const email = parsed.data.email.toLowerCase().trim();
 
-    // 1. Permanently banned
-    if (attempt.bannedForever) {
-      return NextResponse.json(
-        { error: "Account locked permanently. Contact support." },
-        { status: 403 }
-      );
-    }
-
-    // 2. Tried again during lockout → ban forever immediately
-    if (attempt.lockedUntil && Date.now() < attempt.lockedUntil) {
-      attemptStore.set(email, {
-        failCount: 2,
-        lockedUntil: null,
-        bannedForever: true,
-      });
-      return NextResponse.json(
-        { error: "Account locked permanently due to multiple failed attempts." },
-        { status: 403 }
-      );
-    }
-
-    // 3. Validate credentials
     const admin = await prisma.admin.findUnique({
       where: { email },
     });
 
-    const passwordMatch =
-      admin &&
-      (await bcrypt.compare(parsed.data.password, admin.passwordHash));
-
-    if (!admin || !passwordMatch) {
-      if (attempt.failCount === 0) {
-        // 1st failure → lock for 5 minutes
-        attemptStore.set(email, {
-          failCount: 1,
-          lockedUntil: Date.now() + LOCKOUT_MS,
-          bannedForever: false,
-        });
-        return NextResponse.json(
-          { error: "Invalid email or password. Account locked for 5 minutes." },
-          { status: 401 }
-        );
-      } else {
-        // Tried after lockout expired and wrong again → ban forever
-        attemptStore.set(email, {
-          failCount: 2,
-          lockedUntil: null,
-          bannedForever: true,
-        });
-        return NextResponse.json(
-          { error: "Account locked permanently due to multiple failed attempts." },
-          { status: 403 }
-        );
-      }
+    if (!admin || !admin.active) {
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        {
+          status: 401,
+          headers: {
+            "Cache-Control": "no-store",
+          },
+        }
+      );
     }
 
-    // 4. Success — clear attempt record
-    attemptStore.delete(email);
-
-    const token = signAdminToken(String(admin.id));
-    const cookie = buildAuthCookie(token);
-
-    return NextResponse.json(
-      { ok: true, email: admin.email },
-      { headers: { "Set-Cookie": cookie } }
+    const passwordMatch = await bcrypt.compare(
+      parsed.data.password,
+      admin.passwordHash
     );
+
+    if (!passwordMatch) {
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        {
+          status: 401,
+          headers: {
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
+
+    const ttlSeconds = get2FATtlSeconds();
+
+    const pendingToken = jwt.sign(
+      {
+        type: "admin-2fa-pending",
+        adminId: String(admin.id),
+        email: admin.email,
+      },
+      getAdminJwtSecret(),
+      {
+        expiresIn: ttlSeconds,
+      }
+    );
+
+    const res = NextResponse.json(
+      {
+        ok: true,
+        requires2FA: true,
+        email: admin.email,
+        message: "Password correct. Please confirm 2FA code.",
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
+
+    const isProduction = process.env.NODE_ENV === "production";
+
+    res.cookies.set(PENDING_2FA_COOKIE, pendingToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: "/",
+      maxAge: ttlSeconds,
+      expires: new Date(Date.now() + ttlSeconds * 1000),
+    });
+
+    return res;
   } catch (error) {
     console.error("Admin login error:", error);
 
     return NextResponse.json(
       { error: "Something went wrong" },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
     );
   }
 }
 
 export async function DELETE() {
-  const cookie = buildClearCookie();
-
-  return NextResponse.json(
+  const res = NextResponse.json(
     { ok: true },
-    { headers: { "Set-Cookie": cookie } }
+    {
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    }
   );
+
+  res.headers.append("Set-Cookie", buildClearCookie());
+
+  res.cookies.set(PENDING_2FA_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+    expires: new Date(0),
+  });
+
+  return res;
 }

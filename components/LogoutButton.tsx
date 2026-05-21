@@ -6,8 +6,9 @@ export default function LogoutButton() {
   const router = useRouter();
 
   async function handleLogout() {
-    await fetch("/api/admin/auth", { method: "DELETE" });
-    router.push("/admin/login");
+    await fetch("/api/admin/auth", { method: "DELETE", credentials: "include" });
+    // ✅ ចាកចេញ → redirect ទៅ /admin/sophallogin
+    router.push("/admin/sophallogin");
     router.refresh();
   }
 

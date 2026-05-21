@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -16,25 +16,88 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [banned, setBanned] = useState(false);
+  const [lockedUntil, setLockedUntil] = useState<Date | null>(null);
+  const [countdown, setCountdown] = useState<string>("");
+
+  // ✅ Countdown timer សម្រាប់ lock 5 នាទី
+  useEffect(() => {
+    if (!lockedUntil) { setCountdown(""); return; }
+
+    const interval = setInterval(() => {
+      const diff = lockedUntil.getTime() - Date.now();
+      if (diff <= 0) {
+        setLockedUntil(null);
+        setError(null);
+        setCountdown("");
+        clearInterval(interval);
+        return;
+      }
+      const m = Math.floor(diff / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setCountdown(`${m}:${s.toString().padStart(2, "0")}`);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [lockedUntil]);
+
+  // ✅ ពេល refresh page → restore 2FA step + check lock (login & 2FA)
+  useEffect(() => {
+    // Step 1: Check 2FA session via httpOnly cookie (server reads it)
+    fetch("/api/admin/auth/2fa")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.step === "2fa") {
+          setStep("2fa");
+          if (data.locked && data.forever) {
+            setBanned(true);
+            setError("កូដ 2FA ខុស ២ លើក Lock ជាអចិន្ត្រៃយ៍ សូមទាក់ទង owner។");
+          } else if (data.locked && data.lockedUntil) {
+            setLockedUntil(new Date(data.lockedUntil));
+            setError("កូដ 2FA ខុស លើកទី១ Lock 5 នាទី សូមរង់ចាំ។");
+          }
+          return; // Stop here — we're in 2FA step
+        }
+
+        // Step 2: Check login lock via saved email
+        const savedEmail = localStorage.getItem("admin_login_email");
+        if (!savedEmail) return;
+        setEmail(savedEmail);
+
+        fetch(`/api/admin/auth?email=${encodeURIComponent(savedEmail)}`)
+          .then((r) => r.json())
+          .then((loginData) => {
+            if (!loginData.locked) return;
+            if (loginData.forever) {
+              setBanned(true);
+              setError("គណនីត្រូវបាន lock ជាអចិន្ត្រៃយ៍។ សូមទាក់ទង owner។");
+            } else if (loginData.lockedUntil) {
+              setLockedUntil(new Date(loginData.lockedUntil));
+              setError("password ខុស លើកទី១ Lock 5 នាទី សូមរង់ចាំ។");
+            }
+          })
+          .catch(() => {});
+      })
+      .catch(() => {});
+  }, []);
+
+  const isLocked = banned || !!lockedUntil;
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (banned || loading) return;
+    if (isLocked || loading) return;
 
     setError(null);
     setLoading(true);
 
+    // ✅ Save email ដើម្បីប្រើ check lock ពេល refresh
+    localStorage.setItem("admin_login_email", email.trim());
+
     try {
       const res = await fetch("/api/admin/auth", {
         method: "POST",
-        credentials: "include", // ✅ Save admin_2fa_pending cookie
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-          password,
-        }),
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -42,6 +105,12 @@ export default function AdminLoginPage() {
       if (res.status === 403) {
         setBanned(true);
         setError(data.error || "គណនីត្រូវបាន lock ជាអចិន្ត្រៃយ៍");
+        return;
+      }
+
+      if (res.status === 429) {
+        if (data.lockedUntil) setLockedUntil(new Date(data.lockedUntil));
+        setError(data.error || "Lock បណ្ដោះអាសន្ន។ សូមរង់ចាំ។");
         return;
       }
 
@@ -56,6 +125,7 @@ export default function AdminLoginPage() {
         return;
       }
 
+      localStorage.removeItem("admin_login_email");
       router.push("/admin");
       router.refresh();
     } catch (err) {
@@ -75,13 +145,9 @@ export default function AdminLoginPage() {
     try {
       const res = await fetch("/api/admin/auth/2fa", {
         method: "POST",
-        credentials: "include", // ✅ Send admin_2fa_pending cookie
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          code: code.trim(),
-        }),
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code.trim() }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -94,24 +160,19 @@ export default function AdminLoginPage() {
       }
 
       if (res.status === 429) {
-        setError(message || "2FA ត្រូវបាន lock បណ្ដោះអាសន្ន។ សូមរង់ចាំសិន។");
+        if (data.lockedUntil) setLockedUntil(new Date(data.lockedUntil));
+        setError(message || "កូដ 2FA ខុស លើកទី១ Lock 5 នាទី សូមរង់ចាំ។");
         return;
       }
 
       if (res.status === 401) {
         setError(message || "លេខកូដ 2FA មិនត្រឹមត្រូវ");
-
         const lowerMessage = String(message).toLowerCase();
-
-        if (
-          lowerMessage.includes("expired") ||
-          lowerMessage.includes("session")
-        ) {
+        if (lowerMessage.includes("expired") || lowerMessage.includes("session")) {
           setStep("login");
           setPassword("");
           setCode("");
         }
-
         return;
       }
 
@@ -119,12 +180,11 @@ export default function AdminLoginPage() {
         throw new Error(message || "លេខកូដ 2FA មិនត្រឹមត្រូវ");
       }
 
+      localStorage.removeItem("admin_login_email");
       router.push("/admin");
       router.refresh();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "លេខកូដ 2FA មិនត្រឹមត្រូវ"
-      );
+      setError(err instanceof Error ? err.message : "លេខកូដ 2FA មិនត្រឹមត្រូវ");
     } finally {
       setLoading(false);
     }
@@ -132,21 +192,15 @@ export default function AdminLoginPage() {
 
   async function handleBackToLogin() {
     if (loading) return;
-
     setStep("login");
     setPassword("");
     setCode("");
     setError(null);
     setBanned(false);
-
+    setLockedUntil(null);
     try {
-      await fetch("/api/admin/auth", {
-        method: "DELETE",
-        credentials: "include",
-      });
-    } catch {
-      // Ignore logout cleanup error
-    }
+      await fetch("/api/admin/auth", { method: "DELETE", credentials: "include" });
+    } catch { }
   }
 
   return (
@@ -323,11 +377,7 @@ export default function AdminLoginPage() {
         }
 
         .toggle-btn:hover { color: #e91e63; }
-
-        .toggle-btn:disabled {
-          cursor: not-allowed;
-          opacity: 0.4;
-        }
+        .toggle-btn:disabled { cursor: not-allowed; opacity: 0.4; }
 
         .error-box {
           display: flex;
@@ -350,6 +400,12 @@ export default function AdminLoginPage() {
           background: rgba(60, 0, 0, 0.06);
           border: 1px solid rgba(120, 0, 0, 0.28);
           color: #7f0000;
+        }
+
+        .countdown {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #c2185b;
         }
 
         .submit-btn {
@@ -491,9 +547,7 @@ export default function AdminLoginPage() {
 
           <div className="glass-card">
             <h1 className="card-heading">
-              {step === "login"
-                ? "🌸 ចូលគណនីអ្នកគ្រប់គ្រង"
-                : "🔐 បញ្ជាក់កូដ 2FA"}
+              {step === "login" ? "🌸 ចូលគណនីអ្នកគ្រប់គ្រង" : "🔐 បញ្ជាក់កូដ 2FA"}
             </h1>
 
             <p className="card-sub">
@@ -515,7 +569,7 @@ export default function AdminLoginPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       autoFocus
-                      disabled={banned || loading}
+                      disabled={isLocked || loading}
                     />
                   </div>
                 </div>
@@ -530,19 +584,13 @@ export default function AdminLoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      disabled={banned || loading}
+                      disabled={isLocked || loading}
                     />
-
                     <button
                       type="button"
                       className="toggle-btn"
                       onClick={() => setShowPassword(!showPassword)}
-                      aria-label={
-                        showPassword
-                          ? "លាក់លេខសម្ងាត់"
-                          : "បង្ហាញលេខសម្ងាត់"
-                      }
-                      disabled={banned || loading}
+                      disabled={isLocked || loading}
                     >
                       {showPassword ? (
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -567,22 +615,20 @@ export default function AdminLoginPage() {
                       <line x1="12" y1="8" x2="12" y2="12" />
                       <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
-                    {error}
+                    <span>
+                      {error}
+                      {countdown && <> &nbsp;<span className="countdown">⏱ {countdown}</span></>}
+                    </span>
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  className="submit-btn"
-                  disabled={loading || banned}
-                >
+                <button type="submit" className="submit-btn" disabled={loading || isLocked}>
                   {loading ? (
-                    <>
-                      <span className="spinner" />
-                      កំពុងពិនិត្យ…
-                    </>
+                    <><span className="spinner" />កំពុងពិនិត្យ…</>
                   ) : banned ? (
                     "🔒 គណនីត្រូវបានផ្អាកជាអចិន្ត្រៃយ៍"
+                  ) : lockedUntil ? (
+                    `⏳ Lock ${countdown}`
                   ) : (
                     "🔑 ចូលគណនី"
                   )}
@@ -619,16 +665,9 @@ export default function AdminLoginPage() {
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  className="submit-btn"
-                  disabled={loading || banned}
-                >
+                <button type="submit" className="submit-btn" disabled={loading || banned}>
                   {loading ? (
-                    <>
-                      <span className="spinner" />
-                      កំពុងបញ្ជាក់…
-                    </>
+                    <><span className="spinner" />កំពុងបញ្ជាក់…</>
                   ) : banned ? (
                     "🔒 គណនីត្រូវបាន lock ជាអចិន្ត្រៃយ៍"
                   ) : (
@@ -648,9 +687,7 @@ export default function AdminLoginPage() {
             )}
           </div>
 
-          <Link href="/" className="back-link">
-            ← ត្រឡប់ទៅទំព័រដើម
-          </Link>
+          <Link href="/" className="back-link">← ត្រឡប់ទៅទំព័រដើម</Link>
         </div>
       </div>
     </>

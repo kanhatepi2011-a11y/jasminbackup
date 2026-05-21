@@ -16,35 +16,48 @@ function getSecret() {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // ✅ API auth routes → allow always
   if (pathname.startsWith("/api/admin/auth")) {
     return NextResponse.next();
   }
 
-  if (pathname === HONEY_PATH || EXTRA_LOGIN_PATHS.has(pathname)) {
+  // ✅ Login pages → allow always
+  if (EXTRA_LOGIN_PATHS.has(pathname)) {
     return NextResponse.next();
   }
 
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const secret = getSecret();
 
-  if (!token || !secret) {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  // ✅ ពិនិត្យ Token មុន
+  const isLoggedIn = token && secret
+    ? await jwtVerify(token, secret).then(() => true).catch(() => false)
+    : false;
 
-    return NextResponse.redirect(new URL(ADMIN_LOGIN_PATH, req.url));
+  // ✅ Admin login រួចហើយ + ចូល /admin/fuckyou → redirect ទៅ /admin/dashboard
+  if (isLoggedIn && pathname === HONEY_PATH) {
+    return NextResponse.redirect(new URL("/admin/dashboard", req.url));
   }
 
-  try {
-    await jwtVerify(token, secret);
+  // ✅ User មិន Login + ចូល /admin (exact) → redirect ទៅ /admin/fuckyou
+  if (!isLoggedIn && pathname === "/admin") {
+    return NextResponse.redirect(new URL(HONEY_PATH, req.url));
+  }
+
+  // ✅ Honeypot page → allow (for non-logged-in users)
+  if (pathname === HONEY_PATH) {
     return NextResponse.next();
-  } catch {
+  }
+
+  // ✅ មិន Login + ចូល /admin/* ផ្សេងទៀត → redirect ទៅ login
+  if (!isLoggedIn) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
     return NextResponse.redirect(new URL(ADMIN_LOGIN_PATH, req.url));
   }
+
+  return NextResponse.next();
 }
 
 export const config = {

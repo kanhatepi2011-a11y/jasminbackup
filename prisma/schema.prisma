@@ -120,10 +120,8 @@ model Admin {
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
   lastLoginAt  DateTime?
-<<<<<<< HEAD
-=======
   totpSecret   String?   // TOTP secret for authenticator app 2FA (Issue #1)
->>>>>>> 13d2b43 (first commit)
+
 }
 
 model Settings {
@@ -214,8 +212,6 @@ model AdminAuthLock {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
-<<<<<<< HEAD
-=======
 
 // ── Security additions ────────────────────────────────────────────────────────
 
@@ -238,4 +234,3 @@ model RateLimitEntry {
 
   @@index([key, createdAt])
 }
->>>>>>> 13d2b43 (first commit)

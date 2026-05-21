@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 /**
  * lib/auth.ts — Admin authentication helpers (Issue #7)
  *
@@ -9,22 +7,12 @@
  * - Secure cookie cleared properly on logout
  */
 
->>>>>>> 13d2b43 (first commit)
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 
 const ADMIN_COOKIE_NAME = "admin_token";
-<<<<<<< HEAD
 
-function getAdminJwtSecret() {
-  const secret = process.env.ADMIN_JWT_SECRET;
-
-  if (!secret) {
-    throw new Error("ADMIN_JWT_SECRET is not set");
-  }
-
-=======
 // Reduced from 7 days to 8 hours (Issue #7)
 const SESSION_MAX_AGE_SECONDS = 8 * 60 * 60;
 
@@ -33,26 +21,13 @@ function getAdminJwtSecret() {
   if (!secret) {
     throw new Error("ADMIN_JWT_SECRET is not set");
   }
->>>>>>> 13d2b43 (first commit)
   return secret;
 }
 
 export function signAdminToken(adminId: string) {
-<<<<<<< HEAD
-  return jwt.sign(
-    {
-      adminId,
-    },
-    getAdminJwtSecret(),
-    {
-      expiresIn: "7d",
-    }
-  );
-=======
   return jwt.sign({ adminId }, getAdminJwtSecret(), {
     expiresIn: SESSION_MAX_AGE_SECONDS,
   });
->>>>>>> 13d2b43 (first commit)
 }
 
 export function verifyAdminToken(token: string) {
@@ -75,11 +50,7 @@ export function buildAuthCookie(token: string) {
     "Path=/",
     "HttpOnly",
     "SameSite=Lax",
-<<<<<<< HEAD
-    "Max-Age=604800",
-=======
     `Max-Age=${SESSION_MAX_AGE_SECONDS}`,
->>>>>>> 13d2b43 (first commit)
     isProduction ? "Secure" : "",
   ]
     .filter(Boolean)
@@ -87,21 +58,14 @@ export function buildAuthCookie(token: string) {
 }
 
 export function buildClearCookie() {
-<<<<<<< HEAD
-=======
   const isProduction = process.env.NODE_ENV === "production";
->>>>>>> 13d2b43 (first commit)
+
   return [
     `${ADMIN_COOKIE_NAME}=`,
     "Path=/",
     "HttpOnly",
     "SameSite=Lax",
     "Max-Age=0",
-<<<<<<< HEAD
-  ].join("; ");
-}
-
-=======
     isProduction ? "Secure" : "",
   ]
     .filter(Boolean)
@@ -117,7 +81,6 @@ export function buildClearCookie() {
  *
  * Returns null for any failure — callers must treat null as unauthorized.
  */
->>>>>>> 13d2b43 (first commit)
 export async function getCurrentAdmin() {
   try {
     const cookieStore = await cookies();
@@ -127,11 +90,6 @@ export async function getCurrentAdmin() {
     const payload = verifyAdminToken(token);
     if (!payload) return null;
 
-<<<<<<< HEAD
-    return await prisma.admin.findUnique({
-      where: { id: payload.adminId },
-    });
-=======
     const admin = await prisma.admin.findUnique({
       where: { id: payload.adminId },
     });
@@ -141,14 +99,9 @@ export async function getCurrentAdmin() {
     if (admin.role !== "ADMIN" && admin.role !== "SUPERADMIN") return null;
 
     return admin;
->>>>>>> 13d2b43 (first commit)
   } catch {
     return null;
   }
 }
 
-<<<<<<< HEAD
-export { ADMIN_COOKIE_NAME };
-=======
 export { ADMIN_COOKIE_NAME, SESSION_MAX_AGE_SECONDS };
->>>>>>> 13d2b43 (first commit)

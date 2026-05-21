@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkRateLimitMemory } from "@/lib/rateLimit";
 
 const lookupSchema = z.object({
   query: z.string().min(3).max(100),
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     req.headers.get("x-real-ip") ??
     "unknown";
 
-  if (!checkRateLimit(ip, 7, 60_000)) {
+  if (!checkRateLimitMemory(ip, 7, 60_000)) {
     return NextResponse.json(
       { error: "Too many requests. Please wait a minute and try again." },
       { status: 429 }

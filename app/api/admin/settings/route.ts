@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-﻿import { prisma } from "@/lib/prisma";
-=======
 /**
  * /api/admin/settings — Admin settings API (Issue #8)
  *
@@ -10,17 +7,13 @@
  * - Audit log written on PATCH
  */
 
-import { prisma } from "@/lib/prisma";
->>>>>>> 13d2b43 (first commit)
-export const dynamic = "force-dynamic";
-
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-<<<<<<< HEAD
-=======
+import { prisma } from "@/lib/prisma";
 import { getCurrentAdmin } from "@/lib/auth";
 import { logSecurityEvent } from "@/lib/secureLogger";
->>>>>>> 13d2b43 (first commit)
+
+export const dynamic = "force-dynamic";
 
 const settingsSchema = z.object({
   siteName: z.string().min(1).optional(),
@@ -30,21 +23,14 @@ const settingsSchema = z.object({
   maintenanceMode: z.boolean().optional(),
   maintenanceMessage: z.string().nullable().optional(),
   announcement: z.string().nullable().optional(),
-<<<<<<< HEAD
-  announcementTone: z.enum(["info", "warning", "promo"]).nullable().optional(),
-=======
   announcementTone: z
     .enum(["info", "warning", "promo"])
     .nullable()
     .optional(),
->>>>>>> 13d2b43 (first commit)
   telegramBotToken: z.string().nullable().optional(),
   telegramChatId: z.string().nullable().optional(),
 });
 
-<<<<<<< HEAD
-export async function GET() {
-=======
 /** Mask a secret: "••••••••1234" — shows only last 4 chars */
 function maskSecret(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -59,24 +45,16 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
->>>>>>> 13d2b43 (first commit)
   const settings = await prisma.settings.upsert({
     where: { id: 1 },
     update: {},
     create: { id: 1 },
   });
-<<<<<<< HEAD
-  return NextResponse.json(settings);
-}
-
-export async function PATCH(req: NextRequest) {
-=======
 
   // Return masked version — never expose full token to client
   return NextResponse.json({
     ...settings,
     telegramBotToken: maskSecret(settings.telegramBotToken),
-    // telegramChatId is not secret but also not useful to expose fully
   });
 }
 
@@ -86,20 +64,11 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
->>>>>>> 13d2b43 (first commit)
   const body = await req.json().catch(() => ({}));
   const parsed = settingsSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid" }, { status: 400 });
   }
-<<<<<<< HEAD
-  const settings = await prisma.settings.upsert({
-    where: { id: 1 },
-    update: parsed.data,
-    create: { id: 1, ...parsed.data },
-  });
-  return NextResponse.json(settings);
-=======
 
   const data = parsed.data;
 
@@ -127,5 +96,4 @@ export async function PATCH(req: NextRequest) {
     ...settings,
     telegramBotToken: maskSecret(settings.telegramBotToken),
   });
->>>>>>> 13d2b43 (first commit)
 }

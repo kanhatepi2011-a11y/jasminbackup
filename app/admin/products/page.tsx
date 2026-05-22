@@ -90,15 +90,16 @@ export default function AdminProductsPage() {
                 <th className="text-right px-5 py-3">Bonus</th>
                 <th className="text-right px-5 py-3">Price USD</th>
                 <th className="text-left px-5 py-3">Badge</th>
+                <th className="text-left px-5 py-3">Supplier Code</th>
                 <th className="text-center px-5 py-3">Active</th>
                 <th className="text-right px-5 py-3">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-fox-border">
               {loading ? (
-                <tr><td colSpan={8} className="px-5 py-12 text-center text-fox-muted">Loading...</td></tr>
+                <tr><td colSpan={9} className="px-5 py-12 text-center text-fox-muted">Loading...</td></tr>
               ) : products.length === 0 ? (
-                <tr><td colSpan={8} className="px-5 py-16 text-center">
+                <tr><td colSpan={9} className="px-5 py-16 text-center">
                     <div className="text-4xl mb-3">💎</div>
                     <p className="text-fox-muted mb-1">No products yet</p>
                     <p className="text-xs text-fox-muted/60 mb-3">Add packages for customers to purchase.</p>
@@ -113,6 +114,11 @@ export default function AdminProductsPage() {
                     <td className="px-5 py-3 text-right font-mono text-fox-accent">{p.bonus > 0 ? `+${p.bonus}` : "—"}</td>
                     <td className="px-5 py-3 text-right font-mono text-fox-primary">${p.priceUsd.toFixed(2)}</td>
                     <td className="px-5 py-3 text-xs">{p.badge || "—"}</td>
+                    <td className="px-5 py-3 text-xs font-mono">
+                      {p.supplierCode
+                        ? <span className="text-green-400">{p.supplierCode}</span>
+                        : <span className="text-yellow-400">⚠️ not set</span>}
+                    </td>
                     <td className="px-5 py-3 text-center">
                       <button onClick={() => toggleActive(p)}>
                         <span className={`inline-block h-5 w-9 rounded-full relative transition-colors ${p.active ? "bg-green-500" : "bg-fox-border"}`}>
@@ -146,6 +152,7 @@ function ProductForm({ games, defaultGameId, initial, onCancel, onSaved }: any) 
     imageUrl: initial?.imageUrl || "",
     active: initial?.active ?? true,
     sortOrder: initial?.sortOrder ?? 0,
+    supplierCode: initial?.supplierCode || "",  // ✅ FIX 1: added to state
   });
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -163,6 +170,7 @@ function ProductForm({ games, defaultGameId, initial, onCancel, onSaved }: any) 
       sortOrder: Number(form.sortOrder),
       badge: form.badge || null,
       imageUrl: form.imageUrl || null,
+      supplierCode: form.supplierCode || null,  // ✅ FIX 2: added to payload
     };
     const url = initial ? `/api/admin/products/${initial.id}` : "/api/admin/products";
     const method = initial ? "PATCH" : "POST";
@@ -217,6 +225,21 @@ function ProductForm({ games, defaultGameId, initial, onCancel, onSaved }: any) 
           <label className="label">Badge (Hot / Best Value / Pass / custom)</label>
           <input className="input" value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })} />
         </div>
+
+        {/* ✅ FIX 3: Supplier Code input field */}
+        <div className="md:col-span-2">
+          <label className="label">Supplier Code (CamRapid) — required for auto diamond delivery</label>
+          <input
+            className="input font-mono"
+            placeholder="e.g. FF_100_DIA, FF_WEEKLY_PASS"
+            value={form.supplierCode}
+            onChange={(e) => setForm({ ...form, supplierCode: e.target.value })}
+          />
+          {!form.supplierCode && (
+            <p className="mt-1 text-xs text-yellow-400">⚠️ Without this, diamonds will NOT be sent automatically after payment.</p>
+          )}
+        </div>
+
         <div className="md:col-span-3">
           <label className="label">Package Image (optional)</label>
           <div className="flex items-center gap-4 mt-1">

@@ -16,6 +16,7 @@ const productSchema = z.object({
   imageUrl: z.string().optional().nullable(),
   active: z.boolean().default(true),
   sortOrder: z.number().int().default(0),
+  supplierCode: z.string().optional().nullable(),
 });
 
 export async function GET(req: NextRequest) {

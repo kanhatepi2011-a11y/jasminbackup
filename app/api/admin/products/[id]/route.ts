@@ -14,6 +14,7 @@ const updateSchema = z.object({
   imageUrl: z.string().nullable().optional(),
   active: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
+  supplierCode: z.string().nullable().optional(),
 });
 
 export async function PATCH(

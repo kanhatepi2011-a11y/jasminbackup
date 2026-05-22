@@ -16,6 +16,7 @@ import { verifyWebhook, PaymentMethod } from "@/lib/payment";
 import { notifyTelegram, escapeHtml } from "@/lib/telegram";
 import { NextRequest, NextResponse } from "next/server";
 import { logSecurityEvent } from "@/lib/secureLogger";
+import { sendTopup } from "@/lib/supplier";
 
 export async function POST(
   req: NextRequest,
@@ -145,17 +146,20 @@ export async function POST(
       },
     });
 
-    // Fire-and-forget Telegram notification
+    // Fetch full order (game + product) for notification and auto topup
     const fullOrder = await prisma.order.findUnique({
       where: { id: order.id },
       include: { game: true, product: true },
     });
+
     if (fullOrder) {
       const baseUrl =
         process.env.PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || "";
       const link = baseUrl
         ? `\n<a href="${baseUrl}/admin/orders/${fullOrder.orderNumber}">Open in admin</a>`
         : "";
+
+      // Notify Telegram: new paid order
       await notifyTelegram(
         `💰 <b>New paid order</b>\n` +
           `<b>#${escapeHtml(fullOrder.orderNumber)}</b>\n` +
@@ -163,6 +167,57 @@ export async function POST(
           `UID: <code>${escapeHtml(fullOrder.playerUid)}</code>\n` +
           `Amount: $${fullOrder.amountUsd.toFixed(2)}${link}`
       );
+
+      // ── Auto topup via CamRapidSecure ──────────────────────────────────────
+      // Only runs if CAMRAPID_API_KEY is set in env.
+      // If product has no supplierCode, skips and alerts admin to process manually.
+      if (fullOrder.product.supplierCode) {
+        const topupResult = await sendTopup({
+          game: fullOrder.game.slug,
+          uid: fullOrder.playerUid,
+          serverId: fullOrder.serverId ?? undefined,
+          productCode: fullOrder.product.supplierCode,
+          orderRef: fullOrder.orderNumber,
+        });
+
+        if (topupResult.success) {
+          // Mark order as DELIVERED automatically
+          await prisma.order.update({
+            where: { id: fullOrder.id },
+            data: {
+              status: "DELIVERED",
+              deliveredAt: new Date(),
+              deliveryNote: `Auto-delivered via CamRapid. TXN: ${topupResult.transactionId ?? "N/A"}`,
+            },
+          });
+
+          await notifyTelegram(
+            `✅ <b>Auto topup DELIVERED</b>\n` +
+              `#${escapeHtml(fullOrder.orderNumber)}\n` +
+              `${escapeHtml(fullOrder.game.name)} – ${escapeHtml(fullOrder.product.name)}\n` +
+              `UID: <code>${escapeHtml(fullOrder.playerUid)}</code>\n` +
+              `CamRapid TXN: <code>${escapeHtml(topupResult.transactionId ?? "N/A")}</code>`
+          );
+        } else {
+          // Auto topup failed → notify admin to process manually
+          await notifyTelegram(
+            `⚠️ <b>Auto topup FAILED — process manually</b>\n` +
+              `#${escapeHtml(fullOrder.orderNumber)}\n` +
+              `${escapeHtml(fullOrder.game.name)} – ${escapeHtml(fullOrder.product.name)}\n` +
+              `UID: <code>${escapeHtml(fullOrder.playerUid)}</code>\n` +
+              `Error: ${escapeHtml(topupResult.error ?? "unknown")}${link}`
+          );
+        }
+      } else {
+        // No supplierCode on product → alert admin to top up manually
+        await notifyTelegram(
+          `🔔 <b>Manual topup required</b>\n` +
+            `#${escapeHtml(fullOrder.orderNumber)}\n` +
+            `${escapeHtml(fullOrder.game.name)} – ${escapeHtml(fullOrder.product.name)}\n` +
+            `UID: <code>${escapeHtml(fullOrder.playerUid)}</code>\n` +
+            `(Product has no supplier code)${link}`
+        );
+      }
     }
   } else if (event === "payment.expired" || event === "payment.failed") {
     if (transactionId) {

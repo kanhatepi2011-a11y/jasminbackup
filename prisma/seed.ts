@@ -1,11 +1,13 @@
 /**
- * prisma/seed.ts — Database seeder (Issue #3)
+ * prisma/seed.ts — Database seeder
  *
  * Changes:
- * - Removed hardcoded fallback password "sophal030511"
+ * - Removed hardcoded fallback password
  * - Requires ADMIN_EMAIL and ADMIN_PASSWORD from environment
  * - Never logs the real password
  * - Enforces minimum password strength
+ * - Removed Genshin Impact, Call of Duty: Mobile, Honkai: Star Rail
+ * - Fixed product duplicate issue by setting stable product ID
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -29,7 +31,7 @@ async function main() {
     },
   });
 
-  // --- Admin user (Issue #3: require env vars, no fallback) ---
+  // --- Admin user ---
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
 
@@ -38,11 +40,13 @@ async function main() {
       "ADMIN_EMAIL environment variable is required. Set it before running the seed."
     );
   }
+
   if (!adminPassword) {
     throw new Error(
       "ADMIN_PASSWORD environment variable is required. Set it before running the seed."
     );
   }
+
   if (adminPassword.length < 12) {
     throw new Error(
       "ADMIN_PASSWORD must be at least 12 characters for security."
@@ -62,7 +66,6 @@ async function main() {
     },
   });
 
-  // Never log the actual password
   console.log(`✅ Admin created/verified: ${adminEmail} (password set, not logged)`);
 
   // --- Games ---
@@ -81,11 +84,11 @@ async function main() {
       sortOrder: 1,
       products: [
         { name: "11 Diamonds", amount: 11, priceUsd: 0.25 },
-        { name: "22 Diamonds", amount: 22, priceUsd: 0.50 },
-        { name: "56 Diamonds", amount: 56, priceUsd: 1.10 },
-        { name: "86 Diamonds", amount: 86, bonus: 0, priceUsd: 1.80, badge: "Hot" },
-        { name: "172 Diamonds", amount: 172, bonus: 0, priceUsd: 3.50 },
-        { name: "706 Diamonds", amount: 706, bonus: 0, priceUsd: 13.80, badge: "Best Value" },
+        { name: "22 Diamonds", amount: 22, priceUsd: 0.5 },
+        { name: "56 Diamonds", amount: 56, priceUsd: 1.1 },
+        { name: "86 Diamonds", amount: 86, bonus: 0, priceUsd: 1.8, badge: "Hot" },
+        { name: "172 Diamonds", amount: 172, bonus: 0, priceUsd: 3.5 },
+        { name: "706 Diamonds", amount: 706, bonus: 0, priceUsd: 13.8, badge: "Best Value" },
       ],
     },
     {
@@ -104,11 +107,11 @@ async function main() {
         { name: "100 Diamonds", amount: 100, priceUsd: 0.99 },
         { name: "210 Diamonds", amount: 210, priceUsd: 1.98 },
         { name: "530 Diamonds", amount: 530, priceUsd: 4.95, badge: "Hot" },
-        { name: "1080 Diamonds", amount: 1080, priceUsd: 9.90 },
-        { name: "2200 Diamonds", amount: 2200, priceUsd: 19.80, badge: "Best Value" },
-        { name: "5600 Diamonds", amount: 5600, priceUsd: 49.50 },
-        { name: "Weekly Membership", amount: 0, priceUsd: 1.50, badge: "Pass" },
-        { name: "Monthly Membership", amount: 0, priceUsd: 7.90, badge: "Pass" },
+        { name: "1080 Diamonds", amount: 1080, priceUsd: 9.9 },
+        { name: "2200 Diamonds", amount: 2200, priceUsd: 19.8, badge: "Best Value" },
+        { name: "5600 Diamonds", amount: 5600, priceUsd: 49.5 },
+        { name: "Weekly Membership", amount: 0, priceUsd: 1.5, badge: "Pass" },
+        { name: "Monthly Membership", amount: 0, priceUsd: 7.9, badge: "Pass" },
       ],
     },
     {
@@ -132,83 +135,35 @@ async function main() {
         { name: "8100 UC", amount: 8100, bonus: 2100, priceUsd: 99.99 },
       ],
     },
-    {
-      slug: "genshin-impact",
-      name: "Genshin Impact",
-      publisher: "HoYoverse",
-      description: "Top up Genesis Crystals for Genshin Impact",
-      imageUrl: "https://cdn.rithtopup.com/games/genshin.jpg",
-      currencyName: "Genesis Crystals",
-      uidLabel: "UID",
-      uidExample: "812345678",
-      requiresServer: true,
-      servers: JSON.stringify(["America", "Europe", "Asia", "TW/HK/MO"]),
-      featured: true,
-      sortOrder: 4,
-      products: [
-        { name: "60 Genesis Crystals", amount: 60, priceUsd: 0.99 },
-        { name: "300 + 30 Genesis Crystals", amount: 300, bonus: 30, priceUsd: 4.99 },
-        { name: "980 + 110 Genesis Crystals", amount: 980, bonus: 110, priceUsd: 14.99, badge: "Hot" },
-        { name: "1980 + 260 Genesis Crystals", amount: 1980, bonus: 260, priceUsd: 29.99 },
-        { name: "3280 + 600 Genesis Crystals", amount: 3280, bonus: 600, priceUsd: 49.99 },
-        { name: "6480 + 1600 Genesis Crystals", amount: 6480, bonus: 1600, priceUsd: 99.99, badge: "Best Value" },
-        { name: "Blessing of the Welkin Moon", amount: 0, priceUsd: 4.99, badge: "Pass" },
-      ],
-    },
-    {
-      slug: "honkai-star-rail",
-      name: "Honkai: Star Rail",
-      publisher: "HoYoverse",
-      description: "Top up Oneiric Shards for Honkai: Star Rail",
-      imageUrl: "https://cdn.rithtopup.com/games/hsr.jpg",
-      currencyName: "Oneiric Shards",
-      uidLabel: "UID",
-      uidExample: "812345678",
-      requiresServer: true,
-      servers: JSON.stringify(["America", "Europe", "Asia", "TW/HK/MO"]),
-      sortOrder: 5,
-      products: [
-        { name: "60 Oneiric Shards", amount: 60, priceUsd: 0.99 },
-        { name: "300 + 30 Oneiric Shards", amount: 300, bonus: 30, priceUsd: 4.99 },
-        { name: "980 + 110 Oneiric Shards", amount: 980, bonus: 110, priceUsd: 14.99 },
-        { name: "1980 + 260 Oneiric Shards", amount: 1980, bonus: 260, priceUsd: 29.99 },
-      ],
-    },
-    {
-      slug: "call-of-duty-mobile",
-      name: "Call of Duty: Mobile",
-      publisher: "Activision",
-      description: "Top up CP for Call of Duty Mobile",
-      imageUrl: "https://cdn.rithtopup.com/games/codm.jpg",
-      currencyName: "CP",
-      uidLabel: "Player ID",
-      uidExample: "1234567890",
-      sortOrder: 6,
-      products: [
-        { name: "80 CP", amount: 80, priceUsd: 0.99 },
-        { name: "400 + 40 CP", amount: 400, bonus: 40, priceUsd: 4.99 },
-        { name: "800 + 160 CP", amount: 800, bonus: 160, priceUsd: 9.99 },
-        { name: "2000 + 600 CP", amount: 2000, bonus: 600, priceUsd: 24.99 },
-      ],
-    },
   ];
 
   for (const game of games) {
     const { products, ...gameData } = game;
+
     const created = await prisma.game.upsert({
       where: { slug: game.slug },
       update: gameData,
       create: gameData,
     });
+
     for (const prod of products) {
+      const productId = `${created.id}-${prod.name
+        .toLowerCase()
+        .replace(/\+/g, "plus")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")}`;
+
       await prisma.product.upsert({
-        where: {
-          id: `${created.id}-${prod.name.toLowerCase().replace(/\s+/g, "-")}`,
-        },
+        where: { id: productId },
         update: prod,
-        create: { ...prod, gameId: created.id },
+        create: {
+          id: productId,
+          ...prod,
+          gameId: created.id,
+        },
       });
     }
+
     console.log(`✅ Game seeded: ${game.name}`);
   }
 

@@ -4,20 +4,21 @@ import { prisma } from "@/lib/prisma";
 import { CurrencyProvider } from "@/lib/currency";
 import RouteProgress from "@/components/RouteProgress";
 import AnnouncementBar from "@/components/AnnouncementBar";
+import MaintenanceGate from "@/components/MaintenanceGate";
 
 export const metadata: Metadata = {
   title: "JASMINTOPUP",
   description:
-    "Top up Mobile Legends, Free Fire, PUBG, Genshin Impact and more. Instant delivery, secure KHQR payment. 24/7 service in Cambodia.",
+    "Top up Mobile Legends, Free Fire, PUBG Mobile and more. Instant delivery, secure KHQR payment. 24/7 service in Cambodia.",
   keywords: [
     "top up",
     "mobile legends diamonds",
     "free fire diamonds",
     "pubg uc",
-    "genshin impact",
     "ABA Pay",
     "KHQR",
     "Cambodia top up",
+    "JASMINTOPUP",
   ],
   openGraph: {
     title: "JASMINTOPUP",
@@ -32,16 +33,24 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const settings = await prisma.settings
-    .findUnique({ where: { id: 1 } })
+    .findUnique({
+      where: { id: 1 },
+      select: {
+        exchangeRate: true,
+      },
+    })
     .catch(() => null);
+
   const exchangeRate = settings?.exchangeRate ?? 4100;
 
   return (
     <html lang="en">
       <body>
         <RouteProgress />
+
         <CurrencyProvider exchangeRate={exchangeRate}>
           <AnnouncementBar />
+          <MaintenanceGate />
           {children}
         </CurrencyProvider>
       </body>

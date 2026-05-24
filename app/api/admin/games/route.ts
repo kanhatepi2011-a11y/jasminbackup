@@ -1,8 +1,9 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 // Accept either a full http(s) URL or a local uploaded path like /uploads/xxx.png
 const imagePath = z
@@ -30,15 +31,15 @@ const gameSchema = z.object({
   sortOrder: z.number().int().default(0),
 });
 
-export async function GET() {
+export const GET = withAdminAuth(async () => {
   const games = await prisma.game.findMany({
     orderBy: { sortOrder: "asc" },
     include: { _count: { select: { products: true, orders: true } } },
   });
   return NextResponse.json(games);
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminAuth(async (req) => {
   const body = await req.json().catch(() => ({}));
   const parsed = gameSchema.safeParse(body);
   if (!parsed.success) {
@@ -57,4 +58,4 @@ export async function POST(req: NextRequest) {
     }
     throw err;
   }
-}
+});

@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { checkRateLimitMemory } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getIp";
 
 export const dynamic = "force-dynamic";
 
@@ -98,7 +99,7 @@ async function lookupRapidApi(
 
 export async function POST(req: NextRequest) {
   const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    getClientIp(req);
 
   if (!checkRateLimitMemory(`uid-lookup:${ip}`, 10, 60_000)) {
     return NextResponse.json(

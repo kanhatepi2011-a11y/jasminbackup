@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 // Accept either a full http(s) URL or a local uploaded path like /uploads/xxx.png
 const imagePath = z
@@ -29,10 +30,10 @@ const updateSchema = z.object({
   sortOrder: z.number().int().optional(),
 });
 
-export async function GET(
-  _req: NextRequest,
+export const GET = withAdminAuth(async (
+  _req,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const game = await prisma.game.findUnique({
     where: { id: id },
@@ -42,12 +43,12 @@ export async function GET(
   });
   if (!game) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(game);
-}
+});
 
-export async function PATCH(
-  req: NextRequest,
+export const PATCH = withAdminAuth(async (
+  req,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   const parsed = updateSchema.safeParse(body);
@@ -59,13 +60,13 @@ export async function PATCH(
     data: parsed.data,
   });
   return NextResponse.json(game);
-}
+});
 
-export async function DELETE(
-  _req: NextRequest,
+export const DELETE = withAdminAuth(async (
+  _req,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   await prisma.game.delete({ where: { id: id } });
   return NextResponse.json({ ok: true });
-}
+});

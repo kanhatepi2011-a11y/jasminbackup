@@ -1,10 +1,9 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
-import { NextRequest, NextResponse } from "next/server";
-//import { image } from "pdfkit";//
+import { NextResponse } from "next/server";
 import { z } from "zod";
-import { nullable } from "zod/v3";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 const productSchema = z.object({
   gameId: z.string().min(1),
@@ -19,7 +18,7 @@ const productSchema = z.object({
   supplierCode: z.string().optional().nullable(),
 });
 
-export async function GET(req: NextRequest) {
+export const GET = withAdminAuth(async (req) => {
   const gameId = req.nextUrl.searchParams.get("gameId");
   const products = await prisma.product.findMany({
     where: gameId ? { gameId } : undefined,
@@ -27,9 +26,9 @@ export async function GET(req: NextRequest) {
     orderBy: [{ game: { sortOrder: "asc" } }, { sortOrder: "asc" }],
   });
   return NextResponse.json(products);
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminAuth(async (req) => {
   const body = await req.json().catch(() => ({}));
   const parsed = productSchema.safeParse(body);
   if (!parsed.success) {
@@ -40,4 +39,4 @@ export async function POST(req: NextRequest) {
   }
   const product = await prisma.product.create({ data: parsed.data });
   return NextResponse.json(product);
-}
+});

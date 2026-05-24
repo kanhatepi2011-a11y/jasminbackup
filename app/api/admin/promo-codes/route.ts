@@ -1,8 +1,9 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 const createSchema = z.object({
   code: z.string().min(2).max(30).transform((v) => v.toUpperCase().trim()),
@@ -14,14 +15,14 @@ const createSchema = z.object({
   active: z.boolean().default(true),
 });
 
-export async function GET() {
+export const GET = withAdminAuth(async () => {
   const codes = await prisma.promoCode.findMany({
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(codes);
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminAuth(async (req) => {
   try {
     const body = await req.json();
     const parsed = createSchema.safeParse(body);
@@ -54,4 +55,4 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-}
+});

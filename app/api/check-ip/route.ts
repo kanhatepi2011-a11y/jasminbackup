@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
+import { getCurrentAdmin } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  // ✅ Admin auth check — IP info is sensitive infrastructure data
+  const admin = await getCurrentAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    // Check outbound IP via ipify
     const res = await fetch("https://api.ipify.org?format=json");
     const data = await res.json();
 

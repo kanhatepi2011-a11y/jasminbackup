@@ -2,8 +2,9 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
-export async function GET(req: NextRequest) {
+export const GET = withAdminAuth(async (req) => {
   const { searchParams } = req.nextUrl;
   const status = searchParams.get("status") || undefined;
   const q = searchParams.get("q")?.trim();
@@ -41,4 +42,4 @@ export async function GET(req: NextRequest) {
     perPage,
     totalPages: Math.ceil(total / perPage),
   });
-}
+});

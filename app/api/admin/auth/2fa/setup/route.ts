@@ -12,8 +12,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { authenticator } from "otplib";
 import { getCurrentAdmin } from "@/lib/auth";
+import { applyRateLimit } from "@/lib/rateLimit";
 import { prisma } from "@/lib/prisma";
 import { logSecurityEvent } from "@/lib/secureLogger";
+import { getClientIp } from "@/lib/getIp";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -26,7 +28,12 @@ const confirmSchema = z.object({
 });
 
 // ── GET: generate a new TOTP secret and return QR provisioning URI ──────────
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Rate limit: 5 attempts per IP per 15 minutes
+  const ip = getClientIp(req);
+  const rl = await applyRateLimit(`2fa-setup:${ip}`, 5, 15 * 60 * 1000, ip);
+  if (rl) return rl;
+
   const admin = await getCurrentAdmin();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -50,6 +57,11 @@ export async function GET() {
 
 // ── POST: confirm setup by verifying first code, then save secret ───────────
 export async function POST(req: NextRequest) {
+  // Rate limit: 5 attempts per IP per 15 minutes
+  const ip = getClientIp(req);
+  const rl = await applyRateLimit(`2fa-setup:${ip}`, 5, 15 * 60 * 1000, ip);
+  if (rl) return rl;
+
   const admin = await getCurrentAdmin();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

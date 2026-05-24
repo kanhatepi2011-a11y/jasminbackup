@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withAdminAuth(async (req, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   try {
     const body = await req.json();
@@ -21,9 +22,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   } catch {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-}
+});
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const DELETE = withAdminAuth(async (_req, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   try {
     await prisma.promoCode.delete({ where: { id: id } });
@@ -31,4 +32,4 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   } catch {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-}
+});

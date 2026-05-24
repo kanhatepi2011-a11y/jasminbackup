@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getCurrentAdmin } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import PDFDocument from "pdfkit";
 
@@ -312,7 +313,7 @@ function renderPdf(
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ orderNumber: string }> }
 ) {
   const { orderNumber } = await params;
@@ -332,6 +333,37 @@ export async function GET(
       { error: "Invoice is only available after payment is confirmed." },
       { status: 409 }
     );
+  }
+
+  // ── Auth: admin session OR ownership proof via ?uid= ─────────────────────
+  //
+  // This route is outside /api/admin/* so middleware does NOT protect it.
+  // We allow two access modes:
+  //
+  //   1. Admin: valid admin_token JWT cookie → full access to any invoice.
+  //   2. Customer self-service: ?uid=<playerUid> must match the order's
+  //      playerUid exactly.  The UID is already shown on the order tracker
+  //      page, so the customer always has it.  An attacker would need BOTH
+  //      a valid orderNumber AND the correct UID — two independent unknowns.
+  //
+  // If neither check passes → 401.
+  const admin = await getCurrentAdmin().catch(() => null);
+
+  if (!admin) {
+    const uidParam = req.nextUrl.searchParams.get("uid")?.trim() ?? "";
+    if (
+      !uidParam ||
+      uidParam.toLowerCase() !== order.playerUid.toLowerCase()
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Access denied. Include your Player UID as ?uid=<yourUID> " +
+            "or log in as admin.",
+        },
+        { status: 401 }
+      );
+    }
   }
 
   const logoBuffer = await fetchLogo();

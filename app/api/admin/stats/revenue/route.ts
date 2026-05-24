@@ -1,13 +1,14 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 /**
  * Revenue summary for the last N days.
  * Returns daily buckets and the top-5 products by revenue.
  */
-export async function GET(req: NextRequest) {
+export const GET = withAdminAuth(async (req) => {
   const days = Math.min(365, Math.max(1, parseInt(req.nextUrl.searchParams.get("days") || "30")));
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
@@ -49,8 +50,8 @@ export async function GET(req: NextRequest) {
       existing.revenue += o.amountUsd;
     } else {
       productAgg.set(pk, {
-        name: o.product?.name ?? "â€”",
-        game: o.game?.name ?? "â€”",
+        name: o.product?.name ?? "—",
+        game: o.game?.name ?? "—",
         count: 1,
         revenue: o.amountUsd,
       });
@@ -69,4 +70,4 @@ export async function GET(req: NextRequest) {
   const totalRevenue = Math.round(paid.reduce((s, o) => s + o.amountUsd, 0) * 100) / 100;
 
   return NextResponse.json({ days, totalRevenue, totalOrders: paid.length, daily, topProducts });
-}
+});

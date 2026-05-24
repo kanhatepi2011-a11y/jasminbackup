@@ -49,7 +49,7 @@ export function buildAuthCookie(token: string) {
     `${ADMIN_COOKIE_NAME}=${token}`,
     "Path=/",
     "HttpOnly",
-    "SameSite=Lax",
+    "SameSite=Strict",
     `Max-Age=${SESSION_MAX_AGE_SECONDS}`,
     isProduction ? "Secure" : "",
   ]
@@ -64,7 +64,7 @@ export function buildClearCookie() {
     `${ADMIN_COOKIE_NAME}=`,
     "Path=/",
     "HttpOnly",
-    "SameSite=Lax",
+    "SameSite=Strict",
     "Max-Age=0",
     isProduction ? "Secure" : "",
   ]

@@ -2,8 +2,14 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
+import { getCurrentAdmin } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
+  const admin = await getCurrentAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = req.nextUrl;
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
   const perPage = Math.min(100, parseInt(searchParams.get("perPage") || "50"));

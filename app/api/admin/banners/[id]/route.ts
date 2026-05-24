@@ -2,8 +2,9 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 import { writeAudit } from "@/lib/audit";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 const schema = z.object({
   title: z.string().min(1).optional(),
@@ -15,10 +16,10 @@ const schema = z.object({
   sortOrder: z.number().int().optional(),
 });
 
-export async function PATCH(
-  req: NextRequest,
+export const PATCH = withAdminAuth(async (
+  req,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   const parsed = schema.safeParse(body);
@@ -26,14 +27,14 @@ export async function PATCH(
   const banner = await prisma.heroBanner.update({ where: { id: id }, data: parsed.data });
   await writeAudit({ action: "banner.update", targetType: "banner", targetId: id, details: parsed.data });
   return NextResponse.json(banner);
-}
+});
 
-export async function DELETE(
-  _req: NextRequest,
+export const DELETE = withAdminAuth(async (
+  _req,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   await prisma.heroBanner.delete({ where: { id: id } });
   await writeAudit({ action: "banner.delete", targetType: "banner", targetId: id });
   return NextResponse.json({ ok: true });
-}
+});

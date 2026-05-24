@@ -1,19 +1,20 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 import { writeAudit } from "@/lib/audit";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 /**
- * DELETE /api/admin/orders/bulk â€” wipes orders matching the given filter.
+ * DELETE /api/admin/orders/bulk — wipes orders matching the given filter.
  *
  * Body (all optional):
  *   { status?: "PENDING" | ... | "ALL", confirm: "DELETE" }
  *
- * Without `confirm: "DELETE"` the request is refused â€” this is a destructive
+ * Without `confirm: "DELETE"` the request is refused — this is a destructive
  * operation and we don't want it triggered by accident or by a bug in a client.
  */
-export async function DELETE(req: NextRequest) {
+export const DELETE = withAdminAuth(async (req) => {
   const body = await req.json().catch(() => ({}));
   if (body.confirm !== "DELETE") {
     return NextResponse.json(
@@ -34,4 +35,4 @@ export async function DELETE(req: NextRequest) {
   });
 
   return NextResponse.json({ ok: true, deleted: result.count });
-}
+});

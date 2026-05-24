@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCurrency } from "@/lib/currency";
@@ -438,26 +438,34 @@ export default function CheckoutPage() {
     fetchOrder().finally(() => setLoading(false));
   }, [fetchOrder]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Polling — restart only when status changes to avoid infinite re-render.
+  // Extract primitive values so exhaustive-deps is satisfied without
+  // including the full order object (which changes reference on every fetch).
+  const orderStatus = order?.status;
+  const orderExists = order !== null;
   useEffect(() => {
-    if (!order) return;
-    if (TERMINAL.has(order.status) || PAID_STATES.has(order.status)) {
+    if (!orderExists || !orderStatus) return;
+    if (TERMINAL.has(orderStatus) || PAID_STATES.has(orderStatus)) {
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
       return;
     }
     pollRef.current = setInterval(() => { fetchOrder(); }, 3000);
     return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
-  }, [order?.status, fetchOrder]);
+  }, [orderExists, orderStatus, fetchOrder]);
 
-  // Countdown — 5 minutes from order creation
+  // Countdown — uses paymentExpiresAt from API; falls back to createdAt + 5 min.
+  const expiresAt = order?.paymentExpiresAt;
+  const createdAt = order?.createdAt;
   useEffect(() => {
-    if (!order) { setRemainingMs(null); return; }
-    const expiry = new Date(order.createdAt).getTime() + 5 * 60 * 1000;
+    if (!createdAt) { setRemainingMs(null); return; }
+    const expiry = expiresAt
+      ? new Date(expiresAt).getTime()
+      : new Date(createdAt).getTime() + 5 * 60 * 1000;
     const tick = () => { const ms = expiry - Date.now(); setRemainingMs(ms > 0 ? ms : 0); };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [order?.createdAt]);
+  }, [expiresAt, createdAt]);
 
   async function copy(text: string, label: string) {
     try {
@@ -467,8 +475,14 @@ export default function CheckoutPage() {
     } catch { /* clipboard may be unavailable */ }
   }
 
+  // Simulation only works in dev when order has a SIM- paymentRef.
+  const canSimulate =
+    process.env.NEXT_PUBLIC_ALLOW_SIMULATION === "true" &&
+    !!order?.paymentRef &&
+    order.paymentRef.startsWith("SIM-");
+
   async function handleSimulate() {
-    if (!order || simulating) return;
+    if (!order || simulating || !canSimulate) return;
     setSimulating(true);
     try {
       await fetch(
@@ -599,6 +613,24 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Dev-only simulate button — hidden in production */}
+                {canSimulate && (
+                  <div className="rounded-xl border border-yellow-400/40 bg-yellow-50/60 p-4 text-center">
+                    <p className="text-xs text-yellow-700 mb-2 font-semibold">
+                      ⚠️ DEV SIMULATION MODE — blocked in production
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleSimulate}
+                      disabled={simulating}
+                      className="inline-flex items-center gap-2 rounded-lg bg-yellow-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      {simulating && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {simulating ? "Processing..." : "Simulate Payment"}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </>

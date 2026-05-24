@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 //import { image } from "pdfkit";//
 import { z } from "zod";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 const updateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -17,10 +18,10 @@ const updateSchema = z.object({
   supplierCode: z.string().nullable().optional(),
 });
 
-export async function PATCH(
-  req: NextRequest,
+export const PATCH = withAdminAuth(async (
+  req,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   const parsed = updateSchema.safeParse(body);
@@ -32,13 +33,13 @@ export async function PATCH(
     data: parsed.data,
   });
   return NextResponse.json(product);
-}
+});
 
-export async function DELETE(
-  _req: NextRequest,
+export const DELETE = withAdminAuth(async (
+  _req,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   await prisma.product.delete({ where: { id: id } });
   return NextResponse.json({ ok: true });
-}
+});

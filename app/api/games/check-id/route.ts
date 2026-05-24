@@ -10,7 +10,12 @@ const schema = z.object({
   serverId: z.string().optional(),
 });
 
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || "fe5c7f553fmsh0f3d273f04f84dap1f1dcdjsn7d45d7b4bd30";
+function getRapidApiKey(): string {
+  const key = process.env.RAPIDAPI_KEY;
+  if (!key) throw new Error("RAPIDAPI_KEY is not set");
+  return key;
+}
+
 const RAPIDAPI_HOST = "id-game-checker.p.rapidapi.com";
 const BASE = `https://${RAPIDAPI_HOST}`;
 
@@ -74,6 +79,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  let rapidApiKey: string;
+  try {
+    rapidApiKey = getRapidApiKey();
+  } catch {
+    return NextResponse.json({ success: false, error: "Service unavailable" }, { status: 503 });
+  }
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
@@ -83,7 +95,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         "x-rapidapi-host": RAPIDAPI_HOST,
-        "x-rapidapi-key": RAPIDAPI_KEY,
+        "x-rapidapi-key": rapidApiKey,
       },
       cache: "no-store",
       signal: controller.signal,

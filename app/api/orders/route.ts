@@ -6,6 +6,7 @@ import { initiatePayment } from "@/lib/payment";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { applyRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getIp";
 
 
 const createOrderSchema = z.object({
@@ -15,7 +16,7 @@ const createOrderSchema = z.object({
   serverId: z.string().optional(),
   customerEmail: z.string().email().optional(),
   customerPhone: z.string().optional(),
-  paymentMethod: z.enum(["KHPAY"]),
+  paymentMethod: z.enum(["KHPAY", "ABA", "ACLEDA", "WING"]),
   promoCode: z.string().optional(),
   playerNickname: z.string().max(100).optional(),
 });
@@ -23,7 +24,7 @@ const createOrderSchema = z.object({
 export async function POST(req: NextRequest) {
 
   // Rate limit: 10 orders per IP per 10 minutes (Issue #4)
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const ip = getClientIp(req);
   const rl = await applyRateLimit(`orders:${ip}`, 10, 10 * 60 * 1000, ip);
   if (rl) return rl;
 
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Banlist: block orders from flagged emails, phones, IPs or UIDs.
-    const ipAddress = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const ipAddress = getClientIp(req);
     const banCandidates = [
       { type: "email", value: data.customerEmail?.toLowerCase() },
       { type: "phone", value: data.customerPhone?.toLowerCase() },
@@ -94,36 +95,79 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get("user-agent") ?? "unknown";
     const exchangeRate = settings?.exchangeRate ?? 4100;
 
-    // Promo code handling
+    // ── Promo code handling (race-condition-safe) ────────────────────────────
+    //
+    // OLD (buggy): read usedCount → check < maxUses → increment
+    //   Two concurrent requests can both pass the check before either
+    //   increments, letting the same code be used more times than maxUses.
+    //
+    // FIX: wrap everything in a Prisma transaction and use a conditional
+    //   updateMany that includes the `usedCount < maxUses` guard inside the
+    //   WHERE clause.  The database evaluates the check and the increment
+    //   atomically, so only one winner gets through when the last slot is used.
+    type PromoApplied = {
+      promoCodeId: string;
+      discountUsd: number;
+      finalPrice: number;
+    };
+
     let promoCodeId: string | null = null;
     let discountUsd = 0;
     let finalPrice = product.priceUsd;
 
     if (data.promoCode) {
-      const promo = await prisma.promoCode.findUnique({
-        where: { code: data.promoCode.toUpperCase().trim() },
-      });
-      if (
-        promo &&
-        promo.active &&
-        (!promo.expiresAt || promo.expiresAt >= new Date()) &&
-        (promo.maxUses === 0 || promo.usedCount < promo.maxUses) &&
-        product.priceUsd >= promo.minOrderUsd
-      ) {
-        discountUsd =
-          promo.discountType === "PERCENT"
-            ? (product.priceUsd * promo.discountValue) / 100
-            : promo.discountValue;
-        discountUsd = Math.min(discountUsd, product.priceUsd);
-        discountUsd = Math.round(discountUsd * 100) / 100;
-        finalPrice = Math.round((product.priceUsd - discountUsd) * 100) / 100;
-        promoCodeId = promo.id;
+      const promoApplied = await prisma.$transaction(
+        async (tx): Promise<PromoApplied | null> => {
+          // 1. Fetch the promo inside the transaction for a consistent read.
+          const promo = await tx.promoCode.findUnique({
+            where: { code: data.promoCode!.toUpperCase().trim() },
+          });
 
-        // Increment usage count
-        await prisma.promoCode.update({
-          where: { id: promo.id },
-          data: { usedCount: { increment: 1 } },
-        });
+          // Basic eligibility checks (non-atomic — just early-exit guards).
+          if (!promo || !promo.active) return null;
+          if (promo.expiresAt && promo.expiresAt < new Date()) return null;
+          if (product.priceUsd < promo.minOrderUsd) return null;
+
+          // 2. Atomic conditional increment — WHERE includes the maxUses guard.
+          //    If another request just used the last slot, updateMany returns
+          //    count=0 and we bail out cleanly without double-spending.
+          const updated = await tx.promoCode.updateMany({
+            where: {
+              id: promo.id,
+              active: true,
+              OR: [
+                { maxUses: { equals: 0 } },          // unlimited code
+                { usedCount: { lt: promo.maxUses } }, // still has slots
+              ],
+            },
+            data: { usedCount: { increment: 1 } },
+          });
+
+          if (updated.count === 0) {
+            // Lost the race or limit already reached — treat as invalid.
+            return null;
+          }
+
+          // 3. Calculate discount only after we have secured the slot.
+          let discount =
+            promo.discountType === "PERCENT"
+              ? (product.priceUsd * promo.discountValue) / 100
+              : promo.discountValue;
+          discount = Math.min(discount, product.priceUsd);
+          discount = Math.round(discount * 100) / 100;
+
+          return {
+            promoCodeId: promo.id,
+            discountUsd: discount,
+            finalPrice: Math.round((product.priceUsd - discount) * 100) / 100,
+          };
+        }
+      );
+
+      if (promoApplied) {
+        promoCodeId = promoApplied.promoCodeId;
+        discountUsd = promoApplied.discountUsd;
+        finalPrice  = promoApplied.finalPrice;
       }
     }
 

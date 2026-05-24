@@ -2,47 +2,13 @@ import type { NextConfig } from "next";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-function buildCspHeader(): string {
-  const scriptSrc = isProduction
-    ? "'self' 'unsafe-inline'"
-    : "'self' 'unsafe-inline' 'unsafe-eval'";
-
-  const connectSrc = isProduction
-    ? "'self' https:"
-    : "'self' http://localhost:* ws://localhost:* wss: https:";
-
-  return [
-    "default-src 'self'",
-    `script-src ${scriptSrc}`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' data: https://fonts.gstatic.com",
-    [
-      "img-src",
-      "'self'",
-      "data:",
-      "blob:",
-      "https://i.ibb.co",
-      "https://api.qrserver.com",
-      "https://img.freepik.com",
-      "https://res.cloudinary.com",
-      "https://*.cloudinary.com",
-    ].join(" "),
-    `connect-src ${connectSrc}`,
-    "frame-src 'none'",
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "object-src 'none'",
-    "manifest-src 'self'",
-    "worker-src 'self' blob:",
-    isProduction ? "upgrade-insecure-requests" : "",
-  ]
-    .filter(Boolean)
-    .join("; ");
-}
-
+// NOTE: The Content-Security-Policy header is intentionally NOT set here.
+// A nonce-based CSP is generated on every request in middleware.ts, which
+// injects `'nonce-{nonce}'` into script-src so 'unsafe-inline' is never needed.
+//
+// All other security headers remain here because they are static and do not
+// require per-request values.
 const securityHeaders = [
-  { key: "Content-Security-Policy", value: buildCspHeader() },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

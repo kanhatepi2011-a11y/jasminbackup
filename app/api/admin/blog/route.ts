@@ -1,9 +1,10 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 import { writeAudit } from "@/lib/audit";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 const schema = z.object({
   slug: z.string().min(2).regex(/^[a-z0-9-]+$/),
@@ -15,7 +16,7 @@ const schema = z.object({
   published: z.boolean().default(false),
 });
 
-export async function GET() {
+export const GET = withAdminAuth(async () => {
   const posts = await prisma.blogPost.findMany({
     orderBy: { createdAt: "desc" },
     select: {
@@ -32,9 +33,9 @@ export async function GET() {
     },
   });
   return NextResponse.json(posts);
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminAuth(async (req) => {
   const body = await req.json().catch(() => ({}));
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
@@ -56,4 +57,4 @@ export async function POST(req: NextRequest) {
     }
     throw err;
   }
-}
+});

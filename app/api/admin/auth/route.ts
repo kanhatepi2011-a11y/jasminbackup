@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { getClientIp } from "@/lib/getIp";
 
 import { prisma } from "@/lib/prisma";
 import { applyRateLimit } from "@/lib/rateLimit";
 import { logSecurityEvent } from "@/lib/secureLogger";
 import { ADMIN_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/auth";
+import { getLockDurationMs, formatLockDuration } from "@/lib/lockPolicy";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -33,7 +35,7 @@ function get2FATtlSeconds() {
   return Math.floor(ttl);
 }
 
-// ── GET: check login lock status ────────────────────────────────────────────
+// ── GET: check login lock status ─────────────────────────────────────────────
 export async function GET(req: NextRequest) {
   const email = req.nextUrl.searchParams.get("email");
   if (!email) return NextResponse.json({ locked: false });
@@ -42,23 +44,28 @@ export async function GET(req: NextRequest) {
   const lock = await prisma.adminAuthLock.findUnique({ where: { identifier } });
 
   if (!lock) return NextResponse.json({ locked: false });
+
+  // Backward-compat: respect legacy forever locks already in the DB.
   if (lock.forever) return NextResponse.json({ locked: true, forever: true });
+
   if (lock.lockedUntil && lock.lockedUntil > new Date()) {
+    const remainingMs = lock.lockedUntil.getTime() - Date.now();
     return NextResponse.json({
       locked: true,
       forever: false,
       lockedUntil: lock.lockedUntil,
+      retryAfter: formatLockDuration(remainingMs),
     });
   }
 
   return NextResponse.json({ locked: false });
 }
 
-// ── POST: password login → issues pending-2FA cookie ────────────────────────
+// ── POST: password login → issues pending-2FA cookie ─────────────────────────
 export async function POST(req: NextRequest) {
-  // Rate limit: 10 attempts per IP per 15 minutes (Issue #4)
+  // Rate limit: 10 attempts per IP per 15 minutes
   const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    getClientIp(req);
   const rl = await applyRateLimit(`admin-login:${ip}`, 10, 15 * 60 * 1000, ip);
   if (rl) return rl;
 
@@ -80,51 +87,52 @@ export async function POST(req: NextRequest) {
       where: { identifier },
     });
 
+    // Backward-compat: respect legacy forever locks already in DB.
     if (lock?.forever) {
       return NextResponse.json(
-        { error: "Account locked permanently. Contact the site owner." },
+        { error: "Account is disabled. Contact the site owner." },
         { status: 403, headers: { "Cache-Control": "no-store" } }
       );
     }
+
     if (lock?.lockedUntil && lock.lockedUntil > new Date()) {
+      const remainingMs = lock.lockedUntil.getTime() - Date.now();
       return NextResponse.json(
-        { error: "Account temporarily locked. Please wait.", lockedUntil: lock.lockedUntil },
+        {
+          error: `Too many failed attempts. Please try again in ${formatLockDuration(remainingMs)}.`,
+          lockedUntil: lock.lockedUntil,
+          retryAfter: formatLockDuration(remainingMs),
+        },
         { status: 429, headers: { "Cache-Control": "no-store" } }
       );
     }
 
     const admin = await prisma.admin.findUnique({ where: { email } });
 
-    if (!admin || !admin.active) {
-      // Count fail even for unknown email (prevent enumeration)
-      await handleLoginFail(identifier, lock?.failCount ?? 0, ip);
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401, headers: { "Cache-Control": "no-store" } }
-      );
-    }
-
+    // Always run bcrypt even for unknown email to prevent timing attacks.
+    const DUMMY_HASH =
+      "$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
+    const candidateHash = admin?.passwordHash ?? DUMMY_HASH;
     const passwordMatch = await bcrypt.compare(
       parsed.data.password,
-      admin.passwordHash
+      candidateHash
     );
 
-    if (!passwordMatch) {
+    if (!admin || !admin.active || !passwordMatch) {
+      // Use the existing failCount if there's a lock record, else 0.
       const result = await handleLoginFail(
         identifier,
         lock?.failCount ?? 0,
         ip
       );
-
-      if (result.forever) {
-        return NextResponse.json(
-          { error: "Account locked permanently. Contact the site owner." },
-          { status: 403, headers: { "Cache-Control": "no-store" } }
-        );
-      }
+      const remainingMs = result.lockedUntil.getTime() - Date.now();
       return NextResponse.json(
-        { error: "Invalid email or password. Account locked temporarily.", lockedUntil: result.lockedUntil },
-        { status: 429, headers: { "Cache-Control": "no-store" } }
+        {
+          error: `Invalid credentials. Please try again in ${formatLockDuration(remainingMs)}.`,
+          lockedUntil: result.lockedUntil,
+          retryAfter: formatLockDuration(remainingMs),
+        },
+        { status: 401, headers: { "Cache-Control": "no-store" } }
       );
     }
 
@@ -156,7 +164,7 @@ export async function POST(req: NextRequest) {
     res.cookies.set(PENDING_2FA_COOKIE, pendingToken, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: "lax",
+      sameSite: "strict",
       path: "/",
       maxAge: ttlSeconds,
     });
@@ -171,7 +179,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ── DELETE: logout — clear both session cookies ──────────────────────────────
+// ── DELETE: logout — clear both session cookies ───────────────────────────────
 export async function DELETE() {
   const isProduction = process.env.NODE_ENV === "production";
 
@@ -183,7 +191,7 @@ export async function DELETE() {
   const cookieOpts = {
     httpOnly: true,
     secure: isProduction,
-    sameSite: "lax" as const,
+    sameSite: "strict" as const,
     path: "/",
     maxAge: 0,
     expires: new Date(0),
@@ -195,50 +203,34 @@ export async function DELETE() {
   return res;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/**
+ * Increments the fail counter and applies a progressive temporary lock.
+ * Never sets forever=true — manual disable is done via Admin.active field.
+ */
 async function handleLoginFail(
   identifier: string,
   currentFailCount: number,
   ip: string
 ) {
-  const nextFail = currentFailCount + 1;
+  const nextFail    = currentFailCount + 1;
+  const durationMs  = getLockDurationMs(nextFail);
+  const lockedUntil = new Date(Date.now() + durationMs);
 
   logSecurityEvent({
     event: "admin_login_fail",
     ip,
     detail: identifier,
     failCount: nextFail,
+    lockDuration: formatLockDuration(durationMs),
   });
 
-  if (nextFail >= 2) {
-    await prisma.adminAuthLock.upsert({
-      where: { identifier },
-      update: { failCount: nextFail, lockedUntil: null, forever: true },
-      create: {
-        identifier,
-        failCount: nextFail,
-        lockedUntil: null,
-        forever: true,
-      },
-    });
-    logSecurityEvent({
-      event: "admin_locked_forever",
-      ip,
-      detail: identifier,
-    });
-    return { forever: true, lockedUntil: null };
-  }
-
-  const lockedUntil = new Date(Date.now() + 5 * 60 * 1000);
   await prisma.adminAuthLock.upsert({
     where: { identifier },
     update: { failCount: nextFail, lockedUntil, forever: false },
-    create: {
-      identifier,
-      failCount: nextFail,
-      lockedUntil,
-      forever: false,
-    },
+    create: { identifier, failCount: nextFail, lockedUntil, forever: false },
   });
-  return { forever: false, lockedUntil };
+
+  return { lockedUntil };
 }

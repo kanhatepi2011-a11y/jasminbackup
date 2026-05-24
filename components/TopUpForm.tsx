@@ -47,6 +47,7 @@ export default function TopUpForm({ game, products }: { game: Game; products: Pr
 
   // Dismissed state — persists across page refresh via sessionStorage
   const [dismissed, setDismissed] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(true);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -132,7 +133,8 @@ export default function TopUpForm({ game, products }: { game: Game; products: Pr
     !!selected &&
     isValidUid(uid) &&
     (!needsServer || serverId.trim().length > 0) &&
-    (!needsNickname || nicknameStatus === "verified");
+    (!needsNickname || nicknameStatus === "verified")  &&
+  termsAccepted;
 
   async function applyPromo() {
     if (!promoInput.trim() || !selectedProduct) return;
@@ -498,6 +500,34 @@ export default function TopUpForm({ game, products }: { game: Game; products: Pr
                   </div>
                 </div>
               </button>
+              <div className="mt-3 flex items-center gap-2 rounded-xl border border-pink-200 bg-white/70 px-4 py-3">
+  <button
+    type="button"
+    onClick={() => setTermsAccepted((v) => !v)}
+    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
+      termsAccepted
+        ? "border-pink-500 bg-pink-500"
+        : "border-pink-300 bg-white"
+    }`}
+    aria-label="Accept terms"
+  >
+    {termsAccepted && (
+      <Check className="h-3 w-3 text-white" strokeWidth={3} />
+    )}
+  </button>
+
+  <span className="text-xs font-semibold text-pink-600">
+    ខ្ញុំព្រមជាមួយ{" "}
+    <a
+      href="/Terms-of-service"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline hover:text-pink-800"
+    >
+      លក្ខខណ្ឌ
+    </a>
+  </span>
+</div>
             </div>
           </div>
 
@@ -589,6 +619,11 @@ export default function TopUpForm({ game, products }: { game: Game; products: Pr
               {selected && needsNickname && nicknameStatus !== "verified" && isValidUid(uid) && (
                 <p className="mt-4 text-xs text-pink-400 text-center">🔍 សូមពិនិត្យឈ្មោះ Player មុន</p>
               )}
+              {!termsAccepted && (
+  <p className="mt-2 text-xs text-pink-400 text-center">
+    សូមចុច ✓ យល់ព្រមលក្ខខណ្ឌមុនបង់ប្រាក់
+  </p>
+)}
 
               <button
                 type="submit"
@@ -661,6 +696,11 @@ export default function TopUpForm({ game, products }: { game: Game; products: Pr
           {!selected && (
             <p className="mb-2 text-xs text-pink-400 text-center">👆 សូមជ្រើសរើសកញ្ចប់មុន</p>
           )}
+          {!termsAccepted && (
+  <p className="mb-2 text-xs text-pink-400 text-center">
+    សូមចុច ✓ យល់ព្រមលក្ខខណ្ឌមុនបង់ប្រាក់
+  </p>
+)}
           {selected && needsNickname && nicknameStatus !== "verified" && isValidUid(uid) && (
             <p className="mb-2 text-xs text-pink-400 text-center">🔍 សូមពិនិត្យឈ្មោះ Player មុន</p>
           )}

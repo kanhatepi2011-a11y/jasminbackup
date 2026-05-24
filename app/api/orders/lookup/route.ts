@@ -3,25 +3,21 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { checkRateLimitMemory } from "@/lib/rateLimit";
+import { applyRateLimit } from "@/lib/rateLimit";  // ← DB-backed (ជំនួស memory)
+import { getClientIp } from "@/lib/getIp";
 
 const lookupSchema = z.object({
   query: z.string().min(3).max(100),
 });
 
 export async function POST(req: NextRequest) {
-  // ── Rate limit: 7 requests / 60 s / IP ──────────────────────────────────
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown";
-
-  if (!checkRateLimitMemory(ip, 7, 60_000)) {
-    return NextResponse.json(
-      { error: "Too many requests. Please wait a minute and try again." },
-      { status: 429 }
-    );
-  }
+  // ── Rate limit: 7 requests / 60s / IP — DB-backed ───────────────────────
+  // checkRateLimitMemory() resets on server restart + មិន work លើ
+  // Vercel multi-instance deployments។ applyRateLimit() ប្រើ DB
+  // ដូច្នេះ consistent គ្រប់ instance និង restart។
+  const ip = getClientIp(req);
+  const rl = await applyRateLimit(`orders-lookup:${ip}`, 7, 60_000, ip);
+  if (rl) return rl;
   // ────────────────────────────────────────────────────────────────────────
 
   try {

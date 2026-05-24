@@ -301,7 +301,7 @@ export default function OrderPage() {
             {["PAID", "PROCESSING", "DELIVERED"].includes(order.status) && (
               <div className="mx-5 sm:mx-6 mb-5 sm:mb-6">
                 <a
-                  href={`/api/orders/${encodeURIComponent(order.orderNumber)}/invoice`}
+                  href={`/api/orders/${encodeURIComponent(order.orderNumber)}/invoice?uid=${encodeURIComponent(order.playerUid)}`}
                   className="flex items-center justify-center gap-2 w-full rounded-xl border border-pink-400/40 bg-pink-500/10 hover:bg-pink-500/20 text-pink-600 py-3 text-sm font-medium transition-colors"
                 >
                   <FileText className="h-4 w-4" strokeWidth={2} />

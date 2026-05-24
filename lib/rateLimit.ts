@@ -60,8 +60,15 @@ export async function checkRateLimitDb(
 
     return true;
   } catch (err) {
-    console.error("[rateLimit] DB error, failing open:", err);
-    return true;
+    // ✅ Fail-closed: block request ពេល DB មិន available
+    // មិន fallback ទៅ memory ទេ — ការពារ bypass after server restart
+    console.error("[rateLimit] DB error, blocking as precaution:", err);
+    logSecurityEvent({
+      event: "rate_limit_exceeded",
+      detail: `DB unavailable for key: ${key} — blocking as precaution`,
+      ip,
+    });
+    return false;
   }
 }
 

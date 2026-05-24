@@ -3,16 +3,17 @@ export const dynamic = "force-dynamic";
 
 import { writeAudit } from "@/lib/audit";
 import { fetchKhpayStatus } from "@/lib/payment";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 /**
  * Admin debug endpoint: pulls the latest KHPay status for an order
  * and, if paid, flips the order to PAID.
  */
-export async function POST(
-  _req: NextRequest,
+export const POST = withAdminAuth(async (
+  _req,
   { params }: { params: Promise<{ orderNumber: string }> }
-) {
+) => {
   const { orderNumber } = await params;
   const order = await prisma.order.findUnique({
     where: { orderNumber: orderNumber },
@@ -62,4 +63,4 @@ export async function POST(
   });
 
   return NextResponse.json({ remote, order: updated });
-}
+});

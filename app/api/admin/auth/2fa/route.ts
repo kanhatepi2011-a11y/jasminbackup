@@ -1,23 +1,20 @@
 /**
- * /api/admin/auth/2fa — TOTP-based 2FA (Issue #1)
+ * /api/admin/auth/2fa — TOTP-based 2FA
  *
- * Replaces static ADMIN_2FA_CODE with TOTP via otplib.
- * The admin's TOTP secret is stored in Admin.totpSecret (encrypted at rest
- * via the DATABASE_URL connection — ensure SSL in production).
- *
- * Setup flow  : GET /api/admin/auth/2fa/setup  → returns QR + secret
- * Verify flow : POST /api/admin/auth/2fa        → verifies 6-digit TOTP code
+ * Verify flow : POST /api/admin/auth/2fa  → verifies 6-digit TOTP code
+ * Status check: GET  /api/admin/auth/2fa  → returns lock / step info
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import jwt from "jsonwebtoken";
 import { authenticator } from "otplib";
-
+import { getClientIp } from "@/lib/getIp";
 import { prisma } from "@/lib/prisma";
 import { signAdminToken, SESSION_MAX_AGE_SECONDS } from "@/lib/auth";
 import { applyRateLimit } from "@/lib/rateLimit";
 import { logSecurityEvent } from "@/lib/secureLogger";
+import { getLockDurationMs, formatLockDuration } from "@/lib/lockPolicy";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -26,7 +23,7 @@ export const runtime = "nodejs";
 authenticator.options = { window: 1 };
 
 const PENDING_2FA_COOKIE = "admin_2fa_pending";
-const ADMIN_COOKIE_NAME = "admin_token";
+const ADMIN_COOKIE_NAME  = "admin_token";
 
 const verifySchema = z.object({
   code: z.string().length(6).regex(/^\d{6}$/),
@@ -69,21 +66,26 @@ export async function GET(req: NextRequest) {
   const identifier = `admin-2fa:${payload.adminId}`;
   const lock = await prisma.adminAuthLock.findUnique({ where: { identifier } });
 
+  // Backward-compat: respect legacy forever locks already in DB.
   if (lock?.forever) {
     return NextResponse.json({ step: "2fa", locked: true, forever: true });
   }
 
   if (lock?.lockedUntil && lock.lockedUntil > new Date()) {
+    const remainingMs = lock.lockedUntil.getTime() - Date.now();
     return NextResponse.json({
       step: "2fa",
       locked: true,
       forever: false,
       lockedUntil: lock.lockedUntil,
+      retryAfter: formatLockDuration(remainingMs),
     });
   }
 
   // Tell frontend whether TOTP is already configured
-  const admin = await prisma.admin.findUnique({ where: { id: payload.adminId } });
+  const admin = await prisma.admin.findUnique({
+    where: { id: payload.adminId },
+  });
   const totpConfigured = !!admin?.totpSecret;
 
   return NextResponse.json({
@@ -98,12 +100,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   // Rate limit: 10 attempts per IP per 15 minutes
   const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    getClientIp(req);
   const rl = await applyRateLimit(`2fa-verify:${ip}`, 10, 15 * 60 * 1000, ip);
   if (rl) return rl;
 
   try {
-    const body = await req.json().catch(() => ({}));
+    const body   = await req.json().catch(() => ({}));
     const parsed = verifySchema.safeParse(body);
 
     if (!parsed.success) {
@@ -136,15 +138,22 @@ export async function POST(req: NextRequest) {
       where: { identifier },
     });
 
+    // Backward-compat: respect legacy forever locks already in DB.
     if (lock?.forever) {
       return NextResponse.json(
-        { error: "Account locked permanently. Contact the site owner." },
+        { error: "Account is disabled. Contact the site owner." },
         { status: 403 }
       );
     }
+
     if (lock?.lockedUntil && lock.lockedUntil > new Date()) {
+      const remainingMs = lock.lockedUntil.getTime() - Date.now();
       return NextResponse.json(
-        { error: "Too many failed attempts. Please wait 5 minutes.", lockedUntil: lock.lockedUntil },
+        {
+          error: `Too many failed attempts. Please try again in ${formatLockDuration(remainingMs)}.`,
+          lockedUntil: lock.lockedUntil,
+          retryAfter: formatLockDuration(remainingMs),
+        },
         { status: 429 }
       );
     }
@@ -162,7 +171,8 @@ export async function POST(req: NextRequest) {
     if (!admin.totpSecret) {
       return NextResponse.json(
         {
-          error: "TOTP not configured. Please complete 2FA setup before logging in.",
+          error:
+            "TOTP not configured. Please complete 2FA setup before logging in.",
           needsSetup: true,
         },
         { status: 403 }
@@ -170,57 +180,49 @@ export async function POST(req: NextRequest) {
     }
 
     const inputCode = parsed.data.code.trim();
-    const isValid = authenticator.verify({
-      token: inputCode,
+
+    // Replay-attack guard: reject codes already consumed within the acceptance window
+    const usedToken = await prisma.usedTotpToken.findUnique({
+      where: { adminId_token: { adminId: payload.adminId, token: inputCode } },
+    });
+    if (usedToken) {
+      return NextResponse.json(
+        { error: "Code already used. Please wait for a new code." },
+        { status: 401 }
+      );
+    }
+
+    const isValid   = authenticator.verify({
+      token:  inputCode,
       secret: admin.totpSecret,
     });
 
     if (!isValid) {
-      const nextFail = (lock?.failCount || 0) + 1;
+      const nextFail    = (lock?.failCount ?? 0) + 1;
+      const durationMs  = getLockDurationMs(nextFail);
+      const lockedUntil = new Date(Date.now() + durationMs);
 
       logSecurityEvent({
         event: "admin_2fa_fail",
         adminId: payload.adminId,
         ip,
         failCount: nextFail,
+        lockDuration: formatLockDuration(durationMs),
       });
 
-      if (nextFail >= 2) {
-        await prisma.adminAuthLock.upsert({
-          where: { identifier },
-          update: { failCount: nextFail, lockedUntil: null, forever: true },
-          create: {
-            identifier,
-            failCount: nextFail,
-            lockedUntil: null,
-            forever: true,
-          },
-        });
-        logSecurityEvent({
-          event: "admin_locked_forever",
-          adminId: payload.adminId,
-          ip,
-          reason: "2fa_fail",
-        });
-        return NextResponse.json(
-          { error: "Account locked permanently. Contact the site owner." },
-          { status: 403 }
-        );
-      }
-
-      const lockedUntil = new Date(Date.now() + 5 * 60 * 1000);
       await prisma.adminAuthLock.upsert({
         where: { identifier },
         update: { failCount: nextFail, lockedUntil, forever: false },
-        create: {
-          identifier,
-          failCount: nextFail,
-          lockedUntil,
-          forever: false,
-        },
+        create: { identifier, failCount: nextFail, lockedUntil, forever: false },
       });
+
+      const remainingMs = lockedUntil.getTime() - Date.now();
       return NextResponse.json(
-        { error: "Invalid 2FA code. Account locked for 5 minutes.", lockedUntil },
+        {
+          error: `Invalid 2FA code. Please try again in ${formatLockDuration(remainingMs)}.`,
+          lockedUntil,
+          retryAfter: formatLockDuration(remainingMs),
+        },
         { status: 429 }
       );
     }
@@ -229,30 +231,41 @@ export async function POST(req: NextRequest) {
     await prisma.adminAuthLock.deleteMany({ where: { identifier } });
     await prisma.admin.update({
       where: { id: payload.adminId },
-      data: { lastLoginAt: new Date() },
+      data:  { lastLoginAt: new Date() },
     });
 
+    // Record the used token so it cannot be replayed within the 90-second window
+    const tokenExpiresAt = new Date(Date.now() + 90 * 1000);
+    await prisma.usedTotpToken.create({
+      data: { adminId: payload.adminId, token: inputCode, expiresAt: tokenExpiresAt },
+    });
+
+    // Fire-and-forget: purge expired tokens (older than 90s)
+    prisma.usedTotpToken
+      .deleteMany({ where: { expiresAt: { lt: new Date() } } })
+      .catch(() => {});
+
     logSecurityEvent({
-      event: "admin_2fa_success",
+      event:   "admin_2fa_success",
       adminId: payload.adminId,
       ip,
     });
 
-    const adminToken = signAdminToken(payload.adminId);
-    const isProduction = process.env.NODE_ENV === "production";
+    const adminToken     = signAdminToken(payload.adminId);
+    const isProduction   = process.env.NODE_ENV === "production";
 
     const res = NextResponse.json({
-      ok: true,
-      email: payload.email,
+      ok:      true,
+      email:   payload.email,
       message: "2FA confirmed",
     });
 
     res.cookies.set(ADMIN_COOKIE_NAME, adminToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: "lax",
-      path: "/",
-      maxAge: SESSION_MAX_AGE_SECONDS,
+      secure:   isProduction,
+      sameSite: "strict",
+      path:     "/",
+      maxAge:   SESSION_MAX_AGE_SECONDS,
     });
 
     res.cookies.delete(PENDING_2FA_COOKIE);

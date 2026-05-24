@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import type { Metadata } from "next";
@@ -385,6 +386,22 @@ export default function PrivacyPolicyPage() {
       </div>
 
       <section className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+
+        {/* Back buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-8">
+          <Link
+            href="/"
+            className="flex-1 text-center bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold py-3.5 rounded-2xl shadow-md hover:shadow-lg hover:from-pink-600 hover:to-rose-600 transition-all text-sm"
+          >
+            🏠 ត្រឡប់ទៅទំព័រដើម
+          </Link>
+          <Link
+            href="/order"
+            className="flex-1 text-center bg-white border-2 border-pink-400 text-pink-600 font-bold py-3.5 rounded-2xl shadow-sm hover:bg-pink-50 transition-all text-sm"
+          >
+            📦 តាមដានការបញ្ជាទិញ
+          </Link>
+        </div>
 
         {/* TOC */}
         <div className="mb-8 rounded-2xl border-2 border-pink-200 bg-white p-6">

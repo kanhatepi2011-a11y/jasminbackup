@@ -2,8 +2,9 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 import { writeAudit } from "@/lib/audit";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 const schema = z.object({
   slug: z.string().min(2).regex(/^[a-z0-9-]+$/).optional(),
@@ -15,20 +16,20 @@ const schema = z.object({
   published: z.boolean().optional(),
 });
 
-export async function GET(
-  _req: NextRequest,
+export const GET = withAdminAuth(async (
+  _req,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const post = await prisma.blogPost.findUnique({ where: { id: id } });
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(post);
-}
+});
 
-export async function PATCH(
-  req: NextRequest,
+export const PATCH = withAdminAuth(async (
+  req,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   const parsed = schema.safeParse(body);
@@ -48,14 +49,14 @@ export async function PATCH(
   const post = await prisma.blogPost.update({ where: { id: id }, data });
   await writeAudit({ action: "blog.update", targetType: "blog", targetId: id, details: parsed.data });
   return NextResponse.json(post);
-}
+});
 
-export async function DELETE(
-  _req: NextRequest,
+export const DELETE = withAdminAuth(async (
+  _req,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   await prisma.blogPost.delete({ where: { id: id } });
   await writeAudit({ action: "blog.delete", targetType: "blog", targetId: id });
   return NextResponse.json({ ok: true });
-}
+});

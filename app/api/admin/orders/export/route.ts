@@ -1,16 +1,31 @@
 ﻿import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
+import { getCurrentAdmin } from "@/lib/auth";
 
 import { NextRequest, NextResponse } from "next/server";
+
+const CSV_FORMULA_PREFIX = /^[=+\-@\t]/;
 
 function csvCell(v: unknown): string {
   if (v === null || v === undefined) return "";
   const s = String(v);
+
+  if (CSV_FORMULA_PREFIX.test(s)) {
+    return `"'${s.replace(/"/g, '""')}"`;
+  }
+
   if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+
   return s;
 }
 
 export async function GET(req: NextRequest) {
+  // ✅ Auth check — export is admin-only
+  const admin = await getCurrentAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = req.nextUrl;
   const status = searchParams.get("status") || undefined;
   const q = searchParams.get("q")?.trim();

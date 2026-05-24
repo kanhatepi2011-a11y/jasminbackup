@@ -3,8 +3,9 @@ export const dynamic = "force-dynamic";
 
 import { writeAudit } from "@/lib/audit";
 import { notifyTelegram, escapeHtml } from "@/lib/telegram";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 const updateSchema = z.object({
   status: z.enum([
@@ -20,10 +21,10 @@ const updateSchema = z.object({
   failureReason: z.string().optional(),
 });
 
-export async function GET(
-  _req: NextRequest,
+export const GET = withAdminAuth(async (
+  _req,
   { params }: { params: Promise<{ orderNumber: string }> }
-) {
+) => {
   const { orderNumber } = await params;
   const order = await prisma.order.findUnique({
     where: { orderNumber: orderNumber },
@@ -34,12 +35,12 @@ export async function GET(
   });
   if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(order);
-}
+});
 
-export async function PATCH(
-  req: NextRequest,
+export const PATCH = withAdminAuth(async (
+  req,
   { params }: { params: Promise<{ orderNumber: string }> }
-) {
+) => {
   const { orderNumber } = await params;
   const body = await req.json().catch(() => ({}));
   const parsed = updateSchema.safeParse(body);
@@ -70,12 +71,12 @@ export async function PATCH(
       action: `order.status.${parsed.data.status.toLowerCase()}`,
       targetType: "order",
       targetId: order.orderNumber,
-      details: `${order.status} â†’ ${parsed.data.status}`,
+      details: `${order.status} → ${parsed.data.status}`,
     });
     if (parsed.data.status === "DELIVERED" || parsed.data.status === "PAID") {
       await notifyTelegram(
-        `âœ… <b>Order ${escapeHtml(parsed.data.status)}</b>\n` +
-          `#${escapeHtml(order.orderNumber)} â€” $${order.amountUsd.toFixed(2)}\n` +
+        `✅ <b>Order ${escapeHtml(parsed.data.status)}</b>\n` +
+          `#${escapeHtml(order.orderNumber)} — $${order.amountUsd.toFixed(2)}\n` +
           `UID: <code>${escapeHtml(order.playerUid)}</code>`
       );
     }
@@ -89,4 +90,4 @@ export async function PATCH(
   }
 
   return NextResponse.json(updated);
-}
+});

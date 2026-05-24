@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { applyRateLimit } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getIp";
 
 const schema = z.object({
   code: z.string().min(1),
@@ -10,6 +12,12 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 10 attempts per IP per 5 minutes
+  // ការពារ brute-force promo codes (e.g. SAVE10, FREE99, VIP50...)
+  const ip = getClientIp(req);
+  const rl = await applyRateLimit(`promo-validate:${ip}`, 10, 5 * 60 * 1000, ip);
+  if (rl) return rl;
+
   try {
     const body = await req.json();
     const parsed = schema.safeParse(body);

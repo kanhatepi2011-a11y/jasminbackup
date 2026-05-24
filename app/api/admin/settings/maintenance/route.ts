@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ const bodySchema = z.object({
   maintenanceMessage: z.string().min(1).optional(),
 });
 
-export async function PATCH(req: Request) {
+export const PATCH = withAdminAuth(async (req) => {
   try {
     const body = await req.json();
     const data = bodySchema.parse(body);
@@ -52,4 +53,4 @@ export async function PATCH(req: Request) {
       { status: 400 }
     );
   }
-}
+});

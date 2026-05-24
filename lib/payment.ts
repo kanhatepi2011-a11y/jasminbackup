@@ -230,8 +230,14 @@ export function verifyWebhook(
   rawBody: string,
   headers: Record<string, string>
 ): boolean {
-  if (isPaymentSimulationMode()) return true;
-
+  // ⚠️  NEVER bypass signature verification based on simulation mode.
+  //
+  // Simulation flows are handled entirely by /api/payment/simulate — that
+  // route updates the order directly and never calls this webhook endpoint.
+  // If someone POSTs to /api/payment/webhook/khpay while simulation mode is
+  // active (e.g. PAYMENT_SIMULATION_MODE accidentally left true in production),
+  // we must still reject unsigned requests; otherwise anyone could forge a
+  // "payment.paid" event and receive free top-ups.
   const secret = cleanEnv(process.env.KHPAY_WEBHOOK_SECRET);
   if (!secret) {
     console.warn("[webhook] KHPAY_WEBHOOK_SECRET not set — rejecting.");
@@ -244,7 +250,8 @@ export function verifyWebhook(
   const expected =
     "sha256=" + crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
 
-  const a = Buffer.from(received);
+  // Use fixed-length Buffers so timingSafeEqual never throws.
+  const a = Buffer.from(received.padEnd(expected.length, "\0"));
   const b = Buffer.from(expected);
   if (a.length !== b.length) return false;
   return crypto.timingSafeEqual(a, b);

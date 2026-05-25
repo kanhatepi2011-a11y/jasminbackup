@@ -2,7 +2,7 @@ import crypto from "crypto";
 import nodeFetch from "node-fetch";
 import { HttpsProxyAgent } from "https-proxy-agent";
 
-export type PaymentMethod = "KHPAY" | "MANUAL";
+export type PaymentMethod = "KHPAY" | "MANUAL" | "ABA" | "ACLEDA" | "WING";
 
 export interface InitiatePaymentArgs {
   orderNumber: string;
@@ -72,7 +72,9 @@ export async function initiatePayment(
   args: InitiatePaymentArgs
 ): Promise<PaymentInitResult> {
   if (isPaymentSimulationMode()) return simulatePayment(args);
-  if (args.method !== "KHPAY") throw new Error(`Unsupported payment method: ${args.method}`);
+  if (!["KHPAY"].includes(args.method)) {
+  return simulatePayment(args); // ABA, ACLEDA, WING → simulation ជាមុន
+}
 
   try {
     return await initiateKhpay(args);

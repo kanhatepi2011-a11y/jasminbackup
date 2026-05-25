@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
     const init = await initiatePayment({
       orderNumber: order.orderNumber,
       amountUsd: order.amountUsd,
-      method: data.paymentMethod,
+      method: data.paymentMethod as any,
       returnUrl: `${publicUrl}/order?number=${order.orderNumber}`,
       cancelUrl: `${publicUrl}/games/${game.slug}`,
       callbackUrl: `${publicUrl}/api/payment/webhook/khpay`,

@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
+
 
 // =====================================
 // PUT YOUR TELEGRAM BOT TOKEN & CHAT ID
@@ -436,7 +438,7 @@ export default function HoneypotLoginPage() {
             )}
           </div>
 
-          <a href="/" className="hp-back">← ត្រឡប់ទៅទំព័រដើម</a>
+          <Link href="/" className="hp-back">← ត្រឡប់ទៅទំព័រដើម</Link>
         </div>
       </div>
     </>

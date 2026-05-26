@@ -1,4 +1,19 @@
-@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Baloo+2:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Baloo+2:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Kantumruy+Pro:wght@300;400;500;600&display=swap");
+
+/* Kantumruy Pro utility — used on login page */
+.font-khmer {
+  font-family: 'Kantumruy Pro', sans-serif;
+}
+
+/* Honeypot page — floating icon animation */
+@keyframes floatUp {
+  from { transform: translateY(110vh) rotate(0deg); opacity: 0.08; }
+  to   { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+}
+.animate-float-up {
+  animation: floatUp 10s linear infinite;
+  opacity: 0.08;
+}
 
 @tailwind base;
 @tailwind components;

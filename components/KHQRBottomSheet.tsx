@@ -79,7 +79,7 @@ export default function KHQRBottomSheet({
 
       try {
         const dataUrl = await QRCode.toDataURL(currentOrder.qrString, {
-          width: 320,
+          width: 260,
           margin: 2,
           errorCorrectionLevel: "M",
           color: {
@@ -373,10 +373,10 @@ export default function KHQRBottomSheet({
                 <img
                   src={qrDataUrl}
                   alt="KHQR Code"
-                  className="h-[280px] w-[280px]"
+                  className="h-[220px] w-[220px]"
                 />
               ) : (
-                <div className="flex h-[280px] w-[280px] items-center justify-center rounded-2xl border border-dashed text-gray-400">
+                <div className="flex h-[220px] w-[220px] items-center justify-center rounded-2xl border border-dashed text-gray-400">
                   No QR available
                 </div>
               )}

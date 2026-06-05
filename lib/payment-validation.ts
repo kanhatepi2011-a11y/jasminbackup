@@ -77,7 +77,10 @@ export function amountsMatch(
 export function isRemotePaid(remote: RemotePaymentSnapshot | null | undefined): boolean {
   if (!remote) return false;
   const status = String(remote.status ?? "").trim().toLowerCase();
-  return remote.paid === true || ["paid", "success", "succeeded", "completed"].includes(status);
+  return (
+    remote.paid === true ||
+    ["paid", "approved", "success", "succeeded", "completed"].includes(status)
+  );
 }
 
 export function validatePaymentForOrder(

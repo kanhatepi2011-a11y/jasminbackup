@@ -249,15 +249,28 @@ export function verifyWebhook(
     return false;
   }
 
-  const received = headers["x-webhook-signature"] || "";
-  if (!received.startsWith("sha256=")) return false;
+  // KHPay sends: X-KHPay-Signature: t=<timestamp>,v1=<hmac_hex>
+  const received = headers["x-khpay-signature"] || "";
+  if (!received) return false;
 
-  const expected =
-    "sha256=" + crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  // Extract v1 value from "t=1234,v1=abcdef..."
+  const v1Match = received.match(/v1=([a-f0-9]+)/i);
+  if (!v1Match) return false;
+  const receivedHmac = v1Match[1];
+
+  // Extract timestamp and build signed payload: "t=<timestamp>.<rawBody>"
+  const tMatch = received.match(/t=(\d+)/);
+  const timestamp = tMatch ? tMatch[1] : "";
+  const signedPayload = timestamp ? `${timestamp}.${rawBody}` : rawBody;
+
+  const expectedHmac = crypto
+    .createHmac("sha256", secret)
+    .update(signedPayload)
+    .digest("hex");
 
   // Use fixed-length Buffers so timingSafeEqual never throws.
-  const a = Buffer.from(received.padEnd(expected.length, "\0"));
-  const b = Buffer.from(expected);
+  const a = Buffer.from(receivedHmac.padEnd(expectedHmac.length, "\0"));
+  const b = Buffer.from(expectedHmac);
   if (a.length !== b.length) return false;
   return crypto.timingSafeEqual(a, b);
 }

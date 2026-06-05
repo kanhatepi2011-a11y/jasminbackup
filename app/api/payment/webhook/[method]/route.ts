@@ -154,7 +154,7 @@ export async function POST(
     const transactionId = getWebhookTransactionId(payload, data);
     const orderNumber = getWebhookOrderNumber(payload, data);
 
-    if (!["payment.paid", "payment.expired", "payment.failed"].includes(event)) {
+    if (!["payment.paid", "payment.approved", "payment.expired", "payment.failed"].includes(event)) {
       return NextResponse.json({ ok: true, ignored: true });
     }
 
@@ -177,7 +177,7 @@ export async function POST(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (event === "payment.paid") {
+    if (event === "payment.paid" || event === "payment.approved") {
       const validation = validatePaymentForOrder(order, {
         orderNumber,
         transactionId,

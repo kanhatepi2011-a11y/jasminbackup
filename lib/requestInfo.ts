@@ -2,11 +2,7 @@
 import { NextRequest } from "next/server";
 import { getClientIp } from "@/lib/getIp";
 
-export function getRequestInfo(req: NextRequest) {
-  const ip = getClientIp(req);
-  const userAgent = req.headers.get("user-agent") || "";
-  const country = req.headers.get("cf-ipcountry") || null;
-
+export function parseUserAgent(userAgent: string) {
   const ua = userAgent.toLowerCase();
 
   const os =
@@ -17,16 +13,25 @@ export function getRequestInfo(req: NextRequest) {
     "Unknown";
 
   const browser =
+    ua.includes("edg") ? "Edge" :
     ua.includes("chrome") ? "Chrome" :
     ua.includes("safari") ? "Safari" :
     ua.includes("firefox") ? "Firefox" :
-    ua.includes("edg") ? "Edge" :
     "Unknown";
 
   const device =
     ua.includes("mobile") ? "Mobile" :
     ua.includes("tablet") ? "Tablet" :
     "Desktop/Unknown";
+
+  return { os, browser, device };
+}
+
+export function getRequestInfo(req: NextRequest) {
+  const ip = getClientIp(req);
+  const userAgent = req.headers.get("user-agent") || "";
+  const country = req.headers.get("cf-ipcountry") || null;
+  const { os, browser, device } = parseUserAgent(userAgent);
 
   return { ip, userAgent, country, os, browser, device };
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
 const SESSION_COOKIE = "admin_token";
@@ -26,6 +26,7 @@ const VALID_ADMIN_PREFIXES = [
   "/admin/orders",
   "/admin/products",
   "/admin/promo-codes",
+  "/admin/security",
   "/admin/settings",
   "/admin/login",
   "/admin/sophallogin",
@@ -69,6 +70,86 @@ async function isValidAdminToken(token?: string) {
     return true;
   } catch {
     return false;
+  }
+}
+
+
+function parseUserAgent(userAgent: string) {
+  const ua = userAgent.toLowerCase();
+
+  const os =
+    ua.includes("android") ? "Android" :
+    ua.includes("iphone") || ua.includes("ios") ? "iOS" :
+    ua.includes("windows") ? "Windows" :
+    ua.includes("mac os") ? "macOS" :
+    "Unknown";
+
+  const browser =
+    ua.includes("edg") ? "Edge" :
+    ua.includes("chrome") ? "Chrome" :
+    ua.includes("safari") ? "Safari" :
+    ua.includes("firefox") ? "Firefox" :
+    "Unknown";
+
+  const device =
+    ua.includes("mobile") ? "Mobile" :
+    ua.includes("tablet") ? "Tablet" :
+    "Desktop/Unknown";
+
+  return { os, browser, device };
+}
+
+function getRequestIp(req: NextRequest): string {
+  const realIp = req.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim();
+    if (first) return first;
+  }
+
+  return "unknown";
+}
+
+function shouldTrackRequest(pathname: string): boolean {
+  if (!process.env.INTERNAL_SECURITY_SECRET) return false;
+
+  // Avoid loops and noisy internal/admin-only traffic.
+  if (pathname.startsWith("/api/security/track")) return false;
+  if (pathname.startsWith("/api/cron")) return false;
+  if (pathname.startsWith("/api/admin")) return false;
+  if (pathname.startsWith("/admin")) return false;
+
+  return true;
+}
+
+async function trackRequest(req: NextRequest, pathname: string) {
+  try {
+    const userAgent = req.headers.get("user-agent") || "";
+    const { os, browser, device } = parseUserAgent(userAgent);
+
+    await fetch(new URL("/api/security/track", req.url), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-internal-secret": process.env.INTERNAL_SECURITY_SECRET || "",
+      },
+      body: JSON.stringify({
+        ip: getRequestIp(req),
+        path: pathname,
+        method: req.method,
+        country: req.headers.get("cf-ipcountry") || null,
+        userAgent,
+        os,
+        browser,
+        device,
+        referer: req.headers.get("referer") || null,
+      }),
+      cache: "no-store",
+    });
+  } catch {
+    // Never break the site if analytics logging fails.
   }
 }
 
@@ -162,8 +243,12 @@ function addSecurityHeaders(
   return response;
 }
 
-export async function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest, event: NextFetchEvent) {
   const { pathname } = req.nextUrl;
+
+  if (shouldTrackRequest(pathname)) {
+    event.waitUntil(trackRequest(req, pathname));
+  }
 
   const nonce = generateNonce();
   const isProduction = process.env.NODE_ENV === "production";

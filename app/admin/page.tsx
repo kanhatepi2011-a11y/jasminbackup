@@ -1,422 +1,323 @@
-"use client";
+import Link from "next/link";
+import { getCambodiaDayRange, getDailyDashboardStats } from "@/lib/dailyStats";
 
-import { useEffect, useState } from "react";
+export const dynamic = "force-dynamic";
 
-type AdminSettingsForm = {
-  siteName: string;
-  exchangeRate: number | string;
-  supportTelegram: string | null;
-  supportEmail: string | null;
-  maintenanceMode: boolean;
-  maintenanceMessage: string | null;
-  announcement: string | null;
-  announcementTone: "info" | "warning" | "promo";
-  telegramBotToken: string | null;
-  telegramChatId: string | null;
-};
+function money(value: number) {
+  return `$${value.toFixed(2)}`;
+}
 
-const DEFAULT_MAINTENANCE_MESSAGE =
-  "server កំពុងមានបញ្ហាសូមរង់ចាំ 30 នាទី";
+function number(value: number) {
+  return value.toLocaleString("en-US");
+}
 
-export default function AdminSettingsPage() {
-  const [form, setForm] = useState<AdminSettingsForm | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+function dateTime(value: Date | string | null) {
+  if (!value) return "-";
+  return new Date(value).toLocaleString("en-US", { timeZone: "Asia/Phnom_Penh" });
+}
 
-  async function loadSettings() {
-    try {
-      setError(null);
+function packageName(product: { name: string; amount: number; bonus: number }) {
+  return product.bonus > 0
+    ? `${product.name} (${product.amount}+${product.bonus})`
+    : product.name;
+}
 
-      const res = await fetch("/api/admin/settings", {
-        cache: "no-store",
-      });
+const cardClass = "rounded-2xl border border-fox-border bg-fox-card p-5 shadow-sm";
 
-      if (!res.ok) {
-        throw new Error("Failed to load settings");
-      }
-
-      const data = await res.json();
-
-      setForm({
-        siteName: data.siteName || "JASMINTOPUP",
-        exchangeRate: data.exchangeRate || 4100,
-        supportTelegram: data.supportTelegram || "",
-        supportEmail: data.supportEmail || "",
-        maintenanceMode: Boolean(data.maintenanceMode),
-        maintenanceMessage:
-          data.maintenanceMessage || DEFAULT_MAINTENANCE_MESSAGE,
-        announcement: data.announcement || "",
-        announcementTone: data.announcementTone || "info",
-        telegramBotToken: data.telegramBotToken || "",
-        telegramChatId: data.telegramChatId || "",
-      });
-    } catch {
-      setError("Cannot load settings. Please refresh the page.");
-    }
-  }
-
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  async function save(e?: React.FormEvent) {
-    e?.preventDefault();
-
-    if (!form) return;
-
-    try {
-      setSaving(true);
-      setSaved(false);
-      setError(null);
-
-      const res = await fetch("/api/admin/settings", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          siteName: form.siteName,
-          exchangeRate: Number(form.exchangeRate),
-          supportTelegram: form.supportTelegram || null,
-          supportEmail: form.supportEmail || null,
-          maintenanceMode: form.maintenanceMode,
-          maintenanceMessage:
-            form.maintenanceMessage || DEFAULT_MAINTENANCE_MESSAGE,
-          announcement: form.announcement || null,
-          announcementTone: form.announcementTone || "info",
-          telegramBotToken: form.telegramBotToken || null,
-          telegramChatId: form.telegramChatId || null,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to save settings");
-      }
-
-      const updated = await res.json();
-
-      setForm({
-        siteName: updated.siteName || form.siteName,
-        exchangeRate: updated.exchangeRate || form.exchangeRate,
-        supportTelegram: updated.supportTelegram || "",
-        supportEmail: updated.supportEmail || "",
-        maintenanceMode: Boolean(updated.maintenanceMode),
-        maintenanceMessage:
-          updated.maintenanceMessage || DEFAULT_MAINTENANCE_MESSAGE,
-        announcement: updated.announcement || "",
-        announcementTone: updated.announcementTone || "info",
-        telegramBotToken: updated.telegramBotToken || "",
-        telegramChatId: updated.telegramChatId || "",
-      });
-
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } catch {
-      setError("Save failed. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function toggleServerStatus() {
-    if (!form || saving) return;
-
-    const nextMode = !form.maintenanceMode;
-
-    const nextForm = {
-      ...form,
-      maintenanceMode: nextMode,
-      maintenanceMessage:
-        form.maintenanceMessage || DEFAULT_MAINTENANCE_MESSAGE,
-    };
-
-    setForm(nextForm);
-
-    try {
-      setSaving(true);
-      setSaved(false);
-      setError(null);
-
-      const res = await fetch("/api/admin/settings", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          siteName: nextForm.siteName,
-          exchangeRate: Number(nextForm.exchangeRate),
-          supportTelegram: nextForm.supportTelegram || null,
-          supportEmail: nextForm.supportEmail || null,
-          maintenanceMode: nextForm.maintenanceMode,
-          maintenanceMessage:
-            nextForm.maintenanceMessage || DEFAULT_MAINTENANCE_MESSAGE,
-          announcement: nextForm.announcement || null,
-          announcementTone: nextForm.announcementTone || "info",
-          telegramBotToken: nextForm.telegramBotToken || null,
-          telegramChatId: nextForm.telegramChatId || null,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to update server status");
-      }
-
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } catch {
-      setForm(form);
-      setError("Cannot update server status. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (!form) {
-    return (
-      <div className="p-8 text-fox-muted">
-        {error ? error : "Loading..."}
-      </div>
-    );
-  }
+export default async function AdminDashboardPage() {
+  const range = getCambodiaDayRange();
+  const stats = await getDailyDashboardStats(range);
+  const cf = stats.cloudflareSecurity;
 
   return (
-    <div className="p-8 max-w-2xl">
-      <h1 className="font-display text-3xl font-bold mb-2">Settings</h1>
-      <p className="text-fox-muted mb-6">Site-wide configuration.</p>
-
-      {error && (
-        <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-          {error}
-        </div>
-      )}
-
-      <div
-        className={`mb-6 rounded-2xl border p-5 ${
-          form.maintenanceMode
-            ? "border-red-500/40 bg-red-500/10"
-            : "border-green-500/40 bg-green-500/10"
-        }`}
-      >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-bold">
-              {form.maintenanceMode ? "Server Closed" : "Server Open"}
-            </h2>
-            <p className="mt-1 text-sm text-fox-muted">
-              {form.maintenanceMode
-                ? "Customers will see the maintenance message and cannot use the website."
-                : "Customers can use the website normally."}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={toggleServerStatus}
-            disabled={saving}
-            className={`rounded-xl px-5 py-2 font-semibold text-white disabled:opacity-60 ${
-              form.maintenanceMode
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-red-600 hover:bg-red-700"
-            }`}
-          >
-            {saving
-              ? "Updating..."
-              : form.maintenanceMode
-                ? "Open Server"
-                : "Close Server"}
-          </button>
-        </div>
-
-        {form.maintenanceMode && (
-          <p className="mt-4 rounded-lg bg-black/20 px-3 py-2 text-sm">
-            Message:{" "}
-            <span className="font-semibold">
-              {form.maintenanceMessage || DEFAULT_MAINTENANCE_MESSAGE}
-            </span>
+    <main className="space-y-6 p-4 sm:p-6 lg:p-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="font-display text-3xl font-bold">Dashboard</h1>
+          <p className="mt-1 text-sm text-fox-muted">
+            Daily counters reset by Cambodia day. Today: {stats.range.label}
           </p>
-        )}
+        </div>
+
+        <Link href="/admin/security" className="btn-ghost w-fit text-sm">
+          🛡️ Open Security Requests
+        </Link>
       </div>
 
-      <form onSubmit={save} className="card p-6 space-y-5">
-        <div>
-          <label className="label">Site Name</label>
-          <input
-            className="input"
-            value={form.siteName || ""}
-            onChange={(e) =>
-              setForm({ ...form, siteName: e.target.value })
-            }
-          />
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className={cardClass}>
+          <div className="text-sm text-fox-muted">Origin Requests / 1d</div>
+          <div className="mt-3 text-4xl font-black text-fox-primary">{number(stats.totalRequests)}</div>
+          <div className="mt-2 text-xs text-fox-muted">Reached your Next.js app. Unique IPs: {number(stats.uniqueIps)}</div>
         </div>
 
-        <div>
-          <label className="label">Exchange Rate (KHR per 1 USD)</label>
-          <input
-            className="input"
-            type="number"
-            value={form.exchangeRate || 4100}
-            onChange={(e) =>
-              setForm({ ...form, exchangeRate: e.target.value })
-            }
-          />
-          <p className="text-xs text-fox-muted mt-1">
-            Used to show KHR equivalents alongside USD prices.
-          </p>
-        </div>
-
-        <div>
-          <label className="label">Support Telegram Handle</label>
-          <input
-            className="input"
-            value={form.supportTelegram || ""}
-            onChange={(e) =>
-              setForm({ ...form, supportTelegram: e.target.value })
-            }
-            placeholder="@yourhandle"
-          />
-        </div>
-
-        <div>
-          <label className="label">Support Email</label>
-          <input
-            className="input"
-            type="email"
-            value={form.supportEmail || ""}
-            onChange={(e) =>
-              setForm({ ...form, supportEmail: e.target.value })
-            }
-          />
-        </div>
-
-        <div>
-          <label className="label">Site-wide Announcement optional</label>
-          <textarea
-            className="input"
-            rows={2}
-            value={form.announcement || ""}
-            onChange={(e) =>
-              setForm({ ...form, announcement: e.target.value })
-            }
-            placeholder="e.g. Special bonus this weekend!"
-          />
-
-          <div className="mt-2 flex gap-2">
-            {(["info", "warning", "promo"] as const).map((tone) => (
-              <button
-                key={tone}
-                type="button"
-                onClick={() =>
-                  setForm({ ...form, announcementTone: tone })
-                }
-                className={`text-xs px-3 py-1 rounded-full border ${
-                  (form.announcementTone || "info") === tone
-                    ? "border-fox-primary bg-fox-primary/10 text-fox-primary"
-                    : "border-fox-border text-fox-muted"
-                }`}
-              >
-                {tone}
-              </button>
-            ))}
+        <div className={cardClass}>
+          <div className="text-sm text-fox-muted">Cloudflare Protected / 1d</div>
+          <div className="mt-3 text-4xl font-black text-red-500">{number(cf.protectedEvents)}</div>
+          <div className="mt-2 text-xs text-fox-muted">
+            {cf.enabled ? "Blocked/challenged security events" : "Set Cloudflare API env to enable"}
           </div>
         </div>
 
-        <label className="flex items-center gap-3 p-4 rounded-lg border border-fox-border bg-fox-surface">
-          <input
-            type="checkbox"
-            checked={form.maintenanceMode}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                maintenanceMode: e.target.checked,
-                maintenanceMessage:
-                  form.maintenanceMessage ||
-                  DEFAULT_MAINTENANCE_MESSAGE,
-              })
-            }
-          />
+        <div className={cardClass}>
+          <div className="text-sm text-fox-muted">Create Order Requests</div>
+          <div className="mt-3 text-4xl font-black">{number(stats.orderApiRequests)}</div>
+          <div className="mt-2 text-xs text-fox-muted">POST /api/orders today</div>
+        </div>
 
-          <div className="flex-1">
-            <div className="font-medium">Maintenance Mode</div>
-            <div className="text-xs text-fox-muted">
-              Blocks all new orders. Existing orders still process.
-            </div>
-          </div>
-        </label>
+        <div className={cardClass}>
+          <div className="text-sm text-fox-muted">KHQR Generated</div>
+          <div className="mt-3 text-4xl font-black">{number(stats.khqrGenerated)}</div>
+          <div className="mt-2 text-xs text-fox-muted">Orders with paymentRef / QR / payment URL</div>
+        </div>
 
-        {form.maintenanceMode && (
+        <div className={cardClass}>
+          <div className="text-sm text-fox-muted">Paid Ready</div>
+          <div className="mt-3 text-4xl font-black text-green-500">{number(stats.paidReadyCount)}</div>
+          <div className="mt-2 text-xs text-fox-muted">Revenue: {money(stats.paidRevenueUsd)}</div>
+        </div>
+      </section>
+
+      <section className={cardClass}>
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <label className="label">
-              Maintenance message shown to customers
-            </label>
-            <input
-              className="input"
-              value={
-                form.maintenanceMessage || DEFAULT_MAINTENANCE_MESSAGE
-              }
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  maintenanceMessage: e.target.value,
-                })
-              }
-              placeholder={DEFAULT_MAINTENANCE_MESSAGE}
-            />
+            <h2 className="text-lg font-bold">🛡️ Cloudflare Bot / DDoS Protection Today</h2>
+            <p className="text-sm text-fox-muted">
+              These are Cloudflare Security Events for blocked/challenged traffic before it reaches your app.
+            </p>
           </div>
-        )}
-
-        <div className="pt-4 border-t border-fox-border">
-          <h2 className="font-semibold mb-1">
-            Telegram Notifications
-          </h2>
-          <p className="text-xs text-fox-muted mb-3">
-            Get a message when an order is paid or delivered. Leave empty
-            to disable.
-          </p>
-
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div>
-              <label className="label">Bot token</label>
-              <input
-                className="input font-mono text-xs"
-                value={form.telegramBotToken || ""}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    telegramBotToken: e.target.value,
-                  })
-                }
-                placeholder="123456:ABC-DEF..."
-              />
-            </div>
-
-            <div>
-              <label className="label">Chat ID</label>
-              <input
-                className="input font-mono text-xs"
-                value={form.telegramChatId || ""}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    telegramChatId: e.target.value,
-                  })
-                }
-                placeholder="-1001234567890"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 pt-2">
-          <button type="submit" disabled={saving} className="btn-primary">
-            {saving ? "Saving..." : "Save Settings"}
-          </button>
-
-          {saved && (
-            <span className="text-sm text-green-400">✓ Saved</span>
+          {!cf.enabled ? (
+            <span className="rounded-full border border-yellow-500/40 bg-yellow-500/10 px-3 py-1 text-xs font-semibold text-yellow-600">
+              Not configured
+            </span>
+          ) : (
+            <span className="rounded-full border border-green-500/40 bg-green-500/10 px-3 py-1 text-xs font-semibold text-green-600">
+              Connected
+            </span>
           )}
         </div>
-      </form>
-    </div>
+
+        {!cf.enabled ? (
+          <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm text-yellow-700">
+            Cloudflare stats are hidden because {cf.error || "the Cloudflare API token/zone ID is missing"}. Add
+            <code className="mx-1 rounded bg-white/60 px-1">CLOUDFLARE_API_TOKEN</code>
+            and
+            <code className="mx-1 rounded bg-white/60 px-1">CLOUDFLARE_ZONE_ID</code>
+            in your hosting environment.
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              <div className="rounded-xl border border-fox-border bg-fox-surface p-4">
+                <div className="text-xs text-fox-muted">Security Events</div>
+                <div className="mt-2 text-2xl font-black">{number(cf.totalSecurityEvents)}</div>
+              </div>
+              <div className="rounded-xl border border-fox-border bg-fox-surface p-4">
+                <div className="text-xs text-fox-muted">Blocked</div>
+                <div className="mt-2 text-2xl font-black text-red-500">{number(cf.blockedEvents)}</div>
+              </div>
+              <div className="rounded-xl border border-fox-border bg-fox-surface p-4">
+                <div className="text-xs text-fox-muted">Challenged</div>
+                <div className="mt-2 text-2xl font-black text-orange-500">{number(cf.challengeEvents)}</div>
+              </div>
+              <div className="rounded-xl border border-fox-border bg-fox-surface p-4">
+                <div className="text-xs text-fox-muted">Bot-related</div>
+                <div className="mt-2 text-2xl font-black">{number(cf.botEvents)}</div>
+              </div>
+              <div className="rounded-xl border border-fox-border bg-fox-surface p-4">
+                <div className="text-xs text-fox-muted">DDoS / Rate-limit</div>
+                <div className="mt-2 text-2xl font-black">{number(cf.ddosEvents)}</div>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-xl border border-fox-border bg-fox-surface p-4">
+                <h3 className="mb-3 font-bold">Top Cloudflare Actions</h3>
+                {cf.topActions.length === 0 ? (
+                  <p className="text-sm text-fox-muted">No Cloudflare security events today.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {cf.topActions.map((item) => (
+                      <div key={item.label} className="flex items-center justify-between gap-4 text-sm">
+                        <span className="font-mono">{item.label}</span>
+                        <span className="font-bold">{number(item.count)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-fox-border bg-fox-surface p-4">
+                <h3 className="mb-3 font-bold">Top Cloudflare Sources</h3>
+                {cf.topSources.length === 0 ? (
+                  <p className="text-sm text-fox-muted">No Cloudflare security sources today.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {cf.topSources.map((item) => (
+                      <div key={item.label} className="flex items-center justify-between gap-4 text-sm">
+                        <span className="font-mono">{item.label}</span>
+                        <span className="font-bold">{number(item.count)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-5 overflow-x-auto">
+              <table className="w-full min-w-[900px] text-sm">
+                <thead className="border-b border-fox-border text-left text-xs uppercase tracking-wider text-fox-muted">
+                  <tr>
+                    <th className="p-3">Time</th>
+                    <th className="p-3">Action</th>
+                    <th className="p-3">Source</th>
+                    <th className="p-3">IP</th>
+                    <th className="p-3">Country</th>
+                    <th className="p-3">Path</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-fox-border">
+                  {cf.latestEvents.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-fox-muted">No latest Cloudflare events today.</td>
+                    </tr>
+                  ) : (
+                    cf.latestEvents.map((event, index) => (
+                      <tr key={`${event.datetime}-${event.ip}-${index}`} className="hover:bg-fox-surface/50">
+                        <td className="p-3 text-xs text-fox-muted">{dateTime(event.datetime || null)}</td>
+                        <td className="p-3 font-mono text-xs">{event.action || "unknown"}</td>
+                        <td className="p-3 font-mono text-xs">{event.source || "unknown"}</td>
+                        <td className="p-3 font-mono text-xs">{event.ip || "unknown"}</td>
+                        <td className="p-3">{event.country || "-"}</td>
+                        <td className="max-w-[320px] truncate p-3 font-mono text-xs">{event.path || "/"}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </section>
+
+      <section className={cardClass}>
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-bold">✅ Paid Ready Orders Today</h2>
+            <p className="text-sm text-fox-muted">Shows IP, game, amount, player ID, and package for orders already paid.</p>
+          </div>
+          <Link href="/admin/orders?status=PAID" className="text-sm font-semibold text-fox-primary hover:underline">
+            View all →
+          </Link>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1050px] text-sm">
+            <thead className="border-b border-fox-border text-left text-xs uppercase tracking-wider text-fox-muted">
+              <tr>
+                <th className="p-3">Paid Time</th>
+                <th className="p-3">IP</th>
+                <th className="p-3">Game</th>
+                <th className="p-3">Amount</th>
+                <th className="p-3">Player ID</th>
+                <th className="p-3">Package</th>
+                <th className="p-3">Order</th>
+                <th className="p-3">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-fox-border">
+              {stats.paidOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-fox-muted">No paid orders today.</td>
+                </tr>
+              ) : (
+                stats.paidOrders.map((order) => (
+                  <tr key={order.id} className="hover:bg-fox-surface/50">
+                    <td className="p-3 text-xs text-fox-muted">{dateTime(order.paidAt)}</td>
+                    <td className="p-3 font-mono text-xs">{order.ipAddress || "unknown"}</td>
+                    <td className="p-3 font-semibold">{order.game.name}</td>
+                    <td className="p-3 font-mono">{money(order.amountUsd)}</td>
+                    <td className="p-3 font-mono text-xs">{order.playerUid}</td>
+                    <td className="p-3 text-fox-muted">{packageName(order.product)}</td>
+                    <td className="p-3">
+                      <Link href={`/admin/orders/${order.orderNumber}`} className="font-mono text-fox-primary hover:underline">
+                        {order.orderNumber}
+                      </Link>
+                    </td>
+                    <td className="p-3">
+                      <span className="rounded-full border border-green-500/30 bg-green-500/10 px-2 py-1 text-xs font-bold text-green-500">
+                        {order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className={cardClass}>
+        <h2 className="mb-4 text-lg font-bold">🧾 Orders Created + KHQR Generated Today</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1050px] text-sm">
+            <thead className="border-b border-fox-border text-left text-xs uppercase tracking-wider text-fox-muted">
+              <tr>
+                <th className="p-3">Created</th>
+                <th className="p-3">IP</th>
+                <th className="p-3">Game</th>
+                <th className="p-3">Player ID</th>
+                <th className="p-3">Package</th>
+                <th className="p-3">Amount</th>
+                <th className="p-3">KHQR</th>
+                <th className="p-3">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-fox-border">
+              {stats.latestOrderRequests.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-fox-muted">No orders created today.</td>
+                </tr>
+              ) : (
+                stats.latestOrderRequests.map((order) => (
+                  <tr key={order.id} className="hover:bg-fox-surface/50">
+                    <td className="p-3 text-xs text-fox-muted">{dateTime(order.createdAt)}</td>
+                    <td className="p-3 font-mono text-xs">{order.ipAddress || "unknown"}</td>
+                    <td className="p-3 font-semibold">{order.game.name}</td>
+                    <td className="p-3 font-mono text-xs">{order.playerUid}</td>
+                    <td className="p-3 text-fox-muted">{packageName(order.product)}</td>
+                    <td className="p-3 font-mono">{money(order.amountUsd)}</td>
+                    <td className="p-3">
+                      {order.paymentRef || order.qrString || order.paymentUrl ? (
+                        <span className="rounded-full bg-green-500/10 px-2 py-1 text-xs font-bold text-green-500">Generated</span>
+                      ) : (
+                        <span className="rounded-full bg-red-500/10 px-2 py-1 text-xs font-bold text-red-500">No QR</span>
+                      )}
+                    </td>
+                    <td className="p-3">{order.status}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className={cardClass}>
+        <h2 className="mb-4 text-lg font-bold">🌐 Top Origin IPs Today</h2>
+        {stats.topIps.length === 0 ? (
+          <p className="text-sm text-fox-muted">No request logs yet. Make sure INTERNAL_SECURITY_SECRET is set.</p>
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {stats.topIps.map((item) => (
+              <div key={item.ip} className="rounded-xl border border-fox-border bg-fox-surface p-3">
+                <div className="font-mono text-sm">{item.ip}</div>
+                <div className="text-xs text-fox-muted">{number(item.count)} request(s) that reached the app</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
   );
 }

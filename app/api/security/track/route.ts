@@ -1,7 +1,7 @@
 // app/api/security/track/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { detectProvider } from "@/lib/requestInfo";
+import { detectProvider, parseUserAgent } from "@/lib/requestInfo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,10 +20,13 @@ export async function POST(req: NextRequest) {
   const method = String(body?.method || "GET");
   const country = body?.country ? String(body.country) : null;
   const userAgent = body?.userAgent ? String(body.userAgent) : null;
-  const os = body?.os ? String(body.os) : null;
-  const browser = body?.browser ? String(body.browser) : null;
-  const device = body?.device ? String(body.device) : null;
+  const parsedUa = parseUserAgent(userAgent || "");
+  const os = body?.os ? String(body.os) : parsedUa.os;
+  const browser = body?.browser ? String(body.browser) : parsedUa.browser;
+  const device = body?.device ? String(body.device) : parsedUa.device;
   const isp = body?.isp ? String(body.isp) : null;
+  const statusCode = body?.statusCode ? Number(body.statusCode) : null;
+  const referer = body?.referer ? String(body.referer) : null;
 
   const blocked = await prisma.blockedIdentity.findUnique({
     where: {
@@ -46,6 +49,8 @@ export async function POST(req: NextRequest) {
       os,
       browser,
       userAgent,
+      referer,
+      statusCode,
       blocked: Boolean(blocked),
     },
   });

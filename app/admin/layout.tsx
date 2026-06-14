@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getCurrentAdmin } from "@/lib/auth";
 import AdminSidebar from "@/components/AdminSidebar";
 import AdminPageTransition from "@/components/AdminPageTransition";
+import AdminClickSound from "@/components/AdminClickSound";
 
 const ADMIN_COOKIE_NAME = "admin_token";
 const ADMIN_LOGIN_PATH = process.env.ADMIN_LOGIN_PATH || "/admin/sophallogin";
@@ -29,6 +30,7 @@ export default async function AdminLayout({
 
   return (
     <div className="admin-root flex min-h-screen bg-fox-bg text-fox-text">
+      <AdminClickSound />
       <AdminSidebar adminEmail={admin.email} />
       <AdminPageTransition>{children}</AdminPageTransition>
     </div>

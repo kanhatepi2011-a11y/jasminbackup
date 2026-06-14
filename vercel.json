@@ -9,7 +9,7 @@
     },
     {
       "path": "/api/cron/cloudflare-alert",
-      "schedule": "*/5 * * * *"
+      "schedule": "5 17 * * *"
     }
   ]
 }

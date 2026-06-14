@@ -15,9 +15,9 @@ export default function LogoutButton() {
   return (
     <button
       onClick={handleLogout}
-      className="w-full text-xs text-fox-muted hover:text-fox-primary transition-colors text-left"
+      className="inline-flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-extrabold text-pink-600 transition-all duration-300 hover:bg-pink-50 hover:text-pink-700 hover:shadow-sm"
     >
-      ចាកចេញ →
+      <span>ចាកចេញ</span><span>→</span>
     </button>
   );
 }

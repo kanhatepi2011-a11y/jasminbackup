@@ -398,3 +398,83 @@ body {
     transition-duration: 0.001ms !important;
   }
 }
+/* ─────────────────────────────────────────────
+   Admin panel polish: smooth sidebar switching
+   ───────────────────────────────────────────── */
+.admin-root {
+  background-image:
+    radial-gradient(circle at 12% 6%, rgba(233, 30, 140, 0.10), transparent 34%),
+    radial-gradient(circle at 88% 18%, rgba(255, 110, 180, 0.10), transparent 30%),
+    linear-gradient(135deg, #fff0f6 0%, #ffe8f2 45%, #fff7fb 100%);
+}
+
+.admin-sidebar-indicator {
+  will-change: transform;
+  transition:
+    transform 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 260ms ease,
+    box-shadow 420ms ease;
+}
+
+.admin-nav-link {
+  will-change: transform, color, opacity;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.admin-nav-link:active {
+  transform: translateX(4px) scale(0.985);
+}
+
+.admin-sidebar nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.admin-sidebar nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-sidebar nav::-webkit-scrollbar-thumb {
+  background: rgba(233, 30, 140, 0.22);
+  border: 0;
+}
+
+.admin-page-shell {
+  animation: admin-page-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.admin-page-shell a,
+.admin-page-shell button {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity, filter;
+  transition-duration: 260ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.admin-page-shell a:active,
+.admin-page-shell button:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+@keyframes admin-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.992);
+    filter: blur(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-sidebar-indicator,
+  .admin-nav-link,
+  .admin-page-shell,
+  .admin-page-shell a,
+  .admin-page-shell button {
+    animation: none !important;
+    transition-duration: 1ms !important;
+  }
+}

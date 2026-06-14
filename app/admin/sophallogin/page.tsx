@@ -1,11 +1,24 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-// Font 'Kantumruy Pro' is imported in globals.css via Google Fonts.
-// class "font-khmer" is defined there too.
+import { useRouter } from "next/navigation";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  BarChart3,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Loader2,
+  Lock,
+  Mail,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -21,7 +34,6 @@ export default function AdminLoginPage() {
   const [lockedUntil, setLockedUntil] = useState<Date | null>(null);
   const [countdown, setCountdown] = useState<string>("");
 
-  // ✅ Countdown timer សម្រាប់ lock 5 នាទី
   useEffect(() => {
     if (!lockedUntil) {
       setCountdown("");
@@ -47,7 +59,6 @@ export default function AdminLoginPage() {
     return () => clearInterval(interval);
   }, [lockedUntil]);
 
-  // ✅ ពេល refresh page → restore 2FA step + check lock
   useEffect(() => {
     fetch("/api/admin/auth/2fa")
       .then((r) => r.json())
@@ -222,123 +233,90 @@ export default function AdminLoginPage() {
   }
 
   const inputCls =
-    "w-full h-12 px-4 bg-white/75 border border-[rgba(233,30,99,0.18)] rounded-[14px] " +
-    "font-khmer text-[0.9rem] text-[#2d0a18] outline-none transition-all duration-200 " +
-    "placeholder:text-[#d4a0b5] focus:border-[#e91e63] focus:bg-white " +
-    "focus:shadow-[0_0_0_3px_rgba(233,30,99,0.13)] " +
-    "disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-[rgba(220,220,220,0.5)]";
+    "admin-login-input w-full rounded-[22px] border border-white/80 bg-white/68 py-4 pl-14 pr-5 text-[0.95rem] font-semibold text-[#5a1232] outline-none backdrop-blur-xl transition-all duration-300 placeholder:text-[#ca8aa5] focus:border-[#ff6fab] focus:bg-white/90 focus:shadow-[0_0_0_5px_rgba(255,105,180,0.14),0_18px_38px_rgba(217,39,115,0.12)] disabled:cursor-not-allowed disabled:opacity-45";
 
   const submitBtnCls =
-    "w-full h-[50px] bg-[linear-gradient(135deg,#f06292_0%,#e91e63_50%,#c2185b_100%)] " +
-    "border-0 rounded-full font-khmer text-base font-medium text-white cursor-pointer " +
-    "transition-all duration-150 shadow-[0_6px_20px_rgba(233,30,99,0.4)] mt-2 relative overflow-hidden " +
-    "hover:enabled:-translate-y-0.5 hover:enabled:shadow-[0_10px_28px_rgba(233,30,99,0.45)] " +
-    "disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0";
+    "admin-login-button group relative mt-2 flex h-[58px] w-full items-center justify-center gap-3 overflow-hidden rounded-[24px] border border-white/35 bg-[linear-gradient(135deg,#ff74b8_0%,#ef3f8f_42%,#c81568_100%)] text-[1rem] font-bold text-white shadow-[0_18px_42px_rgba(219,39,119,0.38),inset_0_1px_0_rgba(255,255,255,0.45)] transition-all duration-300 hover:enabled:-translate-y-1 hover:enabled:scale-[1.012] hover:enabled:shadow-[0_24px_54px_rgba(219,39,119,0.48),inset_0_1px_0_rgba(255,255,255,0.55)] active:enabled:translate-y-0 active:enabled:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none";
 
   return (
-    <div className="font-khmer min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-[#fce8f0]">
-      {/* Background radial gradients */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0"
-        aria-hidden="true"
-        style={{
-          background:
-            "radial-gradient(ellipse 55% 55% at 20% 25%,#f9b8d0 0%,transparent 65%)," +
-            "radial-gradient(ellipse 50% 50% at 80% 75%,#f9b8d0 0%,transparent 65%)," +
-            "radial-gradient(ellipse 70% 70% at 50% 50%,#fde0eb 0%,transparent 70%)",
-        }}
-      />
+    <main className="admin-login-page font-khmer relative min-h-screen overflow-hidden bg-[#ffe9f3] px-4 py-8 text-[#5a1232] sm:px-6">
+      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_16%,rgba(255,103,173,0.32),transparent_33%),radial-gradient(circle_at_86%_68%,rgba(255,70,152,0.24),transparent_31%),linear-gradient(135deg,#fff7fb_0%,#ffe3f0_45%,#ffcde4_100%)]" />
+        <div className="absolute -left-28 -top-28 h-[430px] w-[430px] rounded-full bg-white/20 shadow-[inset_0_0_55px_rgba(255,255,255,0.8)] blur-[1px]" />
+        <div className="absolute -bottom-44 -right-28 h-[520px] w-[520px] rounded-full bg-[#ff8fc2]/24 shadow-[inset_0_0_65px_rgba(255,255,255,0.75)]" />
+        <div className="admin-login-orbit absolute left-[4%] top-[9%] h-[210px] w-[430px] rounded-[100%] border border-white/45" />
+        <div className="admin-login-orbit absolute right-[-5%] top-[6%] h-[250px] w-[520px] rounded-[100%] border border-white/35 [animation-delay:-4s]" />
+        <div className="absolute inset-0 opacity-70 [background-image:radial-gradient(rgba(255,255,255,0.9)_1px,transparent_1.5px)] [background-size:54px_54px]" />
+      </div>
 
-      {/* Gamepad */}
-      <span className="fixed top-[6%] left-[7%] text-[2.5rem] opacity-[0.18] text-[#e91e63] pointer-events-none z-0 animate-float [animation-delay:0s]" aria-hidden="true">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M17 4H7a5 5 0 0 0-5 5v6a5 5 0 0 0 5 5h10a5 5 0 0 0 5-5V9a5 5 0 0 0-5-5zm-7 8H8v2H6v-2H4v-2h2V8h2v2h2v2zm4 1a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm2-3a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
-        </svg>
-      </span>
+      <FloatingBadge className="left-[10%] top-[16%] hidden md:flex" delay="0s">
+        <BarChart3 size={28} />
+      </FloatingBadge>
+      <FloatingBadge className="left-[9%] bottom-[27%] hidden md:flex" delay="-3s">
+        <ShieldCheck size={30} />
+      </FloatingBadge>
+      <FloatingBadge className="left-[19%] bottom-[15%] hidden lg:flex" delay="-5s">
+        <Users size={31} />
+      </FloatingBadge>
+      <FloatingBadge className="right-[18%] top-[18%] hidden md:flex" delay="-2s">
+        <Settings size={30} />
+      </FloatingBadge>
+      <FloatingBadge className="right-[18%] bottom-[24%] hidden lg:flex" delay="-6s">
+        <Lock size={28} />
+      </FloatingBadge>
+      <span className="admin-login-sparkle left-[17%] top-[39%]">♥</span>
+      <span className="admin-login-sparkle right-[10%] top-[42%] [animation-delay:-2s]">✦</span>
+      <span className="admin-login-sparkle right-[23%] top-[52%] [animation-delay:-4s]">♥</span>
+      <span className="admin-login-sparkle left-[7%] bottom-[18%] [animation-delay:-1s]">✧</span>
 
-      {/* Diamond */}
-      <span className="fixed top-[7%] right-[6%] text-[2rem] opacity-[0.18] text-[#e91e63] pointer-events-none z-0 animate-float [animation-delay:-2s]" aria-hidden="true">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-          <path d="m12 2 4 6H8L12 2zm8 6-4 10H8L4 8h16zm-8 8 4-8H8l4 8z" />
-        </svg>
-      </span>
-
-      {/* Star */}
-      <span className="fixed top-[38%] right-[3%] text-[1.6rem] opacity-[0.18] text-[#e91e63] pointer-events-none z-0 animate-float [animation-delay:-1s]" aria-hidden="true">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-        </svg>
-      </span>
-
-      {/* Flower */}
-      <span className="fixed bottom-[8%] right-[5%] text-[2.2rem] opacity-[0.18] text-[#e91e63] pointer-events-none z-0 animate-float [animation-delay:-3s]" aria-hidden="true">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 22a4 4 0 0 1-4-4c0-1.1.45-2.1 1.17-2.83A4 4 0 0 1 8 12a4 4 0 0 1 1.17-2.83A4 4 0 0 1 12 2a4 4 0 0 1 2.83 6.83A4 4 0 0 1 16 12a4 4 0 0 1-1.17 2.83A4.002 4.002 0 0 1 16 18a4 4 0 0 1-4 4z" />
-        </svg>
-      </span>
-
-      {/* Bolt */}
-      <span className="fixed bottom-[18%] left-[9%] text-[2rem] opacity-[0.18] text-[#e91e63] pointer-events-none z-0 animate-float [animation-delay:-1.5s]" aria-hidden="true">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M13 2 4.5 13.5H11L10 22l9.5-11.5H13L13 2z" />
-        </svg>
-      </span>
-
-      {/* Circle */}
-      <span className="fixed top-[42%] left-[3%] text-[1.4rem] opacity-[0.18] text-[#e91e63] pointer-events-none z-0 animate-float [animation-delay:-4s]" aria-hidden="true">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <circle cx="12" cy="12" r="9" />
-        </svg>
-      </span>
-
-      {/* Heart */}
-      <span className="fixed bottom-[35%] right-[10%] text-[1.2rem] opacity-[0.18] text-[#e91e63] pointer-events-none z-0 animate-float [animation-delay:-2.5s]" aria-hidden="true">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-        </svg>
-      </span>
-
-      {/* Crown */}
-      <span className="fixed top-[20%] left-[20%] text-[1rem] opacity-[0.18] text-[#e91e63] pointer-events-none z-0 animate-float [animation-delay:-0.5s]" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M2 19h20v2H2v-2zm2-3 3-8 5 4 5-4 3 8H4z" />
-        </svg>
-      </span>
-
-      {/* Card */}
-      <div className="relative z-10 w-full max-w-[420px] animate-fade-up">
-        {/* Logo */}
-        <Link href="/" className="flex justify-center mb-7">
+      <section className="relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-5xl flex-col items-center justify-center">
+        <Link
+          href="/"
+          className="admin-login-logo group relative mb-4 flex justify-center sm:mb-5"
+          aria-label="Go to homepage"
+        >
+          <span className="absolute inset-x-8 bottom-1 h-8 rounded-full bg-[#e91e63]/25 blur-2xl transition-transform duration-500 group-hover:scale-125" />
           <Image
-            src="https://i.ibb.co/ycPxxz8h/IMG-20260515-100429.png"
-            alt="TopUpJASMIN Logo"
-            width={76}
-            height={76}
-            className="w-[76px] h-[76px] object-contain rounded-full bg-white p-[6px] shadow-[0_6px_28px_rgba(233,30,99,0.22)]"
+            src="/jasmintopup-admin-logo.png"
+            alt="JASMINTOPUP Logo"
+            width={260}
+            height={260}
+            className="relative h-auto w-[170px] max-w-[58vw] drop-shadow-[0_18px_32px_rgba(196,24,92,0.25)] transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-[1.035] sm:w-[220px]"
             priority
           />
         </Link>
 
-        {/* Glass card */}
-        <div className="bg-white/65 backdrop-blur-[28px] border border-white/85 rounded-[28px] px-9 py-10 shadow-[0_12px_48px_rgba(233,30,99,0.13),0_2px_0_rgba(255,255,255,0.95)_inset]">
-          <h1 className="text-2xl font-semibold text-[#c2185b] mb-1 text-center">
-            {step === "login" ? "🌸 ចូលគណនីអ្នកគ្រប់គ្រង" : "🔐 បញ្ជាក់កូដ 2FA"}
-          </h1>
+        <div className="admin-login-card relative w-full max-w-[560px] overflow-hidden rounded-[36px] border border-white/80 bg-white/56 px-6 py-8 shadow-[0_30px_90px_rgba(204,37,111,0.20),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-[30px] sm:px-12 sm:py-11">
+          <div className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
+          <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-white/35 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-[#ff72b3]/18 blur-3xl" />
 
-          <p className="text-sm text-[#ad5f80] text-center mb-8 font-light leading-relaxed">
-            {step === "login"
-              ? "សូមបញ្ចូលព័ត៌មានរបស់អ្នក ដើម្បីចូលគ្រប់គ្រង"
-              : "Password ត្រឹមត្រូវហើយ។ សូមបញ្ចូលកូដ 2FA ដើម្បីបញ្ជាក់"}
-          </p>
+          <div className="relative text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/70 bg-white/65 text-[#e91e63] shadow-[0_10px_30px_rgba(233,30,99,0.15)]">
+              {step === "login" ? <Sparkles size={24} /> : <ShieldCheck size={25} />}
+            </div>
+
+            <h1 className="text-[1.75rem] font-black leading-tight tracking-[-0.03em] text-[#d41467] sm:text-[2.25rem]">
+              {step === "login" ? "ចូលគណនីអ្នកគ្រប់គ្រង" : "បញ្ជាក់កូដ 2FA"}
+            </h1>
+            <p className="mx-auto mt-2 max-w-sm text-sm font-semibold leading-6 text-[#9f5a77]">
+              {step === "login"
+                ? "ប្រព័ន្ធគ្រប់គ្រង JASMINTOPUP មានសុវត្ថិភាព និងរចនាស្អាតជាងមុន"
+                : "Password ត្រឹមត្រូវហើយ។ សូមបញ្ចូលកូដ 2FA ដើម្បីបន្តចូល Admin Panel"}
+            </p>
+            <div className="mx-auto my-6 flex w-24 items-center justify-center gap-2">
+              <span className="h-px flex-1 bg-[#f384b7]" />
+              <span className="h-2 w-2 rounded-full bg-[#e91e63] shadow-[0_0_18px_rgba(233,30,99,0.7)]" />
+              <span className="h-px flex-1 bg-[#f384b7]" />
+            </div>
+          </div>
 
           {step === "login" ? (
-            <form onSubmit={handleLogin}>
-              {/* Email */}
-              <div className="mb-5">
-                <label className="block text-xs font-medium text-[#b06080] mb-2">
-                  អ៊ីមែល
-                </label>
+            <form className="relative space-y-5" onSubmit={handleLogin}>
+              <div>
+                <label className="mb-2 block text-sm font-extrabold text-[#ba376f]">អ៊ីមែល</label>
                 <div className="relative">
+                  <Mail className="pointer-events-none absolute left-5 top-1/2 z-10 -translate-y-1/2 text-[#e05493]" size={21} />
                   <input
                     type="email"
                     className={inputCls}
@@ -352,101 +330,58 @@ export default function AdminLoginPage() {
                 </div>
               </div>
 
-              {/* Password */}
-              <div className="mb-5">
-                <label className="block text-xs font-medium text-[#b06080] mb-2">
-                  លេខសម្ងាត់
-                </label>
+              <div>
+                <label className="mb-2 block text-sm font-extrabold text-[#ba376f]">លេខសម្ងាត់</label>
                 <div className="relative">
+                  <Lock className="pointer-events-none absolute left-5 top-1/2 z-10 -translate-y-1/2 text-[#e05493]" size={21} />
                   <input
                     type={showPassword ? "text" : "password"}
-                    className={`${inputCls} pr-12`}
+                    className={`${inputCls} pr-14`}
                     placeholder="••••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLocked || loading}
                   />
-
                   <button
                     type="button"
-                    className="absolute right-0 top-0 h-12 w-[46px] flex items-center justify-center bg-transparent border-none cursor-pointer text-[#c088a0] hover:text-[#e91e63] transition-colors duration-200 p-0 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-2xl text-[#bd7894] transition-all duration-300 hover:bg-[#ffe2ef] hover:text-[#e91e63] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={isLocked || loading}
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
-                    {showPassword ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
               </div>
 
-              {/* Error */}
-              {error && (
-                <div
-                  className={`flex items-start gap-[0.6rem] rounded-xl px-4 py-3 mb-5 text-[0.82rem] leading-relaxed ${
-                    banned
-                      ? "bg-[rgba(60,0,0,0.06)] border border-[rgba(120,0,0,0.28)] text-[#7f0000]"
-                      : "bg-[rgba(244,67,54,0.07)] border border-[rgba(244,67,54,0.25)] text-[#b71c1c]"
-                  }`}
-                >
-                  <svg style={{ flexShrink: 0, marginTop: "2px" }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                  <span>
-                    {error}
-                    {countdown && (
-                      <>
-                        {" "}
-                        <span className="text-lg font-semibold text-[#c2185b]">
-                          ⏱ {countdown}
-                        </span>
-                      </>
-                    )}
-                  </span>
-                </div>
-              )}
+              <LoginError error={error} banned={banned} countdown={countdown} />
 
-              {/* Turnstile removed */}
-
-              <button
-                type="submit"
-                className={submitBtnCls}
-                disabled={loading || isLocked}
-              >
+              <button type="submit" className={submitBtnCls} disabled={loading || isLocked}>
+                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 {loading ? (
                   <>
-                    <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin align-middle mr-2" />
-                    កំពុងពិនិត្យ…
+                    <Loader2 className="relative animate-spin" size={21} />
+                    <span className="relative">កំពុងពិនិត្យ…</span>
                   </>
                 ) : banned ? (
-                  "🔒 គណនីត្រូវបានផ្អាកជាអចិន្ត្រៃយ៍"
+                  <span className="relative">🔒 គណនីត្រូវបានផ្អាកជាអចិន្ត្រៃយ៍</span>
                 ) : lockedUntil ? (
-                  `⏳ Lock ${countdown}`
+                  <span className="relative">⏳ Lock {countdown}</span>
                 ) : (
-                  "🔑 ចូលគណនី"
+                  <>
+                    <KeyRound className="relative text-yellow-200 drop-shadow" size={22} />
+                    <span className="relative">ចូលគណនី</span>
+                  </>
                 )}
               </button>
             </form>
           ) : (
-            <form onSubmit={handleVerify2FA}>
-              <div className="mb-5">
-                <label className="block text-xs font-medium text-[#b06080] mb-2">
-                  កូដ 2FA
-                </label>
+            <form className="relative space-y-5" onSubmit={handleVerify2FA}>
+              <div>
+                <label className="mb-2 block text-sm font-extrabold text-[#ba376f]">កូដ 2FA</label>
                 <div className="relative">
+                  <ShieldCheck className="pointer-events-none absolute left-5 top-1/2 z-10 -translate-y-1/2 text-[#e05493]" size={22} />
                   <input
                     type="text"
                     inputMode="numeric"
@@ -462,43 +397,33 @@ export default function AdminLoginPage() {
                 </div>
               </div>
 
-              {error && (
-                <div
-                  className={`flex items-start gap-[0.6rem] rounded-xl px-4 py-3 mb-5 text-[0.82rem] leading-relaxed ${
-                    banned
-                      ? "bg-[rgba(60,0,0,0.06)] border border-[rgba(120,0,0,0.28)] text-[#7f0000]"
-                      : "bg-[rgba(244,67,54,0.07)] border border-[rgba(244,67,54,0.25)] text-[#b71c1c]"
-                  }`}
-                >
-                  <svg style={{ flexShrink: 0, marginTop: "2px" }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                  {error}
-                </div>
-              )}
+              <LoginError error={error} banned={banned} countdown={countdown} />
 
               <button type="submit" className={submitBtnCls} disabled={loading || banned}>
+                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 {loading ? (
                   <>
-                    <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin align-middle mr-2" />
-                    កំពុងបញ្ជាក់…
+                    <Loader2 className="relative animate-spin" size={21} />
+                    <span className="relative">កំពុងបញ្ជាក់…</span>
                   </>
                 ) : banned ? (
-                  "🔒 គណនីត្រូវបាន lock ជាអចិន្ត្រៃយ៍"
+                  <span className="relative">🔒 គណនីត្រូវបាន lock ជាអចិន្ត្រៃយ៍</span>
                 ) : (
-                  "✅ បញ្ជាក់ 2FA"
+                  <>
+                    <ShieldCheck className="relative text-white" size={22} />
+                    <span className="relative">បញ្ជាក់ 2FA</span>
+                  </>
                 )}
               </button>
 
               <button
                 type="button"
-                className={`${submitBtnCls} mt-3 !bg-white/65 !text-[#c2185b] !shadow-none border border-[rgba(233,30,99,0.25)]`}
+                className="mt-3 flex h-[52px] w-full items-center justify-center gap-2 rounded-[22px] border border-[#f7a7ca]/55 bg-white/62 font-bold text-[#c2185b] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/82 hover:shadow-[0_16px_34px_rgba(233,30,99,0.14)] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={loading}
                 onClick={handleBackToLogin}
               >
-                ← ត្រឡប់ទៅ Login
+                <ArrowLeft size={18} />
+                ត្រឡប់ទៅ Login
               </button>
             </form>
           )}
@@ -506,11 +431,64 @@ export default function AdminLoginPage() {
 
         <Link
           href="/"
-          className="block text-center mt-[1.4rem] text-[0.82rem] text-[#c06080] no-underline hover:text-[#e91e63] transition-colors duration-200"
+          className="group mt-6 flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-[#b54473] transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/45 hover:text-[#e91e63]"
         >
-          ← ត្រឡប់ទៅទំព័រដើម
+          <ArrowLeft size={16} className="transition-transform duration-300 group-hover:-translate-x-1" />
+          ត្រឡប់ទៅទំព័រដើម
         </Link>
-      </div>
+      </section>
+    </main>
+  );
+}
+
+function FloatingBadge({
+  children,
+  className,
+  delay,
+}: {
+  children: ReactNode;
+  className: string;
+  delay: string;
+}) {
+  return (
+    <span
+      className={`admin-login-float pointer-events-none fixed z-[1] h-[78px] w-[78px] items-center justify-center rounded-[28px] border border-white/55 bg-white/24 text-white/92 shadow-[0_18px_50px_rgba(205,30,100,0.14),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-xl ${className}`}
+      style={{ animationDelay: delay }}
+      aria-hidden="true"
+    >
+      {children}
+    </span>
+  );
+}
+
+function LoginError({
+  error,
+  banned,
+  countdown,
+}: {
+  error: string | null;
+  banned: boolean;
+  countdown: string;
+}) {
+  if (!error) return null;
+
+  return (
+    <div
+      className={`flex items-start gap-3 rounded-[20px] px-4 py-3 text-[0.86rem] font-semibold leading-relaxed shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] ${
+        banned
+          ? "border border-red-300/60 bg-red-50/70 text-red-800"
+          : "border border-[#ff9ebd]/60 bg-[#fff1f6]/82 text-[#a61b4e]"
+      }`}
+    >
+      <AlertTriangle className="mt-0.5 shrink-0" size={17} />
+      <span>
+        {error}
+        {countdown && (
+          <span className="ml-2 inline-flex rounded-full bg-white/70 px-2 py-0.5 text-base font-black text-[#d41467]">
+            ⏱ {countdown}
+          </span>
+        )}
+      </span>
     </div>
   );
 }

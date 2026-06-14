@@ -17,7 +17,7 @@ export async function GET() {
       maintenanceMode: settings?.maintenanceMode ?? false,
       maintenanceMessage:
         settings?.maintenanceMessage ??
-        "server កំពុងមានបញ្ហាសូមរង់ចាំ 30 នាទី",
+        "Server កំពុងថែទាំបណ្តោះអាសន្ន។ សូមរង់ចាំប្រហែល 30 នាទី។",
     });
   } catch {
     return NextResponse.json({

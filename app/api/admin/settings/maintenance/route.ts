@@ -21,7 +21,7 @@ export const PATCH = withAdminAuth(async (req) => {
         maintenanceMode: data.maintenanceMode,
         maintenanceMessage:
           data.maintenanceMessage ??
-          "server កំពុងមានបញ្ហាសូមរង់ចាំ 30 នាទី",
+          "Server កំពុងថែទាំបណ្តោះអាសន្ន។ សូមរង់ចាំប្រហែល 30 នាទី។",
       },
       create: {
         id: 1,
@@ -32,7 +32,7 @@ export const PATCH = withAdminAuth(async (req) => {
         maintenanceMode: data.maintenanceMode,
         maintenanceMessage:
           data.maintenanceMessage ??
-          "server កំពុងមានបញ្ហាសូមរង់ចាំ 30 នាទី",
+          "Server កំពុងថែទាំបណ្តោះអាសន្ន។ សូមរង់ចាំប្រហែល 30 នាទី។",
       },
       select: {
         maintenanceMode: true,

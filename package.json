@@ -21,7 +21,7 @@
     "@neondatabase/serverless": "^1.1.0",
     "@prisma/client": "^5.22.0",
     "@supabase/ssr": "^0.10.3",
-    "@supabase/supabase-js": "^2.45.0",
+    "@supabase/supabase-js": "^2.108.2",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.0",
     "https-proxy-agent": "^9.0.0",

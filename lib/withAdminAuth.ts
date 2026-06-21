@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentAdmin } from "@/lib/auth";
+import { getCurrentAdminFromRequest } from "@/lib/auth";
 import type { Admin } from "@prisma/client";
+import {
+  forbiddenResponse,
+  hasAnyAdminPermission,
+  isAdminRoleAllowed,
+  type AdminPermission,
+  type NormalizedAdminRole,
+} from "@/lib/adminPermissions";
 
 type RouteParams = Record<string, string>;
 
@@ -12,16 +19,23 @@ type AuthedHandler<TParams extends RouteParams = RouteParams> = (
   req: NextRequest,
   ctx: AdminRouteContext<TParams>,
   admin: Admin
-) => Promise<NextResponse> | NextResponse;
+) => Promise<Response> | Response;
+
+type AdminAuthOptions = {
+  permission?: AdminPermission;
+  permissions?: AdminPermission[];
+  roles?: NormalizedAdminRole[];
+};
 
 export function withAdminAuth<TParams extends RouteParams = RouteParams>(
-  handler: AuthedHandler<TParams>
+  handler: AuthedHandler<TParams>,
+  options: AdminAuthOptions = {}
 ) {
   return async function (
     req: NextRequest,
     ctx: AdminRouteContext<TParams>
-  ): Promise<NextResponse> {
-    const admin = await getCurrentAdmin();
+  ): Promise<Response> {
+    const admin = await getCurrentAdminFromRequest(req);
 
     if (!admin) {
       return NextResponse.json(
@@ -33,6 +47,19 @@ export function withAdminAuth<TParams extends RouteParams = RouteParams>(
           },
         }
       );
+    }
+
+    if (options.roles && !isAdminRoleAllowed(admin, options.roles)) {
+      return forbiddenResponse("Your admin role cannot access this resource.");
+    }
+
+    const permissions = [
+      ...(options.permission ? [options.permission] : []),
+      ...(options.permissions || []),
+    ];
+
+    if (permissions.length > 0 && !hasAnyAdminPermission(admin, permissions)) {
+      return forbiddenResponse("Your admin role cannot perform this action.");
     }
 
     return handler(req, ctx, admin);

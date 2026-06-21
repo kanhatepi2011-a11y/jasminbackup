@@ -1,5 +1,6 @@
-import { prisma } from "@/lib/prisma";
 import Header from "@/components/Header";
+import PublicDataRefresh from "@/components/PublicDataRefresh";
+import { getPublicFaqs } from "@/lib/publicData";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -12,10 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function FaqPage() {
-  const faqs = await prisma.faq.findMany({
-    where: { active: true },
-    orderBy: [{ category: "asc" }, { sortOrder: "asc" }],
-  });
+  const faqs = await getPublicFaqs();
 
   const grouped = faqs.reduce<Record<string, typeof faqs>>((acc, f) => {
     (acc[f.category] = acc[f.category] || []).push(f);
@@ -24,6 +22,7 @@ export default async function FaqPage() {
 
   return (
     <>
+      <PublicDataRefresh scope="faq" intervalMs={15000} />
       <Header />
       <section className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
         <div className="text-center mb-10">

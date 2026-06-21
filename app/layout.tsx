@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/prisma";
 import { CurrencyProvider } from "@/lib/currency";
 import RouteProgress from "@/components/RouteProgress";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import MaintenanceGate from "@/components/MaintenanceGate";
+import PublicDataRefresh from "@/components/PublicDataRefresh";
+import { getPublicSettings } from "@/lib/publicData";
 
 export const metadata: Metadata = {
   title: "JASMINTOPUP",
@@ -43,16 +44,9 @@ export default async function RootLayout({
   const headersList = await headers();
   const nonce = headersList.get("x-nonce") ?? undefined;
 
-  const settings = await prisma.settings
-    .findUnique({
-      where: { id: 1 },
-      select: {
-        exchangeRate: true,
-      },
-    })
-    .catch(() => null);
+  const settings = await getPublicSettings();
 
-  const exchangeRate = settings?.exchangeRate ?? 4100;
+  const exchangeRate = settings.exchangeRate;
 
   return (
     <html lang="en">
@@ -80,6 +74,7 @@ export default async function RootLayout({
             <Script nonce={nonce} src="..." strategy="afterInteractive" />
         */}
         <RouteProgress />
+        <PublicDataRefresh scope="settings" intervalMs={20000} />
 
         <CurrencyProvider exchangeRate={exchangeRate}>
           <AnnouncementBar />

@@ -1,5 +1,6 @@
-import { prisma } from "@/lib/prisma";
 import Header from "@/components/Header";
+import PublicDataRefresh from "@/components/PublicDataRefresh";
+import { getPublicGameBySlug } from "@/lib/publicData";
 import Footer from "@/components/Footer";
 import TopUpForm from "@/components/TopUpForm";
 import Link from "next/link";
@@ -10,20 +11,13 @@ export const dynamic = "force-dynamic";
 
 export default async function GamePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const game = await prisma.game.findUnique({
-    where: { slug: slug },
-    include: {
-      products: {
-        where: { active: true },
-        orderBy: { sortOrder: "asc" },
-      },
-    },
-  });
+  const game = await getPublicGameBySlug(slug);
 
   if (!game || !game.active) notFound();
 
   return (
     <>
+      <PublicDataRefresh scope="game" slug={slug} intervalMs={15000} />
       <Header />
 
       {/* Game banner */}

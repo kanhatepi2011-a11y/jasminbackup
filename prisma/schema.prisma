@@ -117,15 +117,17 @@ model PromoCode {
 }
 
 model Admin {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  name         String?
-  role         String    @default("ADMIN")
-  active       Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  lastLoginAt  DateTime?
-  totpSecret   String?
+  id              String                @id @default(cuid())
+  email           String                @unique
+  passwordHash    String
+  name            String?
+  role            String                @default("ADMIN")
+  active          Boolean               @default(true)
+  createdAt       DateTime              @default(now())
+  lastLoginAt     DateTime?
+  totpSecret      String?
+  mobileSessions  AdminSession[]
+  loginChallenges AdminLoginChallenge[]
 }
 
 model Settings {
@@ -193,13 +195,17 @@ model BlogPost {
 
 model AuditLog {
   id         String   @id @default(cuid())
+  adminId    String?
   adminEmail String?
   action     String
   targetType String?
   targetId   String?
   details    String?
+  ipAddress  String?
+  userAgent  String?
   createdAt  DateTime @default(now())
 
+  @@index([adminId])
   @@index([createdAt])
   @@index([targetType, targetId])
 }
@@ -225,6 +231,57 @@ model AdminAuthLock {
   forever     Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model AdminLoginChallenge {
+  id           String    @id @default(cuid())
+  adminId      String
+  admin        Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  attemptCount Int       @default(0)
+  usedAt       DateTime?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([adminId])
+  @@index([expiresAt])
+  @@index([usedAt])
+}
+
+model AdminSession {
+  id         String    @id @default(cuid())
+  adminId    String
+  admin      Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+
+  @@index([adminId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+
+model Notification {
+  id         String    @id @default(cuid())
+  type       String
+  title      String
+  message    String
+  targetType String?
+  targetId   String?
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([readAt])
+  @@index([type])
+  @@index([targetType, targetId])
+  @@index([createdAt])
 }
 
 // ── Security Dashboard Additions ──────────────────────────────────────────────

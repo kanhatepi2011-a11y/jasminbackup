@@ -149,6 +149,31 @@ export default function OrderPage() {
     }).catch(() => null);
   }, []);
 
+  const startPolling = useCallback(
+    (orderNum: string) => {
+      stopPolling();
+
+      pollRef.current = setInterval(async () => {
+        try {
+          await syncPayment(orderNum);
+
+          const data = await fetchOrder(orderNum);
+          const status = normalizeStatus(data.status);
+
+          setOrder(data);
+
+          if (TERMINAL_STATUSES.has(status)) {
+            stopPolling();
+          }
+        } catch {
+          // Silent polling error
+        }
+      }, 10000);
+    },
+    [fetchOrder, stopPolling, syncPayment]
+  );
+
+
   const loadOrderByNumber = useCallback(
     async (rawOrderNumber: string, options?: { silent?: boolean }) => {
       const clean = cleanOrderNumber(rawOrderNumber);
@@ -184,31 +209,7 @@ export default function OrderPage() {
         }
       }
     },
-    [fetchOrder, syncPayment, stopPolling]
-  );
-
-  const startPolling = useCallback(
-    (orderNum: string) => {
-      stopPolling();
-
-      pollRef.current = setInterval(async () => {
-        try {
-          await syncPayment(orderNum);
-
-          const data = await fetchOrder(orderNum);
-          const status = normalizeStatus(data.status);
-
-          setOrder(data);
-
-          if (TERMINAL_STATUSES.has(status)) {
-            stopPolling();
-          }
-        } catch {
-          // Silent polling error
-        }
-      }, 10000);
-    },
-    [fetchOrder, stopPolling, syncPayment]
+    [fetchOrder, startPolling, syncPayment, stopPolling]
   );
 
   useEffect(() => {

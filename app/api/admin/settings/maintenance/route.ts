@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { withAdminAuth } from "@/lib/withAdminAuth";
+import { writeAuditForAdmin } from "@/lib/audit";
+import { revalidateAdminChange } from "@/lib/adminRevalidate";
 
 export const dynamic = "force-dynamic";
 
@@ -10,11 +12,18 @@ const bodySchema = z.object({
   maintenanceMessage: z.string().min(1).optional(),
 });
 
-export const PATCH = withAdminAuth(async (req) => {
-  try {
-    const body = await req.json();
-    const data = bodySchema.parse(body);
+export const PATCH = withAdminAuth(
+  async (req, _ctx, admin) => {
+    const body = await req.json().catch(() => ({}));
+    const parsed = bodySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: "Failed to update maintenance mode", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
 
+    const data = parsed.data;
     const settings = await prisma.settings.upsert({
       where: { id: 1 },
       update: {
@@ -40,17 +49,15 @@ export const PATCH = withAdminAuth(async (req) => {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      settings,
+    await writeAuditForAdmin(admin, req, {
+      action: "settings.maintenance.update",
+      targetType: "settings",
+      targetId: "1",
+      details: data,
     });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to update maintenance mode",
-      },
-      { status: 400 }
-    );
-  }
-});
+    revalidateAdminChange("settings");
+
+    return NextResponse.json({ success: true, settings });
+  },
+  { permission: "settings.write" }
+);

@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
-import { getCurrentAdmin } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 import { applyRateLimit } from "@/lib/rateLimit";
 import { logSecurityEvent } from "@/lib/secureLogger";
 
@@ -57,23 +57,18 @@ function generateSafePublicId(): string {
   return `jasmintopup/img_${ts}_${rand}`;
 }
 
-export async function POST(req: NextRequest) {
-  // Auth check — upload endpoint must be admin-only
-  const admin = await getCurrentAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const POST = withAdminAuth(
+  async (req: NextRequest, _ctx, admin) => {
+    // Rate limit: 20 uploads per admin per hour
+    const rl = await applyRateLimit(
+      `upload:${admin.id}`,
+      20,
+      60 * 60 * 1000,
+      admin.id
+    );
+    if (rl) return rl;
 
-  // Rate limit: 20 uploads per admin per hour
-  const rl = await applyRateLimit(
-    `upload:${admin.id}`,
-    20,
-    60 * 60 * 1000,
-    admin.id
-  );
-  if (rl) return rl;
-
-  try {
+    try {
     const form = await req.formData();
     const file = form.get("file");
 
@@ -135,8 +130,10 @@ export async function POST(req: NextRequest) {
       size: file.size,
       type: file.type,
     });
-  } catch (err) {
-    console.error("[upload] error:", err);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
-  }
-}
+    } catch (err) {
+      console.error("[upload] error:", err);
+      return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    }
+  },
+  { permissions: ["products.write", "games.write", "banners.write", "settings.write"] }
+);

@@ -18,6 +18,16 @@ A production-ready **Next.js 14** platform for selling in-game credits — with 
 
 ---
 
+## 📦 Final JASMIN_DASHBOARD Deployment Guide
+
+This project now includes the connected Flutter admin app in `jasmin_dashboard/`.
+
+For the final release checklist, backend deployment, Flutter Android/iOS build commands, production environment variables, and security checklist, read:
+
+- [`STEP16_FINAL_DEPLOYMENT_INSTRUCTIONS.md`](./STEP16_FINAL_DEPLOYMENT_INSTRUCTIONS.md)
+- [`STEP16_FINAL_SUMMARY.md`](./STEP16_FINAL_SUMMARY.md)
+
+
 ## 🎯 What is this?
 
 **JASMINTOPUP** lets customers buy Diamonds / UC / Genesis Crystals / game passes using a single KHQR code scannable by **every major Cambodian bank app** — ABA Pay, ACLEDA Pay, Wing, TrueMoney, Chip Mong, Prince Bank, and more.

@@ -1,6 +1,7 @@
 import Image from "next/image";
-import { prisma } from "@/lib/prisma";
 import Header from "@/components/Header";
+import PublicDataRefresh from "@/components/PublicDataRefresh";
+import { getPublicHomeData } from "@/lib/publicData";
 import Footer from "@/components/Footer";
 import GameCard from "@/components/GameCard";
 import HeroCarousel from "@/components/HeroCarousel";
@@ -19,19 +20,11 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [games, banners] = await Promise.all([
-    prisma.game.findMany({
-      where: { active: true },
-      orderBy: [{ featured: "desc" }, { sortOrder: "asc" }],
-    }),
-    prisma.heroBanner.findMany({
-      where: { active: true },
-      orderBy: { sortOrder: "asc" },
-    }),
-  ]);
+  const { games, banners } = await getPublicHomeData();
 
   return (
     <>
+      <PublicDataRefresh scope="home" intervalMs={15000} />
       <Header />
 
       {/* ✅ Invisible Turnstile: auto verify homepage visitor in background */}

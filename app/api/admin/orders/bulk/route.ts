@@ -1,38 +1,32 @@
 import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
-import { writeAudit } from "@/lib/audit";
+import { writeAuditForAdmin } from "@/lib/audit";
 import { NextResponse } from "next/server";
 import { withAdminAuth } from "@/lib/withAdminAuth";
 
-/**
- * DELETE /api/admin/orders/bulk — wipes orders matching the given filter.
- *
- * Body (all optional):
- *   { status?: "PENDING" | ... | "ALL", confirm: "DELETE" }
- *
- * Without `confirm: "DELETE"` the request is refused — this is a destructive
- * operation and we don't want it triggered by accident or by a bug in a client.
- */
-export const DELETE = withAdminAuth(async (req) => {
-  const body = await req.json().catch(() => ({}));
-  if (body.confirm !== "DELETE") {
-    return NextResponse.json(
-      { error: "Missing confirmation. Resend with { confirm: 'DELETE' }." },
-      { status: 400 }
-    );
-  }
+export const DELETE = withAdminAuth(
+  async (req, _ctx, admin) => {
+    const body = await req.json().catch(() => ({}));
+    if (body.confirm !== "DELETE") {
+      return NextResponse.json(
+        { error: "Missing confirmation. Resend with { confirm: 'DELETE' }." },
+        { status: 400 }
+      );
+    }
 
-  const status = typeof body.status === "string" ? body.status : "ALL";
-  const where = status === "ALL" ? undefined : { status };
+    const status = typeof body.status === "string" ? body.status : "ALL";
+    const where = status === "ALL" ? undefined : { status: status === "COMPLETED" ? "DELIVERED" : status };
 
-  const result = await prisma.order.deleteMany({ where });
+    const result = await prisma.order.deleteMany({ where });
 
-  await writeAudit({
-    action: "orders.bulk_delete",
-    targetType: "order",
-    details: `Deleted ${result.count} orders (filter: ${status})`,
-  });
+    await writeAuditForAdmin(admin, req, {
+      action: "orders.bulk_delete",
+      targetType: "order",
+      details: `Deleted ${result.count} orders (filter: ${status})`,
+    });
 
-  return NextResponse.json({ ok: true, deleted: result.count });
-});
+    return NextResponse.json({ ok: true, deleted: result.count });
+  },
+  { roles: ["OWNER"] }
+);

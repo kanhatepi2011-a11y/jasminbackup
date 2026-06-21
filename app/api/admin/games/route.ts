@@ -4,15 +4,15 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withAdminAuth } from "@/lib/withAdminAuth";
+import { writeAuditForAdmin } from "@/lib/audit";
+import { revalidateAdminChange } from "@/lib/adminRevalidate";
 
-// Accept either a full http(s) URL or a local uploaded path like /uploads/xxx.png
 const imagePath = z
   .string()
   .min(1)
-  .refine(
-    (v) => /^https?:\/\//i.test(v) || v.startsWith("/uploads/") || v.startsWith("/"),
-    { message: "Must be a URL or uploaded file path" }
-  );
+  .refine((v) => /^https?:\/\//i.test(v) || v.startsWith("/uploads/") || v.startsWith("/"), {
+    message: "Must be a URL or uploaded file path",
+  });
 
 const gameSchema = z.object({
   slug: z.string().min(2).regex(/^[a-z0-9-]+$/),
@@ -29,33 +29,48 @@ const gameSchema = z.object({
   featured: z.boolean().default(false),
   active: z.boolean().default(true),
   sortOrder: z.number().int().default(0),
+  seoTitle: z.string().optional().nullable(),
+  seoDescription: z.string().optional().nullable(),
 });
 
-export const GET = withAdminAuth(async () => {
-  const games = await prisma.game.findMany({
-    orderBy: { sortOrder: "asc" },
-    include: { _count: { select: { products: true, orders: true } } },
-  });
-  return NextResponse.json(games);
-});
+export const GET = withAdminAuth(
+  async () => {
+    const games = await prisma.game.findMany({
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+      include: { _count: { select: { products: true, orders: true } } },
+    });
+    return NextResponse.json(games);
+  },
+  { permission: "games.read" }
+);
 
-export const POST = withAdminAuth(async (req) => {
-  const body = await req.json().catch(() => ({}));
-  const parsed = gameSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid data", details: parsed.error.flatten() },
-      { status: 400 }
-    );
-  }
-
-  try {
-    const game = await prisma.game.create({ data: parsed.data });
-    return NextResponse.json(game);
-  } catch (err: any) {
-    if (err.code === "P2002") {
-      return NextResponse.json({ error: "Slug already exists" }, { status: 409 });
+export const POST = withAdminAuth(
+  async (req, _ctx, admin) => {
+    const body = await req.json().catch(() => ({}));
+    const parsed = gameSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid data", details: parsed.error.flatten() },
+        { status: 400 }
+      );
     }
-    throw err;
-  }
-});
+
+    try {
+      const game = await prisma.game.create({ data: parsed.data });
+      await writeAuditForAdmin(admin, req, {
+        action: "game.create",
+        targetType: "game",
+        targetId: game.id,
+        details: { slug: game.slug, name: game.name },
+      });
+      revalidateAdminChange("games", { gameSlug: game.slug });
+      return NextResponse.json(game, { status: 201 });
+    } catch (err: any) {
+      if (err.code === "P2002") {
+        return NextResponse.json({ error: "Slug already exists" }, { status: 409 });
+      }
+      throw err;
+    }
+  },
+  { permission: "games.write" }
+);

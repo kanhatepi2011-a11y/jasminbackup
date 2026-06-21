@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
-import { writeAudit } from "@/lib/audit";
+import { writeAuditForAdmin } from "@/lib/audit";
 import { fetchKhpayStatus } from "@/lib/payment";
 import { NextResponse } from "next/server";
+import { revalidateAdminChange } from "@/lib/adminRevalidate";
+import { createAdminNotification } from "@/lib/adminNotifications";
 import { withAdminAuth } from "@/lib/withAdminAuth";
 import {
   isRemotePaid,
@@ -18,8 +20,9 @@ import { notifyAndMaybeDeliverPaidOrder } from "@/lib/order-fulfillment";
  * validation against the existing order paymentRef, amount, and currency.
  */
 export const POST = withAdminAuth(async (
-  _req,
-  { params }: { params: Promise<{ orderNumber: string }> }
+  req,
+  { params }: { params: Promise<{ orderNumber: string }> },
+  admin
 ) => {
   const { orderNumber } = await params;
   const order = await prisma.order.findUnique({
@@ -60,7 +63,7 @@ export const POST = withAdminAuth(async (
 
     if (!validation.ok) {
       logPaymentValidationFailure("admin_refresh", validation);
-      await writeAudit({
+      await writeAuditForAdmin(admin, req, {
         action: "order.khpay_refresh.rejected",
         targetType: "order",
         targetId: order.id,
@@ -91,7 +94,7 @@ export const POST = withAdminAuth(async (
 
     updated = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
     await notifyAndMaybeDeliverPaidOrder(order.id);
-    await writeAudit({
+    await writeAuditForAdmin(admin, req, {
       action: "order.khpay_refresh.auto_paid",
       targetType: "order",
       targetId: order.id,
@@ -102,7 +105,7 @@ export const POST = withAdminAuth(async (
       where: { id: order.id },
       data: { status: "FAILED", failureReason: `KHPay: ${remote.status}` },
     });
-    await writeAudit({
+    await writeAuditForAdmin(admin, req, {
       action: "order.khpay_refresh.auto_failed",
       targetType: "order",
       targetId: order.id,
@@ -110,12 +113,23 @@ export const POST = withAdminAuth(async (
     });
   }
 
-  await writeAudit({
+  await writeAuditForAdmin(admin, req, {
     action: "order.khpay_refresh",
     targetType: "order",
     targetId: order.id,
     details: { paymentRef: order.paymentRef, remote },
   });
 
+  if (updated.status !== order.status) {
+    await createAdminNotification({
+      type: "order.updated",
+      title: "Payment refresh updated an order",
+      message: `${order.orderNumber}: ${order.status} → ${updated.status}`,
+      targetType: "order",
+      targetId: order.orderNumber,
+    });
+    revalidateAdminChange("orders", { orderNumber: order.orderNumber });
+  }
+
   return NextResponse.json({ remote, order: updated });
-});
+}, { permission: "orders.update" });

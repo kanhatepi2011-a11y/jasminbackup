@@ -1,15 +1,15 @@
 /**
- * lib/auth.ts — Admin authentication helpers (Issue #7)
+ * lib/auth.ts — Admin authentication helpers
  *
- * Changes:
- * - Session lifetime reduced from 7d → 8h
- * - getCurrentAdmin now verifies admin is active + role is ADMIN/SUPERADMIN
- * - Secure cookie cleared properly on logout
+ * Web admin continues to use the HttpOnly admin_token cookie.
+ * Flutter/mobile admin can use a Bearer token verified from AdminSession.
  */
 
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
+import type { NextRequest } from "next/server";
 import { prisma } from "./prisma";
+import { getAdminFromBearerToken, isAllowedAdminRole } from "@/lib/adminMobileAuth";
 
 const ADMIN_COOKIE_NAME = "admin_token";
 
@@ -73,12 +73,7 @@ export function buildClearCookie() {
 }
 
 /**
- * Returns the current admin if:
- * 1. A valid, unexpired JWT cookie exists
- * 2. The admin exists in the database
- * 3. The admin is active
- * 4. The admin role is ADMIN or SUPERADMIN
- *
+ * Returns the current web admin from the HttpOnly cookie.
  * Returns null for any failure — callers must treat null as unauthorized.
  */
 export async function getCurrentAdmin() {
@@ -96,12 +91,26 @@ export async function getCurrentAdmin() {
 
     if (!admin) return null;
     if (!admin.active) return null;
-    if (admin.role !== "ADMIN" && admin.role !== "SUPERADMIN") return null;
+    if (!isAllowedAdminRole(admin.role)) return null;
 
     return admin;
   } catch {
     return null;
   }
+}
+
+/**
+ * Returns the current admin from either:
+ * 1. Flutter/mobile Bearer token, or
+ * 2. Existing web admin HttpOnly cookie.
+ *
+ * Bearer token is checked first so mobile API calls can reuse existing admin APIs.
+ */
+export async function getCurrentAdminFromRequest(req: NextRequest) {
+  const bearerAdmin = await getAdminFromBearerToken(req).catch(() => null);
+  if (bearerAdmin) return bearerAdmin;
+
+  return getCurrentAdmin();
 }
 
 export { ADMIN_COOKIE_NAME, SESSION_MAX_AGE_SECONDS };

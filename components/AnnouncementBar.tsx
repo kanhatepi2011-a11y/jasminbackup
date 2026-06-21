@@ -1,20 +1,20 @@
-import { prisma } from "@/lib/prisma";
+import { getPublicSettings } from "@/lib/publicData";
 
 const TONES: Record<string, string> = {
-  info:    "border-pink-300 text-white",
+  info: "border-pink-300 text-white",
   warning: "bg-yellow-400 border-yellow-400 text-yellow-900",
-  promo:   "bg-green-500 border-green-500 text-white",
+  promo: "bg-green-500 border-green-500 text-white",
 };
 
 const TONE_BG: Record<string, string> = {
-  info:    "linear-gradient(90deg,#E91E8C,#FF6EB4,#E91E8C)",
+  info: "linear-gradient(90deg,#E91E8C,#FF6EB4,#E91E8C)",
   warning: "",
-  promo:   "",
+  promo: "",
 };
 
 export default async function AnnouncementBar() {
-  const settings = await prisma.settings.findUnique({ where: { id: 1 } }).catch(() => null);
-  if (!settings?.announcement || !settings.announcement.trim()) return null;
+  const settings = await getPublicSettings();
+  if (!settings.announcement || !settings.announcement.trim()) return null;
 
   const tone = settings.announcementTone || "info";
   const cls = TONES[tone] || TONES.info;

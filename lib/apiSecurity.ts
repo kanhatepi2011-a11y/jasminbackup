@@ -3,6 +3,7 @@ import { getClientIp } from "@/lib/getIp";
 import { checkRateLimitMemory } from "@/lib/rateLimit";
 
 export const API_CACHE_SHORT = "public, max-age=30, s-maxage=300, stale-while-revalidate=600";
+export const API_CACHE_DYNAMIC = "public, max-age=0, s-maxage=10, stale-while-revalidate=30, must-revalidate";
 export const API_NO_STORE = "no-store";
 
 type RateLimitOptions = {

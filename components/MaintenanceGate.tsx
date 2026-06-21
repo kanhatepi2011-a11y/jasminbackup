@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { AlertTriangle, Clock, ShieldCheck, Sparkles } from "lucide-react";
@@ -7,6 +9,7 @@ import { AlertTriangle, Clock, ShieldCheck, Sparkles } from "lucide-react";
 type MaintenanceState = {
   maintenanceMode: boolean;
   maintenanceMessage: string;
+  updatedAt?: string | null;
 };
 
 const DEFAULT_MAINTENANCE_MESSAGE =
@@ -32,6 +35,7 @@ export default function MaintenanceGate() {
       setState({
         maintenanceMode: false,
         maintenanceMessage: "",
+        updatedAt: null,
       });
       return;
     }
@@ -47,16 +51,33 @@ export default function MaintenanceGate() {
         setState({
           maintenanceMode: Boolean(data.maintenanceMode),
           maintenanceMessage: data.maintenanceMessage || DEFAULT_MAINTENANCE_MESSAGE,
+          updatedAt: data.updatedAt || null,
         });
       } catch {
         setState({
           maintenanceMode: false,
           maintenanceMessage: "",
+          updatedAt: null,
         });
       }
     }
 
     checkMaintenance();
+    const timer = window.setInterval(checkMaintenance, 10000);
+
+    const onFocus = () => checkMaintenance();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") checkMaintenance();
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [isAdminRoute]);
 
   if (isAdminRoute || !state.maintenanceMode) return null;

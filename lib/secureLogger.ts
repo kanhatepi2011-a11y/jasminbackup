@@ -26,7 +26,11 @@ type SecurityEvent =
   | "upload_rejected"
   | "admin_logout"
   | "admin_turnstile_fail"
-  | "admin_password_success_pending_2fa";
+  | "admin_password_success_pending_2fa"
+  | "admin_mobile_login_fail"
+  | "admin_mobile_password_success_pending_2fa"
+  | "admin_mobile_2fa_fail"
+  | "admin_mobile_2fa_success";
 
 interface LogPayload {
   event: SecurityEvent;

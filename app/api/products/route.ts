@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
 import {
-  API_CACHE_SHORT,
+  API_CACHE_DYNAMIC,
   publicRateLimit,
   rejectSuspiciousQuery,
   safeJson,
@@ -49,5 +49,5 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  return safeJson(products, undefined, API_CACHE_SHORT);
+  return safeJson(products, undefined, API_CACHE_DYNAMIC);
 }

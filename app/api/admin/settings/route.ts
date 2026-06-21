@@ -1,16 +1,9 @@
-/**
- * /api/admin/settings — Admin settings API (Issue #8)
- *
- * Changes:
- * - GET masks telegramBotToken (shows only last 4 chars)
- * - Auth check added to both GET and PATCH
- * - Audit log written on PATCH
- */
-
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { getCurrentAdmin } from "@/lib/auth";
+import { withAdminAuth } from "@/lib/withAdminAuth";
+import { writeAuditForAdmin } from "@/lib/audit";
+import { revalidateAdminChange } from "@/lib/adminRevalidate";
 import { logSecurityEvent } from "@/lib/secureLogger";
 
 export const dynamic = "force-dynamic";
@@ -18,82 +11,82 @@ export const dynamic = "force-dynamic";
 const settingsSchema = z.object({
   siteName: z.string().min(1).optional(),
   exchangeRate: z.number().positive().optional(),
-  supportTelegram: z.string().optional(),
-  supportEmail: z.string().optional(),
+  supportTelegram: z.string().optional().nullable(),
+  supportEmail: z.string().email().optional().nullable().or(z.literal("")),
   maintenanceMode: z.boolean().optional(),
   maintenanceMessage: z.string().nullable().optional(),
   announcement: z.string().nullable().optional(),
-  announcementTone: z
-    .enum(["info", "warning", "promo"])
-    .nullable()
-    .optional(),
+  announcementTone: z.enum(["info", "warning", "promo"]).nullable().optional(),
+  logoUrl: z.string().nullable().optional(),
+  logoText: z.string().nullable().optional(),
+  logoTagline: z.string().nullable().optional(),
   telegramBotToken: z.string().nullable().optional(),
   telegramChatId: z.string().nullable().optional(),
 });
 
-/** Mask a secret: "••••••••1234" — shows only last 4 chars */
 function maskSecret(value: string | null | undefined): string | null {
   if (!value) return null;
   if (value.length <= 4) return "••••";
   return "••••••••" + value.slice(-4);
 }
 
-export async function GET() {
-  // Settings are admin-only (Issue #8)
-  const admin = await getCurrentAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const GET = withAdminAuth(
+  async () => {
+    const settings = await prisma.settings.upsert({
+      where: { id: 1 },
+      update: {},
+      create: { id: 1 },
+    });
 
-  const settings = await prisma.settings.upsert({
-    where: { id: 1 },
-    update: {},
-    create: { id: 1 },
-  });
+    return NextResponse.json({
+      ...settings,
+      telegramBotToken: maskSecret(settings.telegramBotToken),
+    });
+  },
+  { permission: "settings.read" }
+);
 
-  // Return masked version — never expose full token to client
-  return NextResponse.json({
-    ...settings,
-    telegramBotToken: maskSecret(settings.telegramBotToken),
-  });
-}
+export const PATCH = withAdminAuth(
+  async (req, _ctx, admin) => {
+    const body = await req.json().catch(() => ({}));
+    const parsed = settingsSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
 
-export async function PATCH(req: NextRequest) {
-  const admin = await getCurrentAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    const data = parsed.data;
+    if (typeof data.telegramBotToken === "string" && data.telegramBotToken.startsWith("••••")) {
+      delete data.telegramBotToken;
+    }
 
-  const body = await req.json().catch(() => ({}));
-  const parsed = settingsSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid" }, { status: 400 });
-  }
+    const settings = await prisma.settings.upsert({
+      where: { id: 1 },
+      update: data,
+      create: { id: 1, ...data },
+    });
 
-  const data = parsed.data;
+    await writeAuditForAdmin(admin, req, {
+      action: "settings.update",
+      targetType: "settings",
+      targetId: "1",
+      details: Object.keys(data),
+    });
 
-  // If the client sends the masked placeholder back, don't overwrite the real token
-  if (
-    typeof data.telegramBotToken === "string" &&
-    data.telegramBotToken.startsWith("••••")
-  ) {
-    delete data.telegramBotToken;
-  }
+    logSecurityEvent({
+      event: "admin_settings_changed",
+      adminId: admin.id,
+      detail: Object.keys(data).join(", "),
+    });
 
-  const settings = await prisma.settings.upsert({
-    where: { id: 1 },
-    update: data,
-    create: { id: 1, ...data },
-  });
+    revalidateAdminChange("settings");
 
-  logSecurityEvent({
-    event: "admin_settings_changed",
-    adminId: admin.id,
-    detail: Object.keys(data).join(", "),
-  });
-
-  return NextResponse.json({
-    ...settings,
-    telegramBotToken: maskSecret(settings.telegramBotToken),
-  });
-}
+    return NextResponse.json({
+      ...settings,
+      telegramBotToken: maskSecret(settings.telegramBotToken),
+    });
+  },
+  { permission: "settings.write" }
+);

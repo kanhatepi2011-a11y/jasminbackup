@@ -9,6 +9,7 @@ import { logSecurityEvent } from "@/lib/secureLogger";
 import { getLockDurationMs, formatLockDuration } from "@/lib/lockPolicy";
 import { createAdminLoginChallenge } from "@/lib/adminMobileAuth";
 import { writeAuditForAdmin } from "@/lib/audit";
+import { adminApiErrorResponse } from "@/lib/adminApiError";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,15 +25,15 @@ const DUMMY_HASH =
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
 
-  const rl = await applyRateLimit(
-    `admin-mobile-login:${ip}`,
-    10,
-    15 * 60 * 1000,
-    ip
-  );
-  if (rl) return rl;
-
   try {
+    const rl = await applyRateLimit(
+      `admin-mobile-login:${ip}`,
+      10,
+      15 * 60 * 1000,
+      ip
+    );
+    if (rl) return rl;
+
     const body = await req.json().catch(() => ({}));
     const parsed = loginSchema.safeParse(body);
 
@@ -117,10 +118,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error("Admin mobile login error:", error);
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500, headers: { "Cache-Control": "no-store" } }
-    );
+    return adminApiErrorResponse(error);
   }
 }
 

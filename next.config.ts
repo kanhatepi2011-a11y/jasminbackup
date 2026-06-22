@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -25,6 +26,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["pdfkit", "fontkit"],
+  outputFileTracingRoot: path.resolve(__dirname),
   poweredByHeader: false,
 
   images: {

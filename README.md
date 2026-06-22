@@ -123,7 +123,7 @@ Open `.env` and set at minimum:
 
 ```env
 DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
-JWT_SECRET="$(openssl rand -base64 32)"
+ADMIN_JWT_SECRET="$(openssl rand -base64 32)"
 ADMIN_EMAIL="you@example.com"
 ADMIN_PASSWORD="YourStrongPassword!"
 PAYMENT_SIMULATION_MODE="true"
@@ -180,7 +180,7 @@ In **Vercel → Settings → Environment Variables**, add for **Production + Pre
 | Variable | Example / how to get it |
 |---|---|
 | `DATABASE_URL` | Your Postgres connection string |
-| `JWT_SECRET` | Run `openssl rand -base64 32` |
+| `ADMIN_JWT_SECRET` | Run `openssl rand -base64 32` |
 | `ADMIN_EMAIL` | Your admin login email |
 | `ADMIN_PASSWORD` | Strong password (used on first seed only) |
 | `KHPAY_BASE_URL` | `https://khpay.site/api/v1` |
@@ -235,7 +235,7 @@ All variables documented in [`.env.example`](.env.example). The essential ones:
 DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
 
 # Auth
-JWT_SECRET="<32+ char random string>"
+ADMIN_JWT_SECRET="<32+ char random string>"
 ADMIN_EMAIL="admin@rithtopup.com"
 ADMIN_PASSWORD="ChangeMeNow123!"
 
@@ -349,7 +349,7 @@ For testing only, set `PAYMENT_SIMULATION_MODE=true` in Vercel, or set `KHPAY_FA
 ## 🔒 Security checklist before going live
 
 - [ ] Change `ADMIN_PASSWORD` from the default
-- [ ] `JWT_SECRET` is 32+ random chars, different from any other project
+- [ ] `ADMIN_JWT_SECRET` is 32+ random chars, different from any other project
 - [ ] `PAYMENT_SIMULATION_MODE=false` in production
 - [ ] `KHPAY_WEBHOOK_SECRET` matches the one configured in KHPay dashboard
 - [ ] Custom domain set in Vercel with HTTPS enforced

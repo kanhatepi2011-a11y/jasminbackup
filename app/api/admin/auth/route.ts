@@ -9,6 +9,7 @@ import { applyRateLimit } from "@/lib/rateLimit";
 import { logSecurityEvent } from "@/lib/secureLogger";
 import { ADMIN_COOKIE_NAME } from "@/lib/auth";
 import { getLockDurationMs, formatLockDuration } from "@/lib/lockPolicy";
+import { adminApiErrorResponse } from "@/lib/adminApiError";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -41,71 +42,76 @@ function get2FATtlSeconds() {
 
 // ── GET: check login lock status ─────────────────────────────────────────────
 export async function GET(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get("email");
+  try {
+    const email = req.nextUrl.searchParams.get("email");
 
-  if (!email) {
+    if (!email) {
+      return NextResponse.json(
+        { locked: false },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
+    const identifier = `admin-login:${email.toLowerCase().trim()}`;
+
+    const lock = await prisma.adminAuthLock.findUnique({
+      where: { identifier },
+    });
+
+    if (!lock) {
+      return NextResponse.json(
+        { locked: false },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
+    // Backward-compat: respect legacy forever locks already in the DB.
+    if (lock.forever) {
+      return NextResponse.json(
+        { locked: true, forever: true },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
+    if (lock.lockedUntil && lock.lockedUntil > new Date()) {
+      const remainingMs = lock.lockedUntil.getTime() - Date.now();
+
+      return NextResponse.json(
+        {
+          locked: true,
+          forever: false,
+          lockedUntil: lock.lockedUntil,
+          retryAfter: formatLockDuration(remainingMs),
+        },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
     return NextResponse.json(
       { locked: false },
       { headers: { "Cache-Control": "no-store" } }
     );
+  } catch (error) {
+    console.error("Admin login lock check error:", error);
+    return adminApiErrorResponse(error);
   }
-
-  const identifier = `admin-login:${email.toLowerCase().trim()}`;
-
-  const lock = await prisma.adminAuthLock.findUnique({
-    where: { identifier },
-  });
-
-  if (!lock) {
-    return NextResponse.json(
-      { locked: false },
-      { headers: { "Cache-Control": "no-store" } }
-    );
-  }
-
-  // Backward-compat: respect legacy forever locks already in the DB.
-  if (lock.forever) {
-    return NextResponse.json(
-      { locked: true, forever: true },
-      { headers: { "Cache-Control": "no-store" } }
-    );
-  }
-
-  if (lock.lockedUntil && lock.lockedUntil > new Date()) {
-    const remainingMs = lock.lockedUntil.getTime() - Date.now();
-
-    return NextResponse.json(
-      {
-        locked: true,
-        forever: false,
-        lockedUntil: lock.lockedUntil,
-        retryAfter: formatLockDuration(remainingMs),
-      },
-      { headers: { "Cache-Control": "no-store" } }
-    );
-  }
-
-  return NextResponse.json(
-    { locked: false },
-    { headers: { "Cache-Control": "no-store" } }
-  );
 }
 
 // ── POST: password login → issues pending-2FA cookie ─────────────────────────
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
 
-  // Rate limit: 10 attempts per IP per 15 minutes
-  const rl = await applyRateLimit(
-    `admin-login:${ip}`,
-    10,
-    15 * 60 * 1000,
-    ip
-  );
-
-  if (rl) return rl;
-
   try {
+    // Rate limit: 10 attempts per IP per 15 minutes
+    const rl = await applyRateLimit(
+      `admin-login:${ip}`,
+      10,
+      15 * 60 * 1000,
+      ip
+    );
+
+    if (rl) return rl;
+
     const body = await req.json().catch(() => ({}));
     const parsed = loginSchema.safeParse(body);
 
@@ -230,10 +236,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Admin login error:", error);
 
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500, headers: { "Cache-Control": "no-store" } }
-    );
+    return adminApiErrorResponse(error);
   }
 }
 

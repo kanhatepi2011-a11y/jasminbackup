@@ -11,7 +11,6 @@ import {
   Truck,
   CreditCard,
   Send,
-  FileText,
   Copy,
   Check,
 } from "lucide-react";
@@ -21,7 +20,8 @@ interface OrderInfo {
   status: string;
   gameName: string;
   productName: string;
-  playerUid: string;
+  playerUidMasked: string | null;
+  serverIdMasked?: string | null;
   amountUsd: number;
   paymentMethod: string;
   createdAt: string;
@@ -127,7 +127,7 @@ export default function OrderPage() {
   const fetchOrder = useCallback(async (orderNum: string) => {
     const clean = cleanOrderNumber(orderNum);
 
-    const res = await fetch(`/api/orders/${encodeURIComponent(clean)}`, {
+    const res = await fetch(`/api/orders/status?orderNumber=${encodeURIComponent(clean)}`, {
       cache: "no-store",
     });
 
@@ -140,13 +140,8 @@ export default function OrderPage() {
     return data;
   }, []);
 
-  const syncPayment = useCallback(async (orderNum: string) => {
-    const clean = cleanOrderNumber(orderNum);
-
-    await fetch(`/api/orders/${encodeURIComponent(clean)}/sync-payment`, {
-      method: "POST",
-      cache: "no-store",
-    }).catch(() => null);
+  const syncPayment = useCallback(async (_orderNum: string) => {
+    // Public order page is read-only. Payment status is changed by backend webhook/verification only.
   }, []);
 
   const startPolling = useCallback(
@@ -469,7 +464,7 @@ export default function OrderPage() {
               <div className="flex justify-between gap-4">
                 <span className="text-pink-500">Player ID</span>
                 <span className="break-all text-right font-mono">
-                  {order.playerUid}
+                  {order.playerUidMasked || "Private"}
                 </span>
               </div>
 
@@ -545,19 +540,6 @@ export default function OrderPage() {
               </div>
             )}
 
-            {["PAID", "PROCESSING", "DELIVERED"].includes(orderStatus) && (
-              <div className="mx-5 mb-5 sm:mx-6 sm:mb-6">
-                <a
-                  href={`/api/orders/${encodeURIComponent(
-                    order.orderNumber
-                  )}/invoice?uid=${encodeURIComponent(order.playerUid)}`}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-pink-400/40 bg-pink-500/10 py-3 text-sm font-medium text-pink-600 transition-colors hover:bg-pink-500/20"
-                >
-                  <FileText className="h-4 w-4" strokeWidth={2} />
-                  Download Invoice (PDF)
-                </a>
-              </div>
-            )}
           </div>
         )}
       </main>

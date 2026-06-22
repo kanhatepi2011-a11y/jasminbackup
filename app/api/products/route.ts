@@ -1,13 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
 import {
-  API_CACHE_DYNAMIC,
+  API_NO_STORE,
   publicRateLimit,
   rejectSuspiciousQuery,
   safeJson,
 } from "@/lib/apiSecurity";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function isSafeId(value: string): boolean {
   return /^[a-zA-Z0-9_-]{1,80}$/.test(value);
@@ -49,5 +50,5 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  return safeJson(products, undefined, API_CACHE_DYNAMIC);
+  return safeJson(products, undefined, API_NO_STORE);
 }

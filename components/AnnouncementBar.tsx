@@ -14,7 +14,7 @@ const TONE_BG: Record<string, string> = {
 
 export default async function AnnouncementBar() {
   const settings = await getPublicSettings();
-  if (!settings.announcement || !settings.announcement.trim()) return null;
+  if (!settings.announcementEnabled || !settings.announcementText.trim()) return null;
 
   const tone = settings.announcementTone || "info";
   const cls = TONES[tone] || TONES.info;
@@ -23,7 +23,7 @@ export default async function AnnouncementBar() {
   return (
     <div className={`border-b-2 ${cls}`} style={bg ? { background: bg } : {}}>
       <div className="mx-auto max-w-7xl px-4 py-2 text-center text-xs sm:text-sm font-bold">
-        🌸 {settings.announcement} 🌸
+        🌸 {settings.announcementText} 🌸
       </div>
     </div>
   );

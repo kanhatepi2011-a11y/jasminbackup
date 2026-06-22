@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
-export const dynamic = "force-dynamic";
-
 import { writeAuditForAdmin } from "@/lib/audit";
 import { revalidateAdminChange } from "@/lib/adminRevalidate";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withAdminAuth } from "@/lib/withAdminAuth";
+
+export const dynamic = "force-dynamic";
 
 const schema = z.object({
   title: z.string().min(1),

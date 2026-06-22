@@ -1,13 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
 import {
-  API_CACHE_DYNAMIC,
+  API_NO_STORE,
   publicRateLimit,
   rejectSuspiciousQuery,
   safeJson,
 } from "@/lib/apiSecurity";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   const suspicious = rejectSuspiciousQuery(req);
@@ -33,5 +34,5 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  return safeJson(games, undefined, API_CACHE_DYNAMIC);
+  return safeJson(games, undefined, API_NO_STORE);
 }

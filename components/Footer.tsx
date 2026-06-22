@@ -1,26 +1,36 @@
 import Link from "next/link";
 import { getPublicSettings } from "@/lib/publicData";
 
-function telegramInfo(value: string | null | undefined) {
-  const fallbackUsername = "jasmintopup";
+function socialInfo(value: string | null | undefined, fallbackUsername: string, baseUrl: string) {
   const raw = (value || "").trim();
 
-  if (/^https:\/\/t\.me\/[a-zA-Z0-9_]{5,32}$/.test(raw)) {
-    const username = raw.split("/").pop() || fallbackUsername;
+  if (raw.startsWith("https://")) {
+    const username = raw.split("/").pop()?.replace(/^@/, "") || fallbackUsername;
     return { href: raw, label: `@${username}` };
   }
 
   const username = raw.replace(/^@/, "");
-  if (/^[a-zA-Z0-9_]{5,32}$/.test(username)) {
-    return { href: `https://t.me/${username}`, label: `@${username}` };
+  const joiner = baseUrl.endsWith("/") || baseUrl.endsWith("@") ? "" : "/";
+
+  if (/^[a-zA-Z0-9_.-]{2,40}$/.test(username)) {
+    return { href: `${baseUrl}${joiner}${username}`, label: `@${username}` };
   }
 
-  return { href: `https://t.me/${fallbackUsername}`, label: `@${fallbackUsername}` };
+  return { href: `${baseUrl}${joiner}${fallbackUsername}`, label: `@${fallbackUsername}` };
+}
+
+function telegramInfo(value: string | null | undefined) {
+  return socialInfo(value, "jasmintopup", "https://t.me");
+}
+
+function tiktokInfo(value: string | null | undefined) {
+  return socialInfo(value, "jasmintopup", "https://www.tiktok.com/@");
 }
 
 export default async function Footer() {
   const settings = await getPublicSettings();
   const telegram = telegramInfo(settings.supportTelegram);
+  const tiktok = tiktokInfo(settings.supportTikTok);
 
   return (
     <footer className="relative border-t-2 border-pink-200 bg-white">
@@ -56,6 +66,15 @@ export default async function Footer() {
                   <path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-8.609 3.33c-2.068.8-4.133 1.598-5.724 2.21a405.15 405.15 0 0 1-2.349.88 2.252 2.252 0 0 0 .28 4.402l1.504.308c.256.053.515.068.78.044l.85-.082 1.65 4.78c.114.332.415.554.764.554h.43c.35 0 .65-.222.764-.556l.908-2.636 4.354 3.226a2.24 2.24 0 0 0 3.345-1.09l3.12-9.545a2.253 2.253 0 0 0-.8-2.44z" />
                 </svg>
               </a>
+              <a
+                href={tiktok.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="TikTok"
+                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-pink-200 bg-pink-50 text-pink-500 transition-all hover:border-pink-400 hover:bg-pink-100 hover:text-pink-700"
+              >
+                ♪
+              </a>
             </div>
           </div>
           {[
@@ -77,6 +96,7 @@ export default async function Footer() {
               heading: "ជំនួយ",
               items: [
                 { label: `Telegram: ${telegram.label}`, href: telegram.href },
+                { label: `TikTok: ${tiktok.label}`, href: tiktok.href },
                 ...(settings.supportEmail
                   ? [{ label: settings.supportEmail, href: `mailto:${settings.supportEmail}` }]
                   : []),

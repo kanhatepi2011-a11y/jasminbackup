@@ -1,6 +1,4 @@
 import { prisma } from "@/lib/prisma";
-export const dynamic = "force-dynamic";
-
 import { generateOrderNumber, isValidUid, calcKhr } from "@/lib/utils";
 import { initiatePayment } from "@/lib/payment";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,6 +6,8 @@ import { z } from "zod";
 import { applyRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getIp";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const createOrderSchema = z.object({
   gameId: z.string().min(1),
@@ -48,7 +48,21 @@ export async function POST(req: NextRequest) {
     if (maintSettings?.maintenanceMode) {
       return NextResponse.json(
         { error: maintSettings.maintenanceMessage || "Ordering is temporarily disabled for maintenance." },
-        { status: 503 }
+        { status: 503, headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
+    if (maintSettings?.ordersEnabled === false) {
+      return NextResponse.json(
+        { error: "Orders are temporarily disabled." },
+        { status: 503, headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
+    if (maintSettings?.paymentsEnabled === false) {
+      return NextResponse.json(
+        { error: "Payments are temporarily disabled." },
+        { status: 503, headers: { "Cache-Control": "no-store" } }
       );
     }
 
@@ -114,6 +128,13 @@ export async function POST(req: NextRequest) {
     let promoCodeId: string | null = null;
     let discountUsd = 0;
     let finalPrice = product.priceUsd;
+
+    if (data.promoCode && settings?.promosEnabled === false) {
+      return NextResponse.json(
+        { error: "Promo codes are temporarily disabled." },
+        { status: 503, headers: { "Cache-Control": "no-store" } }
+      );
+    }
 
     if (data.promoCode) {
       const promoApplied = await prisma.$transaction(

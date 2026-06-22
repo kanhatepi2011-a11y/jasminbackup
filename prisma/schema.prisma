@@ -140,13 +140,24 @@ model Settings {
   exchangeRate Float  @default(4100)
 
   supportTelegram String?
+  supportTikTok   String?
   supportEmail    String?
 
   maintenanceMode    Boolean @default(false)
   maintenanceMessage String?
 
-  announcement     String?
-  announcementTone String?
+  announcementEnabled Boolean @default(false)
+  announcement        String?
+  announcementTone    String?
+
+  appMinSupportedVersion String  @default("1.0.0")
+  appLatestVersion       String  @default("1.0.0")
+  appForceUpdate         Boolean @default(false)
+  appUpdateUrl           String?
+
+  ordersEnabled   Boolean @default(true)
+  paymentsEnabled Boolean @default(true)
+  promosEnabled   Boolean @default(true)
 
   logoUrl     String?
   logoText    String?

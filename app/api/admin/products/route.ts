@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
-export const dynamic = "force-dynamic";
-
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withAdminAuth } from "@/lib/withAdminAuth";
 import { writeAuditForAdmin } from "@/lib/audit";
 import { revalidateAdminChange } from "@/lib/adminRevalidate";
+
+export const dynamic = "force-dynamic";
 
 const productSchema = z.object({
   gameId: z.string().min(1),

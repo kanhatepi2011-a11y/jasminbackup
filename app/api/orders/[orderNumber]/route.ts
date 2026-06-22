@@ -1,7 +1,5 @@
 import { prisma } from "@/lib/prisma";
-export const dynamic = "force-dynamic";
-import { logSecurityEvent } from "@/lib/secureLogger"; 
-
+import { logSecurityEvent } from "@/lib/secureLogger";
 import { NextRequest } from "next/server";
 import { fetchKhpayStatus } from "@/lib/payment";
 import {
@@ -9,7 +7,10 @@ import {
   logPaymentValidationFailure,
   validatePaymentForOrder,
 } from "@/lib/payment-validation";
-import { publicRateLimit, safeJson } from "@/lib/apiSecurity";
+import { API_NO_STORE, publicRateLimit, safeJson } from "@/lib/apiSecurity";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 /**
  * Public order lookup.
@@ -50,7 +51,7 @@ export async function GET(
   if (limited) return limited;
 
   if (!/^[A-Z0-9-]{3,40}$/.test(normalizedOrderNumber)) {
-    return safeJson({ error: "Order not found" }, { status: 404 });
+    return safeJson({ error: "Order not found" }, { status: 404 }, API_NO_STORE);
   }
 
   let order = await prisma.order.findUnique({
@@ -62,7 +63,7 @@ export async function GET(
   });
 
   if (!order) {
-    return safeJson({ error: "Order not found" }, { status: 404 });
+    return safeJson({ error: "Order not found" }, { status: 404 }, API_NO_STORE);
   }
 
   // Public order lookup is read-only in production.
@@ -169,5 +170,5 @@ export async function GET(
 
     // NEVER returned: raw paymentRef for real orders, internal transaction ID,
     // webhook data, admin notes, failureReason, or un-masked customer data.
-  });
+  }, undefined, API_NO_STORE);
 }

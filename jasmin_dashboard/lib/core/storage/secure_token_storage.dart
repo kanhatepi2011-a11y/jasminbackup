@@ -10,6 +10,9 @@ final secureTokenStorageProvider = Provider<SecureTokenStorage>((ref) {
 class SecureTokenStorage {
   const SecureTokenStorage();
 
+  static String? _cachedToken;
+  static DateTime? _cachedExpiry;
+
   static const FlutterSecureStorage _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
     iOptions: IOSOptions(
@@ -21,6 +24,8 @@ class SecureTokenStorage {
     required String token,
     required DateTime expiresAt,
   }) async {
+    _cachedToken = token;
+    _cachedExpiry = expiresAt;
     await _storage.write(key: AppConstants.tokenKey, value: token);
     await _storage.write(
       key: AppConstants.tokenExpiryKey,
@@ -28,12 +33,26 @@ class SecureTokenStorage {
     );
   }
 
-  Future<String?> readToken() => _storage.read(key: AppConstants.tokenKey);
+  Future<String?> readToken() async {
+    final cached = _cachedToken;
+    if (cached != null && cached.isNotEmpty) return cached;
+
+    final token = await _storage.read(key: AppConstants.tokenKey);
+    if (token != null && token.isNotEmpty) {
+      _cachedToken = token;
+    }
+    return token;
+  }
 
   Future<DateTime?> readExpiry() async {
+    final cached = _cachedExpiry;
+    if (cached != null) return cached;
+
     final raw = await _storage.read(key: AppConstants.tokenExpiryKey);
     if (raw == null) return null;
-    return DateTime.tryParse(raw);
+    final expiry = DateTime.tryParse(raw);
+    _cachedExpiry = expiry;
+    return expiry;
   }
 
   Future<bool> hasValidLocalToken() async {
@@ -44,6 +63,8 @@ class SecureTokenStorage {
   }
 
   Future<void> clearSession() async {
+    _cachedToken = null;
+    _cachedExpiry = null;
     await _storage.delete(key: AppConstants.tokenKey);
     await _storage.delete(key: AppConstants.tokenExpiryKey);
   }

@@ -257,6 +257,7 @@ async function handleMobile2FA(req: NextRequest, challengeId: string, inputCode:
   await storeUsedTotpToken(admin.id, inputCode);
 
   const session = await createAdminMobileSession(admin.id, req);
+  const adminToken = signAdminToken(admin.id);
 
   logSecurityEvent({
     event: "admin_mobile_2fa_success",
@@ -273,9 +274,10 @@ async function handleMobile2FA(req: NextRequest, challengeId: string, inputCode:
 
   return NextResponse.json(
     {
-      token: session.token,
+      token: adminToken,
       tokenType: "Bearer",
       expiresAt: session.expiresAt,
+      mobileSessionToken: session.token,
       admin: safeAdminProfile(admin),
     },
     { headers: { "Cache-Control": "no-store" } }

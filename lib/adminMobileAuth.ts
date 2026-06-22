@@ -51,10 +51,11 @@ export function isAllowedAdminRole(role: string) {
 
 export function getBearerToken(req: NextRequest) {
   const header = req.headers.get("authorization") || req.headers.get("Authorization");
-  if (!header) return null;
+  const fallbackToken = req.headers.get("x-admin-session-token")?.trim();
+  if (!header) return fallbackToken || null;
 
   const match = header.match(/^Bearer\s+(.+)$/i);
-  return match?.[1]?.trim() || null;
+  return match?.[1]?.trim() || fallbackToken || null;
 }
 
 export function hashAdminSessionToken(token: string) {

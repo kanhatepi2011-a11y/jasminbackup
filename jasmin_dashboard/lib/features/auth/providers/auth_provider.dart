@@ -27,6 +27,7 @@ class AuthController extends StateNotifier<AuthState> {
   final AuthRepository _repository;
   Timer? _challengeTimer;
   Timer? _sessionExpiryTimer;
+  bool _isConfirmingUnauthorized = false;
 
   Future<void> checkSession() async {
     _cancelTimers();
@@ -45,13 +46,15 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<bool> login(String email, String password) async {
     _challengeTimer?.cancel();
-    state = AuthState.unauthenticated().copyWith(isLoading: true, clearError: true, clearInfo: true);
+    state = AuthState.unauthenticated()
+        .copyWith(isLoading: true, clearError: true, clearInfo: true);
 
     try {
       final challenge = await _repository.login(email, password);
       if (!challenge.requires2FA || challenge.challengeId.isEmpty) {
         state = AuthState.unauthenticated(
-          errorMessage: 'Login response is missing Google Authenticator challenge. Please try again.',
+          errorMessage:
+              'Login response is missing Google Authenticator challenge. Please try again.',
         );
         return false;
       }
@@ -62,12 +65,12 @@ class AuthController extends StateNotifier<AuthState> {
         challengeId: challenge.challengeId,
         challengeExpiresAt: challenge.expiresAt,
         loginEmail: email.trim().toLowerCase(),
-        infoMessage: 'Password verified. Enter your Google Authenticator code.',
       );
       return true;
     } catch (error) {
       state = AuthState.unauthenticated(
-        errorMessage: _messageFromError(error, fallback: 'Invalid login credentials.'),
+        errorMessage:
+            _messageFromError(error, fallback: 'Invalid email or password'),
       );
       return false;
     }
@@ -75,7 +78,7 @@ class AuthController extends StateNotifier<AuthState> {
 
   Future<bool> verifyTwoFactor(String code) async {
     final challengeId = state.challengeId;
-    if (challengeId == null || challengeId.isEmpty || !state.hasValidChallenge) {
+    if (challengeId == null || challengeId.isEmpty) {
       _challengeTimer?.cancel();
       state = AuthState.unauthenticated(
         errorMessage: '2FA session expired. Please login again.',
@@ -95,7 +98,8 @@ class AuthController extends StateNotifier<AuthState> {
 
     state = state.copyWith(isLoading: true, clearError: true, clearInfo: true);
     try {
-      final session = await _repository.verifyTwoFactor(challengeId, normalizedCode);
+      final session =
+          await _repository.verifyTwoFactor(challengeId, normalizedCode);
       _challengeTimer?.cancel();
       _scheduleSessionExpiry(session.expiresAt);
       state = AuthState(status: AuthStatus.authenticated, admin: session.admin);
@@ -104,7 +108,8 @@ class AuthController extends StateNotifier<AuthState> {
       state = state.copyWith(
         status: AuthStatus.awaitingTwoFactor,
         isLoading: false,
-        errorMessage: _messageFromError(error, fallback: 'Invalid Google Authenticator code.'),
+        errorMessage: _messageFromError(error,
+            fallback: 'Invalid Google Authenticator code'),
         clearInfo: true,
       );
       return false;
@@ -118,34 +123,56 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> handleUnauthorized() async {
-    _cancelTimers();
-    await _repository.clearLocalSession();
-    if (!mounted) return;
-    state = AuthState.unauthenticated(
-      errorMessage: 'Session expired. Please login again.',
-    );
+    if (_isConfirmingUnauthorized) return;
+    _isConfirmingUnauthorized = true;
+
+    try {
+      final admin = await _repository.restoreSession();
+      final expiresAt = await _repository.readLocalExpiry();
+      _scheduleSessionExpiry(expiresAt);
+      if (!mounted) return;
+      state = AuthState(status: AuthStatus.authenticated, admin: admin);
+    } catch (_) {
+      _cancelTimers();
+      await _repository.clearLocalSession();
+      if (!mounted) return;
+      state = AuthState.unauthenticated(
+        errorMessage: 'Session expired. Please login again.',
+      );
+    } finally {
+      _isConfirmingUnauthorized = false;
+    }
   }
 
   Future<void> logout() async {
     final current = state;
-    state = current.copyWith(isLoading: true, clearError: true, clearInfo: true);
+    state =
+        current.copyWith(isLoading: true, clearError: true, clearInfo: true);
     await _repository.logout();
     _cancelTimers();
     if (!mounted) return;
-    state = AuthState.unauthenticated(infoMessage: 'You have been logged out safely.');
+    state = AuthState.unauthenticated(
+        infoMessage: 'You have been logged out safely.');
   }
 
   void _scheduleChallengeExpiry(DateTime expiresAt) {
     _challengeTimer?.cancel();
     final duration = expiresAt.difference(DateTime.now().toUtc());
-    if (duration.isNegative) {
-      state = AuthState.unauthenticated(errorMessage: '2FA session expired. Please login again.');
+    if (!duration.isNegative && duration > Duration.zero) {
+      _challengeTimer = Timer(duration, () {
+        if (!mounted || state.status != AuthStatus.awaitingTwoFactor) return;
+        state = AuthState.unauthenticated(
+            errorMessage: '2FA session expired. Please login again.');
+      });
       return;
     }
 
-    _challengeTimer = Timer(duration, () {
+    // If the backend omits expiry or sends an unexpected date format, let the
+    // backend decide validity when /2fa is called instead of failing locally.
+    _challengeTimer = Timer(const Duration(minutes: 5), () {
       if (!mounted || state.status != AuthStatus.awaitingTwoFactor) return;
-      state = AuthState.unauthenticated(errorMessage: '2FA session expired. Please login again.');
+      state = AuthState.unauthenticated(
+          errorMessage: '2FA session expired. Please login again.');
     });
   }
 

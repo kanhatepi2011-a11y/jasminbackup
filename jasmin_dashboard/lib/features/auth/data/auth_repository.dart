@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/errors/app_exception.dart';
 import '../../../core/storage/secure_token_storage.dart';
 import '../models/admin_user.dart';
 import '../models/auth_session.dart';
@@ -14,7 +15,8 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 class AuthRepository {
-  const AuthRepository({required AuthApi api, required SecureTokenStorage tokenStorage})
+  const AuthRepository(
+      {required AuthApi api, required SecureTokenStorage tokenStorage})
       : _api = api,
         _tokenStorage = tokenStorage;
 
@@ -26,16 +28,22 @@ class AuthRepository {
   }
 
   Future<AuthSession> verifyTwoFactor(String challengeId, String code) async {
-    final session = await _api.verifyTwoFactor(challengeId: challengeId, code: code);
-    await _tokenStorage.saveSession(token: session.token, expiresAt: session.expiresAt);
+    final session =
+        await _api.verifyTwoFactor(challengeId: challengeId, code: code);
+    if (session.token.isEmpty) {
+      throw const AppException(
+          'Unable to start admin session. Please try again.');
+    }
+    await _tokenStorage.saveSession(
+        token: session.token, expiresAt: session.expiresAt);
     return session;
   }
 
   Future<AdminUser> restoreSession() async {
-    final hasToken = await _tokenStorage.hasValidLocalToken();
-    if (!hasToken) {
+    final token = await _tokenStorage.readToken();
+    if (token == null || token.isEmpty) {
       await _tokenStorage.clearSession();
-      throw const FormatException('No valid local token.');
+      throw const FormatException('No local token.');
     }
     return _api.me();
   }

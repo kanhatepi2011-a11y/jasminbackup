@@ -73,7 +73,6 @@ async function isValidAdminToken(token?: string) {
   }
 }
 
-
 function parseUserAgent(userAgent: string) {
   const ua = userAgent.toLowerCase();
 
@@ -279,15 +278,6 @@ export async function middleware(req: NextRequest, event: NextFetchEvent) {
     );
   }
 
-  function jsonUnauthorized(): NextResponse {
-    return addSecurityHeaders(
-      NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-      cspHeader,
-      nonce,
-      isProduction
-    );
-  }
-
   // ✅ Normal pages: only apply CSP/security headers.
   // No need to verify admin JWT outside admin area.
   if (!isAdminArea(pathname)) {
@@ -297,8 +287,9 @@ export async function middleware(req: NextRequest, event: NextFetchEvent) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const isLoggedIn = await isValidAdminToken(token);
 
-  // ✅ Allow admin auth APIs
-  if (pathname.startsWith("/api/admin/auth")) {
+  // Admin API routes validate cookie/Bearer sessions inside route handlers.
+  // Middleware only adds security headers here so Flutter Bearer tokens are not blocked.
+  if (pathname.startsWith("/api/admin")) {
     return nextResponse();
   }
 
@@ -326,10 +317,6 @@ export async function middleware(req: NextRequest, event: NextFetchEvent) {
   }
 
   // ✅ Not logged in + protected admin API → 401
-  if (!isLoggedIn && pathname.startsWith("/api/admin")) {
-    return jsonUnauthorized();
-  }
-
   // ✅ Not logged in + valid protected admin page → real login
   if (!isLoggedIn && isValidAdminPath(pathname)) {
     return redirectResponse(new URL(ADMIN_LOGIN_PATH, req.url));

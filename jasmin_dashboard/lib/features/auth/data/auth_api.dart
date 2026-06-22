@@ -43,7 +43,8 @@ class AuthApi {
       );
       return AuthSession.fromJson(response.data ?? <String, dynamic>{});
     } on DioException catch (error) {
-      throw _toAppException(error, fallback: 'Invalid Google Authenticator code.');
+      throw _toAppException(error,
+          fallback: 'Invalid Google Authenticator code');
     }
   }
 
@@ -54,7 +55,8 @@ class AuthApi {
       final admin = (data['admin'] as Map?)?.cast<String, dynamic>() ?? data;
       return AdminUser.fromJson(admin);
     } on DioException catch (error) {
-      throw _toAppException(error, fallback: 'Session expired. Please login again.');
+      throw _toAppException(error,
+          fallback: 'Session expired. Please login again.');
     }
   }
 
@@ -70,7 +72,7 @@ class AuthApi {
     final data = error.response?.data;
     if (data is Map && data['needsSetup'] == true) {
       return AppException(
-        data['error']?.toString() ?? 'Google Authenticator 2FA is not configured for this admin.',
+        'Google Authenticator is not configured for this admin.',
         statusCode: error.response?.statusCode,
       );
     }
@@ -86,32 +88,35 @@ class AuthApi {
     if (error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.receiveTimeout ||
         error.type == DioExceptionType.sendTimeout) {
-      return AppException('Connection timed out. Check your backend URL and internet connection.');
+      return AppException(
+          'Connection timed out. Please check internet or API URL.');
     }
 
     if (error.type == DioExceptionType.connectionError) {
-      return AppException('Cannot reach JASMINTOPUP backend. Check API base URL.');
+      return AppException(
+          'Connection timed out. Please check internet or API URL.');
     }
 
     // Do not reveal whether email or password is wrong.
-    return AppException('Invalid login credentials.', statusCode: error.response?.statusCode);
+    return AppException('Invalid email or password',
+        statusCode: error.response?.statusCode);
   }
 
   AppException _toAppException(DioException error, {required String fallback}) {
-    final data = error.response?.data;
     String message = fallback;
-    if (data is Map && data['error'] is String) {
-      message = data['error'] as String;
-    }
 
     if (error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.receiveTimeout ||
         error.type == DioExceptionType.sendTimeout) {
-      message = 'Connection timed out. Check your backend URL and internet connection.';
+      message = 'Connection timed out. Please check internet or API URL.';
     }
 
     if (error.type == DioExceptionType.connectionError) {
-      message = 'Cannot reach JASMINTOPUP backend. Check API base URL.';
+      message = 'Connection timed out. Please check internet or API URL.';
+    }
+
+    if (error.response?.statusCode == 429) {
+      message = 'Too many attempts. Please try again later.';
     }
 
     return AppException(message, statusCode: error.response?.statusCode);

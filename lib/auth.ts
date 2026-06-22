@@ -110,6 +110,21 @@ export async function getCurrentAdminFromRequest(req: NextRequest) {
   const bearerAdmin = await getAdminFromBearerToken(req).catch(() => null);
   if (bearerAdmin) return bearerAdmin;
 
+  const header = req.headers.get("authorization") || req.headers.get("Authorization");
+  const bearerToken = header?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+  if (bearerToken) {
+    const payload = verifyAdminToken(bearerToken);
+    if (payload?.adminId) {
+      const admin = await prisma.admin.findUnique({
+        where: { id: payload.adminId },
+      });
+
+      if (admin?.active && isAllowedAdminRole(admin.role)) {
+        return admin;
+      }
+    }
+  }
+
   return getCurrentAdmin();
 }
 

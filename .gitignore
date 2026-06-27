@@ -43,7 +43,9 @@ yarn-error.log*
 /public/uploads/*.webp
 /public/uploads/*.gif
 /public/uploads/*.svg
-!/public/uploads/.gitkeep.env
+!/public/uploads/.gitkeep
+
+# Env files (local overrides)
 .env.local
 node_modules/
 .next/

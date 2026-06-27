@@ -24,7 +24,8 @@ class BannersApi {
   }
 
   Future<BannerModel> fetchBanner(String id) async {
-    final response = await _dio.get<Map<String, dynamic>>(ApiPaths.bannerDetail(id));
+    final response =
+        await _dio.get<Map<String, dynamic>>(ApiPaths.bannerDetail(id));
     return BannerModel.fromJson(response.data ?? const <String, dynamic>{});
   }
 

@@ -65,7 +65,11 @@ class AdminScaffold extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(admin?.name?.isNotEmpty == true ? admin!.name! : 'Admin', style: const TextStyle(fontWeight: FontWeight.w800)),
+                    Text(
+                        admin?.name?.isNotEmpty == true
+                            ? admin!.name!
+                            : 'Admin',
+                        style: const TextStyle(fontWeight: FontWeight.w800)),
                     const SizedBox(height: 2),
                     Text(admin?.email ?? 'Admin account'),
                     const SizedBox(height: 2),
@@ -112,7 +116,9 @@ class AdminScaffold extends ConsumerWidget {
               selectedIndex: _selectedIndex,
               onDestinationSelected: (index) => context.go(_items[index].route),
               destinations: [
-                for (final item in _items) NavigationDestination(icon: Icon(item.icon), label: item.label),
+                for (final item in _items)
+                  NavigationDestination(
+                      icon: Icon(item.icon), label: item.label),
               ],
             ),
     );
@@ -128,10 +134,15 @@ class AdminScaffold extends ConsumerWidget {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Logout?'),
-            content: const Text('This will revoke the current admin session and clear the token from secure storage.'),
+            content: const Text(
+                'This will revoke the current admin session and clear the token from secure storage.'),
             actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-              FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Logout')),
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel')),
+              FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Logout')),
             ],
           ),
         ) ??
@@ -147,7 +158,6 @@ class _NavItem {
   final String label;
 }
 
-
 class _SyncAction extends StatelessWidget {
   const _SyncAction({required this.state, required this.onPressed});
 
@@ -158,12 +168,15 @@ class _SyncAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final lastChecked = state.lastWebsiteCheckAt == null ? 'Not checked yet' : Formatters.shortTime.format(state.lastWebsiteCheckAt!);
+    final lastChecked = state.lastWebsiteCheckAt == null
+        ? 'Not checked yet'
+        : Formatters.shortTime.format(state.lastWebsiteCheckAt!);
     final notice = state.errorMessage ?? state.syncNotice;
     final tooltip = [
       'Auto-update sync',
       'Website check: $lastChecked',
-      if (state.pendingWebsiteSyncScope != null) 'Waiting: ${state.pendingWebsiteSyncScope}',
+      if (state.pendingWebsiteSyncScope != null)
+        'Waiting: ${state.pendingWebsiteSyncScope}',
       if (notice != null && notice.isNotEmpty) notice,
     ].join('\n');
 

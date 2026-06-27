@@ -13,7 +13,8 @@ class AuthState {
   });
 
   factory AuthState.checking() => const AuthState(status: AuthStatus.checking);
-  factory AuthState.unauthenticated({String? errorMessage, String? infoMessage}) {
+  factory AuthState.unauthenticated(
+      {String? errorMessage, String? infoMessage}) {
     return AuthState(
       status: AuthStatus.unauthenticated,
       errorMessage: errorMessage,
@@ -33,7 +34,9 @@ class AuthState {
   bool get hasValidChallenge {
     final id = challengeId;
     final expiresAt = challengeExpiresAt;
-    if (id == null || id.isEmpty || expiresAt == null) return false;
+    if (id == null || id.isEmpty || expiresAt == null) {
+      return false;
+    }
     return expiresAt.isAfter(DateTime.now().toUtc());
   }
 
@@ -55,7 +58,8 @@ class AuthState {
       status: status ?? this.status,
       admin: clearAdmin ? null : admin ?? this.admin,
       challengeId: clearChallenge ? null : challengeId ?? this.challengeId,
-      challengeExpiresAt: clearChallenge ? null : challengeExpiresAt ?? this.challengeExpiresAt,
+      challengeExpiresAt:
+          clearChallenge ? null : challengeExpiresAt ?? this.challengeExpiresAt,
       loginEmail: clearChallenge ? null : loginEmail ?? this.loginEmail,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
       infoMessage: clearInfo ? null : infoMessage ?? this.infoMessage,

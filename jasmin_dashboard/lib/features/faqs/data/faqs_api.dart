@@ -24,7 +24,8 @@ class FaqsApi {
   }
 
   Future<FaqModel> fetchFaq(String id) async {
-    final response = await _dio.get<Map<String, dynamic>>(ApiPaths.faqDetail(id));
+    final response =
+        await _dio.get<Map<String, dynamic>>(ApiPaths.faqDetail(id));
     return FaqModel.fromJson(response.data ?? const <String, dynamic>{});
   }
 

@@ -10,7 +10,10 @@ class SystemStatus {
   final String auth;
 
   factory SystemStatus.fromJson(Map<String, dynamic>? json) {
-    if (json == null) return const SystemStatus(database: 'unknown', api: 'unknown', auth: 'unknown');
+    if (json == null) {
+      return const SystemStatus(
+          database: 'unknown', api: 'unknown', auth: 'unknown');
+    }
     return SystemStatus(
       database: (json['database'] ?? 'unknown').toString(),
       api: (json['api'] ?? 'unknown').toString(),

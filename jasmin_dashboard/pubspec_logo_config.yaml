@@ -1,0 +1,16 @@
+# Add/merge this into your Dashboard app pubspec.yaml
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+
+dev_dependencies:
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/jasmin_logo_icon_opaque.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/jasmin_logo_icon_opaque.png"
+  remove_alpha_ios: true

@@ -4,7 +4,8 @@ class Formatters {
   const Formatters._();
 
   static final NumberFormat usd = NumberFormat.currency(symbol: r'$');
-  static final NumberFormat khr = NumberFormat.currency(symbol: '៛', decimalDigits: 0);
+  static final NumberFormat khr =
+      NumberFormat.currency(symbol: '៛', decimalDigits: 0);
   static final NumberFormat compact = NumberFormat.compact();
   static final DateFormat dateTime = DateFormat('dd MMM yyyy, HH:mm');
   static final DateFormat shortTime = DateFormat('HH:mm');
@@ -14,7 +15,9 @@ class Formatters {
   static String number(num value) => compact.format(value);
 
   static String dateTimeOrDash(DateTime? value) {
-    if (value == null) return '—';
+    if (value == null) {
+      return '—';
+    }
     return dateTime.format(value);
   }
 

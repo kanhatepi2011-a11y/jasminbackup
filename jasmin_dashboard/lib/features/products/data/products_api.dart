@@ -38,12 +38,14 @@ class ProductsApi {
     final response = await _dio.get<List<dynamic>>(ApiPaths.games);
     return (response.data ?? const <dynamic>[])
         .whereType<Map>()
-        .map((item) => ProductGameSummary.fromJson(Map<String, dynamic>.from(item)))
+        .map((item) =>
+            ProductGameSummary.fromJson(Map<String, dynamic>.from(item)))
         .toList();
   }
 
   Future<ProductModel> fetchProduct(String id) async {
-    final response = await _dio.get<Map<String, dynamic>>(ApiPaths.productDetail(id));
+    final response =
+        await _dio.get<Map<String, dynamic>>(ApiPaths.productDetail(id));
     return ProductModel.fromJson(response.data ?? const <String, dynamic>{});
   }
 
@@ -64,13 +66,15 @@ class ProductsApi {
   }
 
   Future<ProductDeleteResult> deleteProduct(String id) async {
-    final response = await _dio.delete<Map<String, dynamic>>(ApiPaths.productDetail(id));
+    final response =
+        await _dio.delete<Map<String, dynamic>>(ApiPaths.productDetail(id));
     final data = response.data ?? const <String, dynamic>{};
     return ProductDeleteResult(
       ok: data['ok'] == true,
       deleted: data['deleted'] == true,
       disabled: data['disabled'] is Map
-          ? ProductModel.fromJson(Map<String, dynamic>.from(data['disabled'] as Map))
+          ? ProductModel.fromJson(
+              Map<String, dynamic>.from(data['disabled'] as Map))
           : null,
     );
   }

@@ -12,22 +12,56 @@ class DashboardQuickActions extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Quick actions', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+            Text('Quick actions',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w800)),
             const SizedBox(height: 12),
             Wrap(
               spacing: 10,
               runSpacing: 10,
               children: [
-                _ActionChip(label: 'Orders', icon: Icons.receipt_long_rounded, onTap: () => context.go('/orders')),
-                _ActionChip(label: 'Products', icon: Icons.inventory_2_rounded, onTap: () => context.go('/products')),
-                _ActionChip(label: 'Games', icon: Icons.sports_esports_rounded, onTap: () => context.go('/games')),
-                _ActionChip(label: 'Banners', icon: Icons.view_carousel_rounded, onTap: () => context.go('/banners')),
-                _ActionChip(label: 'Settings', icon: Icons.settings_rounded, onTap: () => context.go('/settings')),
-                _ActionChip(label: 'FAQ', icon: Icons.help_outline_rounded, onTap: () => context.go('/faqs')),
-                _ActionChip(label: 'Promo Codes', icon: Icons.discount_rounded, onTap: () => context.go('/promo-codes')),
-                _ActionChip(label: 'Customers', icon: Icons.people_alt_rounded, onTap: () => context.go('/customers')),
-                _ActionChip(label: 'Notifications', icon: Icons.notifications_active_rounded, onTap: () => context.go('/notifications')),
-                _ActionChip(label: 'Audit Logs', icon: Icons.history_rounded, onTap: () => context.go('/audit-logs')),
+                _ActionChip(
+                    label: 'Orders',
+                    icon: Icons.receipt_long_rounded,
+                    onTap: () => context.go('/orders')),
+                _ActionChip(
+                    label: 'Products',
+                    icon: Icons.inventory_2_rounded,
+                    onTap: () => context.go('/products')),
+                _ActionChip(
+                    label: 'Games',
+                    icon: Icons.sports_esports_rounded,
+                    onTap: () => context.go('/games')),
+                _ActionChip(
+                    label: 'Banners',
+                    icon: Icons.view_carousel_rounded,
+                    onTap: () => context.go('/banners')),
+                _ActionChip(
+                    label: 'Settings',
+                    icon: Icons.settings_rounded,
+                    onTap: () => context.go('/settings')),
+                _ActionChip(
+                    label: 'FAQ',
+                    icon: Icons.help_outline_rounded,
+                    onTap: () => context.go('/faqs')),
+                _ActionChip(
+                    label: 'Promo Codes',
+                    icon: Icons.discount_rounded,
+                    onTap: () => context.go('/promo-codes')),
+                _ActionChip(
+                    label: 'Customers',
+                    icon: Icons.people_alt_rounded,
+                    onTap: () => context.go('/customers')),
+                _ActionChip(
+                    label: 'Notifications',
+                    icon: Icons.notifications_active_rounded,
+                    onTap: () => context.go('/notifications')),
+                _ActionChip(
+                    label: 'Audit Logs',
+                    icon: Icons.history_rounded,
+                    onTap: () => context.go('/audit-logs')),
               ],
             ),
           ],
@@ -38,7 +72,8 @@ class DashboardQuickActions extends StatelessWidget {
 }
 
 class _ActionChip extends StatelessWidget {
-  const _ActionChip({required this.label, required this.icon, required this.onTap});
+  const _ActionChip(
+      {required this.label, required this.icon, required this.onTap});
 
   final String label;
   final IconData icon;

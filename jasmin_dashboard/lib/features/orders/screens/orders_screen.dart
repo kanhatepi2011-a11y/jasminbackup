@@ -41,7 +41,10 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           tooltip: 'Refresh orders',
           onPressed: state.isRefreshing ? null : () => controller.refresh(),
           icon: state.isRefreshing
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.3))
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2.3))
               : const Icon(Icons.refresh_rounded),
         ),
       ],
@@ -57,7 +60,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
               controller: _searchController,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Search order number, UID, customer, phone, email, payment ref...',
+                hintText:
+                    'Search order number, UID, customer, phone, email, payment ref...',
                 prefixIcon: const Icon(Icons.search_rounded),
                 suffixIcon: _searchController.text.isEmpty
                     ? null
@@ -78,7 +82,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                   ref.read(ordersProvider.notifier).setQuery(value);
                 });
               },
-              onSubmitted: (value) => ref.read(ordersProvider.notifier).setQuery(value),
+              onSubmitted: (value) =>
+                  ref.read(ordersProvider.notifier).setQuery(value),
             ),
             const SizedBox(height: 12),
             OrderFiltersBar(
@@ -110,7 +115,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                 page: state.page,
                 totalPages: state.totalPages,
                 total: state.total,
-                onPrevious: state.canGoPrevious ? controller.previousPage : null,
+                onPrevious:
+                    state.canGoPrevious ? controller.previousPage : null,
                 onNext: state.canGoNext ? controller.nextPage : null,
               ),
             ],
@@ -136,17 +142,27 @@ class _Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Orders management', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+              Text('Orders management',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w900)),
               const SizedBox(height: 6),
               Text(
                 '$total matching orders • auto-refresh every 20s',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: Colors.black54),
               ),
               if (lastUpdatedAt != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   'Last updated ${Formatters.shortTime.format(lastUpdatedAt!)}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black45),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: Colors.black45),
                 ),
               ],
             ],
@@ -182,11 +198,20 @@ class _PaginationBar extends StatelessWidget {
             Expanded(
               child: Text(
                 'Page $page of $totalPages • $total total',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
-            IconButton(onPressed: onPrevious, icon: const Icon(Icons.chevron_left_rounded), tooltip: 'Previous page'),
-            IconButton(onPressed: onNext, icon: const Icon(Icons.chevron_right_rounded), tooltip: 'Next page'),
+            IconButton(
+                onPressed: onPrevious,
+                icon: const Icon(Icons.chevron_left_rounded),
+                tooltip: 'Previous page'),
+            IconButton(
+                onPressed: onNext,
+                icon: const Icon(Icons.chevron_right_rounded),
+                tooltip: 'Next page'),
           ],
         ),
       ),
@@ -195,7 +220,11 @@ class _PaginationBar extends StatelessWidget {
 }
 
 class _MessageCard extends StatelessWidget {
-  const _MessageCard({required this.icon, required this.title, required this.message, required this.onRetry});
+  const _MessageCard(
+      {required this.icon,
+      required this.title,
+      required this.message,
+      required this.onRetry});
 
   final IconData icon;
   final String title;
@@ -215,7 +244,11 @@ class _MessageCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900)),
+                  Text(title,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w900)),
                   const SizedBox(height: 4),
                   Text(message),
                 ],
@@ -243,17 +276,37 @@ class _OrdersLoading extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Container(width: 46, height: 46, decoration: BoxDecoration(color: Colors.black.withOpacity(0.06), borderRadius: BorderRadius.circular(18))),
+                Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(18))),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(height: 14, width: 170, decoration: BoxDecoration(color: Colors.black.withOpacity(0.06), borderRadius: BorderRadius.circular(999))),
+                      Container(
+                          height: 14,
+                          width: 170,
+                          decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(999))),
                       const SizedBox(height: 10),
-                      Container(height: 12, width: double.infinity, decoration: BoxDecoration(color: Colors.black.withOpacity(0.04), borderRadius: BorderRadius.circular(999))),
+                      Container(
+                          height: 12,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              borderRadius: BorderRadius.circular(999))),
                       const SizedBox(height: 8),
-                      Container(height: 12, width: 220, decoration: BoxDecoration(color: Colors.black.withOpacity(0.04), borderRadius: BorderRadius.circular(999))),
+                      Container(
+                          height: 12,
+                          width: 220,
+                          decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              borderRadius: BorderRadius.circular(999))),
                     ],
                   ),
                 ),

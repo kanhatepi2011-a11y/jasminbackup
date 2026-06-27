@@ -23,7 +23,7 @@ class GameFiltersBar extends StatelessWidget {
         SizedBox(
           width: 200,
           child: DropdownButtonFormField<String>(
-            value: selectedActiveFilter,
+            initialValue: selectedActiveFilter,
             decoration: const InputDecoration(
               labelText: 'Visibility',
               prefixIcon: Icon(Icons.visibility_rounded),
@@ -34,14 +34,16 @@ class GameFiltersBar extends StatelessWidget {
               DropdownMenuItem(value: 'INACTIVE', child: Text('Hidden')),
             ],
             onChanged: (value) {
-              if (value != null) onActiveChanged(value);
+              if (value != null) {
+                onActiveChanged(value);
+              }
             },
           ),
         ),
         SizedBox(
           width: 200,
           child: DropdownButtonFormField<String>(
-            value: selectedFeaturedFilter,
+            initialValue: selectedFeaturedFilter,
             decoration: const InputDecoration(
               labelText: 'Featured',
               prefixIcon: Icon(Icons.star_rounded),
@@ -52,7 +54,9 @@ class GameFiltersBar extends StatelessWidget {
               DropdownMenuItem(value: 'NORMAL', child: Text('Normal')),
             ],
             onChanged: (value) {
-              if (value != null) onFeaturedChanged(value);
+              if (value != null) {
+                onFeaturedChanged(value);
+              }
             },
           ),
         ),

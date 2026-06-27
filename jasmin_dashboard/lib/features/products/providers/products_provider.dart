@@ -9,7 +9,8 @@ import '../models/product_game_summary.dart';
 import '../models/product_model.dart';
 import '../models/product_payload.dart';
 
-final productsProvider = StateNotifierProvider.autoDispose<ProductsController, ProductsState>((ref) {
+final productsProvider =
+    StateNotifierProvider.autoDispose<ProductsController, ProductsState>((ref) {
   final controller = ProductsController(ref.watch(productsRepositoryProvider));
   controller.load();
   controller.startAutoRefresh();
@@ -23,7 +24,9 @@ class ProductsController extends StateNotifier<ProductsState> {
   Timer? _autoRefreshTimer;
 
   Future<void> load({bool silent = false}) async {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     state = state.copyWith(
       isLoading: !silent && state.products.isEmpty,
       isRefreshing: silent || state.products.isNotEmpty,
@@ -33,10 +36,14 @@ class ProductsController extends StateNotifier<ProductsState> {
 
     try {
       final results = await Future.wait<dynamic>([
-        _repository.fetchProducts(gameId: state.gameId == 'ALL' ? null : state.gameId, active: state.activeValue),
+        _repository.fetchProducts(
+            gameId: state.gameId == 'ALL' ? null : state.gameId,
+            active: state.activeValue),
         _repository.fetchGames(),
       ]);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         products: results[0] as List<ProductModel>,
         games: results[1] as List<ProductGameSummary>,
@@ -46,7 +53,9 @@ class ProductsController extends StateNotifier<ProductsState> {
         clearError: true,
       );
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         isLoading: false,
         isRefreshing: false,
@@ -58,24 +67,30 @@ class ProductsController extends StateNotifier<ProductsState> {
   Future<void> refresh() => load(silent: true);
 
   Future<void> setGameFilter(String gameId) async {
-    state = state.copyWith(gameId: gameId, clearError: true, clearSuccess: true);
+    state =
+        state.copyWith(gameId: gameId, clearError: true, clearSuccess: true);
     await load();
   }
 
   Future<void> setActiveFilter(String activeFilter) async {
-    state = state.copyWith(activeFilter: activeFilter, clearError: true, clearSuccess: true);
+    state = state.copyWith(
+        activeFilter: activeFilter, clearError: true, clearSuccess: true);
     await load();
   }
 
   void setQuery(String query) {
-    state = state.copyWith(query: query.trim(), clearError: true, clearSuccess: true);
+    state = state.copyWith(
+        query: query.trim(), clearError: true, clearSuccess: true);
   }
 
   Future<void> toggleActive(ProductModel product) async {
-    state = state.copyWith(actionProductId: product.id, clearError: true, clearSuccess: true);
+    state = state.copyWith(
+        actionProductId: product.id, clearError: true, clearSuccess: true);
     try {
       await _repository.setProductActive(product.id, !product.active);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         actionProductId: null,
         successMessage: !product.active
@@ -84,36 +99,49 @@ class ProductsController extends StateNotifier<ProductsState> {
       );
       await load(silent: true);
     } catch (error) {
-      if (!mounted) return;
-      state = state.copyWith(actionProductId: null, errorMessage: _messageFromError(error));
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(
+          actionProductId: null, errorMessage: _messageFromError(error));
     }
   }
 
   Future<void> deleteProduct(ProductModel product) async {
-    state = state.copyWith(actionProductId: product.id, clearError: true, clearSuccess: true);
+    state = state.copyWith(
+        actionProductId: product.id, clearError: true, clearSuccess: true);
     try {
       final result = await _repository.deleteProduct(product.id);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       final message = result.deleted
           ? '${product.name} was deleted.'
           : '${product.name} has orders, so it was disabled instead of deleted.';
       state = state.copyWith(actionProductId: null, successMessage: message);
       await load(silent: true);
     } catch (error) {
-      if (!mounted) return;
-      state = state.copyWith(actionProductId: null, errorMessage: _messageFromError(error));
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(
+          actionProductId: null, errorMessage: _messageFromError(error));
     }
   }
 
   void startAutoRefresh() {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = Timer.periodic(RefreshIntervals.contentManagement, (_) {
-      if (mounted) load(silent: true);
+      if (mounted) {
+        load(silent: true);
+      }
     });
   }
 
   String _messageFromError(Object error) {
-    if (error is AppException) return error.message;
+    if (error is AppException) {
+      return error.message;
+    }
     return 'Products refresh failed. Please try again.';
   }
 
@@ -166,7 +194,9 @@ class ProductsState {
 
   List<ProductModel> get filteredProducts {
     final text = query.trim().toLowerCase();
-    if (text.isEmpty) return products;
+    if (text.isEmpty) {
+      return products;
+    }
     return products.where((product) {
       final haystack = [
         product.name,
@@ -206,20 +236,25 @@ class ProductsState {
       isRefreshing: isRefreshing ?? this.isRefreshing,
       actionProductId: actionProductId,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
-      successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
+      successMessage:
+          clearSuccess ? null : successMessage ?? this.successMessage,
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
     );
   }
 }
 
-final productEditorProvider = StateNotifierProvider.autoDispose.family<ProductEditorController, ProductEditorState, String?>((ref, productId) {
-  final controller = ProductEditorController(ref.watch(productsRepositoryProvider), productId);
+final productEditorProvider = StateNotifierProvider.autoDispose
+    .family<ProductEditorController, ProductEditorState, String?>(
+        (ref, productId) {
+  final controller =
+      ProductEditorController(ref.watch(productsRepositoryProvider), productId);
   controller.load();
   return controller;
 });
 
 class ProductEditorController extends StateNotifier<ProductEditorState> {
-  ProductEditorController(this._repository, this.productId) : super(const ProductEditorState());
+  ProductEditorController(this._repository, this.productId)
+      : super(const ProductEditorState());
 
   final ProductsRepository _repository;
   final String? productId;
@@ -227,13 +262,20 @@ class ProductEditorController extends StateNotifier<ProductEditorState> {
   bool get isEditing => productId != null && productId!.trim().isNotEmpty;
 
   Future<void> load() async {
-    if (!mounted) return;
-    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    if (!mounted) {
+      return;
+    }
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
     try {
       final games = await _repository.fetchGames();
       ProductModel? product;
-      if (isEditing) product = await _repository.fetchProduct(productId!);
-      if (!mounted) return;
+      if (isEditing) {
+        product = await _repository.fetchProduct(productId!);
+      }
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         games: games,
         product: product,
@@ -241,34 +283,49 @@ class ProductEditorController extends StateNotifier<ProductEditorState> {
         clearError: true,
       );
     } catch (error) {
-      if (!mounted) return;
-      state = state.copyWith(isLoading: false, errorMessage: _messageFromError(error));
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(
+          isLoading: false, errorMessage: _messageFromError(error));
     }
   }
 
   Future<ProductModel?> save(ProductPayload payload) async {
-    if (!mounted) return null;
-    state = state.copyWith(isSaving: true, clearError: true, clearSuccess: true);
+    if (!mounted) {
+      return null;
+    }
+    state =
+        state.copyWith(isSaving: true, clearError: true, clearSuccess: true);
     try {
       final result = isEditing
           ? await _repository.updateProduct(productId!, payload)
           : await _repository.createProduct(payload);
-      if (!mounted) return result;
+      if (!mounted) {
+        return result;
+      }
       state = state.copyWith(
         product: result,
         isSaving: false,
-        successMessage: isEditing ? 'Package updated. Website will refresh shortly.' : 'Package created. Website will refresh shortly.',
+        successMessage: isEditing
+            ? 'Package updated. Website will refresh shortly.'
+            : 'Package created. Website will refresh shortly.',
       );
       return result;
     } catch (error) {
-      if (!mounted) return null;
-      state = state.copyWith(isSaving: false, errorMessage: _messageFromError(error));
+      if (!mounted) {
+        return null;
+      }
+      state = state.copyWith(
+          isSaving: false, errorMessage: _messageFromError(error));
       return null;
     }
   }
 
   String _messageFromError(Object error) {
-    if (error is AppException) return error.message;
+    if (error is AppException) {
+      return error.message;
+    }
     return 'Product action failed. Please try again.';
   }
 }
@@ -306,7 +363,8 @@ class ProductEditorState {
       isLoading: isLoading ?? this.isLoading,
       isSaving: isSaving ?? this.isSaving,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
-      successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
+      successMessage:
+          clearSuccess ? null : successMessage ?? this.successMessage,
     );
   }
 }

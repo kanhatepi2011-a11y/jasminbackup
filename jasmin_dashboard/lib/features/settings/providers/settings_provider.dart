@@ -5,7 +5,8 @@ import '../data/settings_repository.dart';
 import '../models/settings_model.dart';
 import '../models/settings_payload.dart';
 
-final settingsProvider = StateNotifierProvider.autoDispose<SettingsController, SettingsState>((ref) {
+final settingsProvider =
+    StateNotifierProvider.autoDispose<SettingsController, SettingsState>((ref) {
   final controller = SettingsController(ref.watch(settingsRepositoryProvider));
   controller.load();
   return controller;
@@ -17,36 +18,52 @@ class SettingsController extends StateNotifier<SettingsState> {
   final SettingsRepository _repository;
 
   Future<void> load() async {
-    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
     try {
       final settings = await _repository.fetchSettings();
-      if (!mounted) return;
-      state = state.copyWith(settings: settings, isLoading: false, clearError: true);
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(
+          settings: settings, isLoading: false, clearError: true);
     } catch (error) {
-      if (!mounted) return;
-      state = state.copyWith(isLoading: false, errorMessage: _messageFromError(error));
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(
+          isLoading: false, errorMessage: _messageFromError(error));
     }
   }
 
   Future<SettingsModel?> save(SettingsPayload payload) async {
-    state = state.copyWith(isSaving: true, clearError: true, clearSuccess: true);
+    state =
+        state.copyWith(isSaving: true, clearError: true, clearSuccess: true);
     try {
       final settings = await _repository.updateSettings(payload);
-      if (!mounted) return settings;
+      if (!mounted) {
+        return settings;
+      }
       state = state.copyWith(
         settings: settings,
         isSaving: false,
-        successMessage: 'Website settings updated. JASMINTOPUP will refresh shortly.',
+        successMessage:
+            'Website settings updated. JASMINTOPUP will refresh shortly.',
       );
       return settings;
     } catch (error) {
-      if (!mounted) return null;
-      state = state.copyWith(isSaving: false, errorMessage: _messageFromError(error));
+      if (!mounted) {
+        return null;
+      }
+      state = state.copyWith(
+          isSaving: false, errorMessage: _messageFromError(error));
       return null;
     }
   }
 
-  String _messageFromError(Object error) => error is AppException ? error.message : 'Settings action failed. Please try again.';
+  String _messageFromError(Object error) => error is AppException
+      ? error.message
+      : 'Settings action failed. Please try again.';
 }
 
 class SettingsState {
@@ -78,7 +95,8 @@ class SettingsState {
       isLoading: isLoading ?? this.isLoading,
       isSaving: isSaving ?? this.isSaving,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
-      successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
+      successMessage:
+          clearSuccess ? null : successMessage ?? this.successMessage,
     );
   }
 }

@@ -35,7 +35,9 @@ class SecureTokenStorage {
 
   Future<String?> readToken() async {
     final cached = _cachedToken;
-    if (cached != null && cached.isNotEmpty) return cached;
+    if (cached != null && cached.isNotEmpty) {
+      return cached;
+    }
 
     final token = await _storage.read(key: AppConstants.tokenKey);
     if (token != null && token.isNotEmpty) {
@@ -46,10 +48,14 @@ class SecureTokenStorage {
 
   Future<DateTime?> readExpiry() async {
     final cached = _cachedExpiry;
-    if (cached != null) return cached;
+    if (cached != null) {
+      return cached;
+    }
 
     final raw = await _storage.read(key: AppConstants.tokenExpiryKey);
-    if (raw == null) return null;
+    if (raw == null) {
+      return null;
+    }
     final expiry = DateTime.tryParse(raw);
     _cachedExpiry = expiry;
     return expiry;
@@ -58,7 +64,9 @@ class SecureTokenStorage {
   Future<bool> hasValidLocalToken() async {
     final token = await readToken();
     final expiresAt = await readExpiry();
-    if (token == null || token.isEmpty || expiresAt == null) return false;
+    if (token == null || token.isEmpty || expiresAt == null) {
+      return false;
+    }
     return expiresAt.isAfter(DateTime.now().toUtc());
   }
 

@@ -15,16 +15,18 @@ class OrderListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final amount = order.amountKhr != null && order.currency.toUpperCase() == 'KHR'
-        ? Formatters.moneyKhr(order.amountKhr!)
-        : Formatters.moneyUsd(order.amountUsd);
+    final amount =
+        order.amountKhr != null && order.currency.toUpperCase() == 'KHR'
+            ? Formatters.moneyKhr(order.amountKhr!)
+            : Formatters.moneyUsd(order.amountUsd);
     final statusColor = OrderStatusPill.colorFor(context, order.status);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        onTap: () => context.go('/orders/${Uri.encodeComponent(order.orderNumber)}'),
+        onTap: () =>
+            context.go('/orders/${Uri.encodeComponent(order.orderNumber)}'),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -34,7 +36,7 @@ class OrderListTile extends StatelessWidget {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.12),
+                  color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Icon(Icons.receipt_long_rounded, color: statusColor),
@@ -48,10 +50,15 @@ class OrderListTile extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            order.orderNumber.isEmpty ? 'Unknown order' : order.orderNumber,
+                            order.orderNumber.isEmpty
+                                ? 'Unknown order'
+                                : order.orderNumber,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w900),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -63,14 +70,20 @@ class OrderListTile extends StatelessWidget {
                       '${order.game.name} • ${order.product.name}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${order.customerLabel} • UID ${order.uidLabel}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.black54),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
@@ -78,8 +91,13 @@ class OrderListTile extends StatelessWidget {
                       runSpacing: 6,
                       children: [
                         _MiniInfo(icon: Icons.payments_rounded, label: amount),
-                        _MiniInfo(icon: Icons.schedule_rounded, label: Formatters.dateTimeOrDash(order.createdAt)),
-                        if (order.paymentMethod.trim().isNotEmpty) _MiniInfo(icon: Icons.account_balance_wallet_rounded, label: order.paymentMethod),
+                        _MiniInfo(
+                            icon: Icons.schedule_rounded,
+                            label: Formatters.dateTimeOrDash(order.createdAt)),
+                        if (order.paymentMethod.trim().isNotEmpty)
+                          _MiniInfo(
+                              icon: Icons.account_balance_wallet_rounded,
+                              label: order.paymentMethod),
                       ],
                     ),
                   ],
@@ -106,7 +124,7 @@ class _MiniInfo extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.04),
+        color: Colors.black.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -116,7 +134,10 @@ class _MiniInfo extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700, color: Colors.black54),
+            style: Theme.of(context)
+                .textTheme
+                .labelSmall
+                ?.copyWith(fontWeight: FontWeight.w700, color: Colors.black54),
           ),
         ],
       ),

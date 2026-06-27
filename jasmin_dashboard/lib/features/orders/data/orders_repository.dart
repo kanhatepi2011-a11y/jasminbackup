@@ -22,9 +22,11 @@ class OrdersRepository {
     required String query,
   }) async {
     try {
-      return await _api.fetchOrders(page: page, perPage: perPage, status: status, query: query);
+      return await _api.fetchOrders(
+          page: page, perPage: perPage, status: status, query: query);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not load orders. Check your connection and try again.');
+      throw _exceptionFromDio(
+          error, 'Could not load orders. Check your connection and try again.');
     }
   }
 
@@ -32,7 +34,8 @@ class OrdersRepository {
     try {
       return await _api.fetchOrder(orderNumber);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not load this order. Pull to refresh and try again.');
+      throw _exceptionFromDio(
+          error, 'Could not load this order. Pull to refresh and try again.');
     }
   }
 
@@ -52,7 +55,8 @@ class OrdersRepository {
         adminNote: adminNote,
       );
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not update this order. Please try again.');
+      throw _exceptionFromDio(
+          error, 'Could not update this order. Please try again.');
     }
   }
 
@@ -60,7 +64,10 @@ class OrdersRepository {
     final data = error.response?.data;
     if (data is Map<String, dynamic>) {
       final message = data['error'] ?? data['message'];
-      if (message != null) return AppException(message.toString(), statusCode: error.response?.statusCode);
+      if (message != null) {
+        return AppException(message.toString(),
+            statusCode: error.response?.statusCode);
+      }
     }
     return AppException(fallback, statusCode: error.response?.statusCode);
   }

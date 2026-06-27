@@ -19,7 +19,8 @@ class GamesRepository {
     try {
       return await _api.fetchGames();
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not load games. Check your connection and try again.');
+      throw _exceptionFromDio(
+          error, 'Could not load games. Check your connection and try again.');
     }
   }
 
@@ -27,7 +28,8 @@ class GamesRepository {
     try {
       return await _api.fetchGame(id);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not load this game. Pull to refresh and try again.');
+      throw _exceptionFromDio(
+          error, 'Could not load this game. Pull to refresh and try again.');
     }
   }
 
@@ -35,7 +37,8 @@ class GamesRepository {
     try {
       return await _api.createGame(payload);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not create this game. Please check the fields and try again.');
+      throw _exceptionFromDio(error,
+          'Could not create this game. Please check the fields and try again.');
     }
   }
 
@@ -43,7 +46,8 @@ class GamesRepository {
     try {
       return await _api.updateGame(id, payload);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not update this game. Please check the fields and try again.');
+      throw _exceptionFromDio(error,
+          'Could not update this game. Please check the fields and try again.');
     }
   }
 
@@ -51,7 +55,8 @@ class GamesRepository {
     try {
       return await _api.setGameActive(id, active);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not update game visibility. Please try again.');
+      throw _exceptionFromDio(
+          error, 'Could not update game visibility. Please try again.');
     }
   }
 
@@ -59,7 +64,8 @@ class GamesRepository {
     try {
       return await _api.deleteGame(id);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not delete this game. It may already be linked to products or orders.');
+      throw _exceptionFromDio(error,
+          'Could not delete this game. It may already be linked to products or orders.');
     }
   }
 
@@ -67,7 +73,8 @@ class GamesRepository {
     try {
       await _api.reorderGame(id, direction);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not reorder this game. Please try again.');
+      throw _exceptionFromDio(
+          error, 'Could not reorder this game. Please try again.');
     }
   }
 
@@ -75,7 +82,10 @@ class GamesRepository {
     final data = error.response?.data;
     if (data is Map<String, dynamic>) {
       final message = data['error'] ?? data['message'];
-      if (message != null) return AppException(message.toString(), statusCode: error.response?.statusCode);
+      if (message != null) {
+        return AppException(message.toString(),
+            statusCode: error.response?.statusCode);
+      }
     }
     return AppException(fallback, statusCode: error.response?.statusCode);
   }

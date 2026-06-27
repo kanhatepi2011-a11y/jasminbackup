@@ -7,7 +7,8 @@ import '../../../core/constants/refresh_intervals.dart';
 import '../data/orders_repository.dart';
 import '../models/order_model.dart';
 
-final ordersProvider = StateNotifierProvider.autoDispose<OrdersController, OrdersState>((ref) {
+final ordersProvider =
+    StateNotifierProvider.autoDispose<OrdersController, OrdersState>((ref) {
   final controller = OrdersController(ref.watch(ordersRepositoryProvider));
   controller.load();
   controller.startAutoRefresh();
@@ -21,7 +22,9 @@ class OrdersController extends StateNotifier<OrdersState> {
   Timer? _autoRefreshTimer;
 
   Future<void> load({bool silent = false, int? page}) async {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     final targetPage = page ?? state.page;
     state = state.copyWith(
       isLoading: !silent && state.orders.isEmpty,
@@ -36,7 +39,9 @@ class OrdersController extends StateNotifier<OrdersState> {
         status: state.status,
         query: state.query,
       );
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         orders: result.orders,
         total: result.total,
@@ -48,7 +53,9 @@ class OrdersController extends StateNotifier<OrdersState> {
         clearError: true,
       );
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         isLoading: false,
         isRefreshing: false,
@@ -65,30 +72,42 @@ class OrdersController extends StateNotifier<OrdersState> {
   }
 
   Future<void> setQuery(String query) async {
-    if (query.trim() == state.query.trim()) return;
+    if (query.trim() == state.query.trim()) {
+      return;
+    }
     state = state.copyWith(query: query.trim(), page: 1, clearError: true);
     await load();
   }
 
   Future<void> nextPage() async {
-    if (state.page >= state.totalPages || state.isLoading || state.isRefreshing) return;
+    if (state.page >= state.totalPages ||
+        state.isLoading ||
+        state.isRefreshing) {
+      return;
+    }
     await load(silent: true, page: state.page + 1);
   }
 
   Future<void> previousPage() async {
-    if (state.page <= 1 || state.isLoading || state.isRefreshing) return;
+    if (state.page <= 1 || state.isLoading || state.isRefreshing) {
+      return;
+    }
     await load(silent: true, page: state.page - 1);
   }
 
   void startAutoRefresh() {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = Timer.periodic(RefreshIntervals.orders, (_) {
-      if (mounted) load(silent: true);
+      if (mounted) {
+        load(silent: true);
+      }
     });
   }
 
   String _messageFromError(Object error) {
-    if (error is AppException) return error.message;
+    if (error is AppException) {
+      return error.message;
+    }
     return 'Orders refresh failed. Please try again.';
   }
 

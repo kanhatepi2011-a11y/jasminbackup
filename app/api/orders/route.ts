@@ -251,7 +251,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error("Order create error:", err);
-    const msg = err instanceof Error ? err.message : "Internal server error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    // Security: never expose internal error messages to public users
+    return NextResponse.json(
+      { error: "Something went wrong. Please try again or contact support." },
+      { status: 500 }
+    );
   }
 }

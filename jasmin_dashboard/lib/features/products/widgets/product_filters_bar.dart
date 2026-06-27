@@ -27,7 +27,7 @@ class ProductFiltersBar extends StatelessWidget {
         SizedBox(
           width: 260,
           child: DropdownButtonFormField<String>(
-            value: selectedGameId,
+            initialValue: selectedGameId,
             decoration: const InputDecoration(
               labelText: 'Game',
               prefixIcon: Icon(Icons.sports_esports_rounded),
@@ -37,18 +37,21 @@ class ProductFiltersBar extends StatelessWidget {
               for (final game in games)
                 DropdownMenuItem(
                   value: game.id,
-                  child: Text(game.active ? game.name : '${game.name} · disabled'),
+                  child:
+                      Text(game.active ? game.name : '${game.name} · disabled'),
                 ),
             ],
             onChanged: (value) {
-              if (value != null) onGameChanged(value);
+              if (value != null) {
+                onGameChanged(value);
+              }
             },
           ),
         ),
         SizedBox(
           width: 190,
           child: DropdownButtonFormField<String>(
-            value: selectedActiveFilter,
+            initialValue: selectedActiveFilter,
             decoration: const InputDecoration(
               labelText: 'Visibility',
               prefixIcon: Icon(Icons.visibility_rounded),
@@ -59,7 +62,9 @@ class ProductFiltersBar extends StatelessWidget {
               DropdownMenuItem(value: 'INACTIVE', child: Text('Hidden')),
             ],
             onChanged: (value) {
-              if (value != null) onActiveChanged(value);
+              if (value != null) {
+                onActiveChanged(value);
+              }
             },
           ),
         ),

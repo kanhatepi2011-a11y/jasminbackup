@@ -13,14 +13,16 @@ class OrderStatusSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = <_StatusRowData>[
-      _StatusRowData('Pending', stats.pendingOrders, Theme.of(context).colorScheme.primary),
+      _StatusRowData('Pending', stats.pendingOrders,
+          Theme.of(context).colorScheme.primary),
       _StatusRowData('Paid', stats.paidOrders, Colors.blue),
       _StatusRowData('Processing', stats.processingOrders, Colors.indigo),
       _StatusRowData('Completed', stats.completedOrders, Colors.green),
       _StatusRowData('Failed', stats.failedOrders, Colors.red),
       _StatusRowData('Cancelled', stats.cancelledOrders, Colors.orange),
     ];
-    final maxValue = rows.fold<int>(1, (max, row) => row.value > max ? row.value : max);
+    final maxValue =
+        rows.fold<int>(1, (max, row) => row.value > max ? row.value : max);
 
     return Card(
       child: Padding(
@@ -28,7 +30,11 @@ class OrderStatusSummaryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Order status', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+            Text('Order status',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w800)),
             const SizedBox(height: 14),
             for (final row in rows) ...[
               _StatusProgressRow(row: row, maxValue: maxValue),
@@ -56,8 +62,14 @@ class _StatusProgressRow extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: Text(row.label, style: Theme.of(context).textTheme.bodyMedium)),
-            Text(row.value.toString(), style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w800)),
+            Expanded(
+                child: Text(row.label,
+                    style: Theme.of(context).textTheme.bodyMedium)),
+            Text(row.value.toString(),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w800)),
           ],
         ),
         const SizedBox(height: 6),
@@ -66,7 +78,7 @@ class _StatusProgressRow extends StatelessWidget {
           child: LinearProgressIndicator(
             minHeight: 7,
             value: fraction.clamp(0.0, 1.0).toDouble(),
-            backgroundColor: row.color.withOpacity(0.12),
+            backgroundColor: row.color.withValues(alpha: 0.12),
             valueColor: AlwaysStoppedAnimation<Color>(row.color),
           ),
         ),

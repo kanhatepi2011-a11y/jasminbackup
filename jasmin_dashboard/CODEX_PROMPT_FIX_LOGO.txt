@@ -1,0 +1,26 @@
+Fix the JASMIN Dashboard Flutter app logo correctly.
+
+Important: Do not only add the PNG asset. Make the actual launcher app icon change.
+
+Use these files from this pack:
+- assets/images/jasmin_logo_icon_opaque.png
+- assets/images/jasmin_logo_full.png
+- android/app/src/main/res/mipmap-*/ic_launcher.png
+- android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+- android/app/src/main/res/values/ic_launcher_background.xml
+- ios/Runner/Assets.xcassets/AppIcon.appiconset/*
+- lib/widgets/jasmin_app_logo.dart
+
+Tasks:
+1. Copy assets/images into the Dashboard Flutter app root.
+2. Copy the Android res files into android/app/src/main/res/ and overwrite old ic_launcher files.
+3. Copy iOS AppIcon.appiconset files into ios/Runner/Assets.xcassets/AppIcon.appiconset/.
+4. Ensure android/app/src/main/AndroidManifest.xml uses android:icon="@mipmap/ic_launcher".
+5. Register assets/images/ in pubspec.yaml.
+6. Add flutter_launcher_icons config using assets/images/jasmin_logo_icon_opaque.png.
+7. Add the JasminAppLogo widget to the login page above the login form.
+8. Add a small logo in the dashboard AppBar/header.
+9. Do not remove existing admin login, 2FA, API, auth, dashboard, or navigation logic.
+10. Run flutter pub get, dart run flutter_launcher_icons, flutter clean, then flutter run.
+
+Fix any asset path or pubspec indentation errors.

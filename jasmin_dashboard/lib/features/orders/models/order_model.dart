@@ -49,15 +49,25 @@ class OrderModel {
   final OrderProductSummary product;
 
   String get customerLabel {
-    if (_hasText(playerNickname)) return playerNickname!.trim();
-    if (_hasText(customerEmail)) return customerEmail!.trim();
-    if (_hasText(customerPhone)) return customerPhone!.trim();
-    if (playerUid.trim().isNotEmpty) return playerUid.trim();
+    if (_hasText(playerNickname)) {
+      return playerNickname!.trim();
+    }
+    if (_hasText(customerEmail)) {
+      return customerEmail!.trim();
+    }
+    if (_hasText(customerPhone)) {
+      return customerPhone!.trim();
+    }
+    if (playerUid.trim().isNotEmpty) {
+      return playerUid.trim();
+    }
     return 'Unknown customer';
   }
 
   String get uidLabel {
-    if (!_hasText(serverId)) return playerUid;
+    if (!_hasText(serverId)) {
+      return playerUid;
+    }
     return '$playerUid ($serverId)';
   }
 
@@ -90,7 +100,8 @@ class OrderModel {
     );
   }
 
-  static bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
+  static bool _hasText(String? value) =>
+      value != null && value.trim().isNotEmpty;
 
   static String? _nullableString(dynamic value) {
     final text = value?.toString().trim();
@@ -98,24 +109,34 @@ class OrderModel {
   }
 
   static double _double(dynamic value) {
-    if (value is num) return value.toDouble();
+    if (value is num) {
+      return value.toDouble();
+    }
     return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   static double? _nullableDouble(dynamic value) {
-    if (value == null) return null;
-    if (value is num) return value.toDouble();
+    if (value == null) {
+      return null;
+    }
+    if (value is num) {
+      return value.toDouble();
+    }
     return double.tryParse(value.toString());
   }
 
   static DateTime? _date(dynamic value) {
     final text = value?.toString();
-    if (text == null || text.isEmpty) return null;
+    if (text == null || text.isEmpty) {
+      return null;
+    }
     return DateTime.tryParse(text)?.toLocal();
   }
 
   static Map<String, dynamic>? _mapOrNull(dynamic value) {
-    if (value is Map) return Map<String, dynamic>.from(value);
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
     return null;
   }
 }

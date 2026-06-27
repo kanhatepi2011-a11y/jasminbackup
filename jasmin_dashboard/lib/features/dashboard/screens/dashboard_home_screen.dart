@@ -30,7 +30,9 @@ class DashboardHomeScreen extends ConsumerWidget {
       title: 'Dashboard',
       currentRoute: '/dashboard',
       actions: [
-        _RefreshAction(isRefreshing: dashboardState.isRefreshing, onPressed: () => ref.read(dashboardProvider.notifier).refresh()),
+        _RefreshAction(
+            isRefreshing: dashboardState.isRefreshing,
+            onPressed: () => ref.read(dashboardProvider.notifier).refresh()),
       ],
       child: RefreshIndicator(
         onRefresh: () => ref.read(dashboardProvider.notifier).refresh(),
@@ -47,18 +49,27 @@ class DashboardHomeScreen extends ConsumerWidget {
                     children: [
                       Text(
                         'Welcome${admin?.name != null ? ', ${admin!.name}' : ''}',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         admin?.email ?? 'Admin account',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: Colors.black54),
                       ),
                       if (dashboardState.lastUpdatedAt != null) ...[
                         const SizedBox(height: 4),
                         Text(
                           'Last updated ${Formatters.shortTime.format(dashboardState.lastUpdatedAt!)} • auto-refresh every 20s',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black45),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: Colors.black45),
                         ),
                       ],
                     ],
@@ -87,7 +98,8 @@ class DashboardHomeScreen extends ConsumerWidget {
               EmptyState(
                 icon: Icons.dashboard_customize_rounded,
                 title: 'Dashboard unavailable',
-                message: 'Login is working, but the dashboard API did not return data yet.',
+                message:
+                    'Login is working, but the dashboard API did not return data yet.',
               )
             else ...[
               _StatsGrid(stats: stats),
@@ -110,7 +122,9 @@ class DashboardHomeScreen extends ConsumerWidget {
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(flex: 3, child: RecentOrdersCard(orders: data.recentOrders)),
+                      Expanded(
+                          flex: 3,
+                          child: RecentOrdersCard(orders: data.recentOrders)),
                       const SizedBox(width: 20),
                       Expanded(
                         flex: 2,
@@ -191,14 +205,16 @@ class _StatsGrid extends StatelessWidget {
             DashboardStatCard(
               title: 'Products',
               value: '${stats.activeProducts}/${stats.totalProducts}',
-              subtitle: '${stats.inactiveProducts < 0 ? 0 : stats.inactiveProducts} disabled',
+              subtitle:
+                  '${stats.inactiveProducts < 0 ? 0 : stats.inactiveProducts} disabled',
               icon: Icons.inventory_2_rounded,
               onTap: () => context.go('/products'),
             ),
             DashboardStatCard(
               title: 'Games',
               value: '${stats.activeGames}/${stats.totalGames}',
-              subtitle: '${stats.inactiveGames < 0 ? 0 : stats.inactiveGames} disabled',
+              subtitle:
+                  '${stats.inactiveGames < 0 ? 0 : stats.inactiveGames} disabled',
               icon: Icons.sports_esports_rounded,
               onTap: () => context.go('/games'),
             ),
@@ -211,7 +227,8 @@ class _StatsGrid extends StatelessWidget {
             ),
             DashboardStatCard(
               title: 'Failed / cancelled',
-              value: Formatters.number(stats.failedOrders + stats.cancelledOrders),
+              value:
+                  Formatters.number(stats.failedOrders + stats.cancelledOrders),
               subtitle: 'Needs review if high',
               icon: Icons.report_problem_rounded,
               onTap: () => context.go('/orders'),
@@ -235,7 +252,10 @@ class _RefreshAction extends StatelessWidget {
       tooltip: 'Refresh dashboard',
       onPressed: isRefreshing ? null : onPressed,
       icon: isRefreshing
-          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.4))
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2.4))
           : const Icon(Icons.refresh_rounded),
     );
   }
@@ -275,7 +295,8 @@ class _SkeletonCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(width: 44, height: 44, decoration: _box(context, radius: 16)),
+            Container(
+                width: 44, height: 44, decoration: _box(context, radius: 16)),
             const Spacer(),
             Container(width: 90, height: 12, decoration: _box(context)),
             const SizedBox(height: 10),
@@ -302,9 +323,13 @@ class _SkeletonPanel extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 children: [
-                  Container(width: 42, height: 42, decoration: _box(context, radius: 16)),
+                  Container(
+                      width: 42,
+                      height: 42,
+                      decoration: _box(context, radius: 16)),
                   const SizedBox(width: 12),
-                  Expanded(child: Container(height: 14, decoration: _box(context))),
+                  Expanded(
+                      child: Container(height: 14, decoration: _box(context))),
                   const SizedBox(width: 12),
                   Container(width: 60, height: 14, decoration: _box(context)),
                 ],
@@ -319,7 +344,7 @@ class _SkeletonPanel extends StatelessWidget {
 
 BoxDecoration _box(BuildContext context, {double radius = 999}) {
   return BoxDecoration(
-    color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
     borderRadius: BorderRadius.circular(radius),
   );
 }

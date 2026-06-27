@@ -47,3 +47,11 @@ yarn-error.log*
 .env.local
 node_modules/
 .next/
+
+# Security: dangerous admin utility scripts should not be in version control
+2fa.mjs
+reset.ts
+reset-totp.ts
+setup-totp.js
+curl.exe
+npx

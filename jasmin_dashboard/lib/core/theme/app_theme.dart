@@ -26,14 +26,12 @@ class AppTheme {
     return base.copyWith(
       textTheme: GoogleFonts.interTextTheme(base.textTheme),
       scaffoldBackgroundColor: const Color(0xFFFFF7FB),
-
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Color(0xFF24112B),
       ),
-
       cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 0,
@@ -42,7 +40,6 @@ class AppTheme {
           borderRadius: BorderRadius.circular(24),
         ),
       ),
-
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
@@ -77,7 +74,6 @@ class AppTheme {
           ),
         ),
       ),
-
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
@@ -105,14 +101,12 @@ class AppTheme {
     return base.copyWith(
       textTheme: GoogleFonts.interTextTheme(base.textTheme),
       scaffoldBackgroundColor: const Color(0xFF08030F),
-
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
       ),
-
       cardTheme: CardThemeData(
         color: const Color(0xFF12091B),
         elevation: 0,
@@ -121,7 +115,6 @@ class AppTheme {
           borderRadius: BorderRadius.circular(24),
         ),
       ),
-
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF12091B),
@@ -145,7 +138,6 @@ class AppTheme {
           ),
         ),
       ),
-
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(52),

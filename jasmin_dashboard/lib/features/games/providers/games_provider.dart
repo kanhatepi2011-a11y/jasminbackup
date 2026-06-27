@@ -8,7 +8,8 @@ import '../data/games_repository.dart';
 import '../models/game_model.dart';
 import '../models/game_payload.dart';
 
-final gamesProvider = StateNotifierProvider.autoDispose<GamesController, GamesState>((ref) {
+final gamesProvider =
+    StateNotifierProvider.autoDispose<GamesController, GamesState>((ref) {
   final controller = GamesController(ref.watch(gamesRepositoryProvider));
   controller.load();
   controller.startAutoRefresh();
@@ -22,7 +23,9 @@ class GamesController extends StateNotifier<GamesState> {
   Timer? _autoRefreshTimer;
 
   Future<void> load({bool silent = false}) async {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     state = state.copyWith(
       isLoading: !silent && state.games.isEmpty,
       isRefreshing: silent || state.games.isNotEmpty,
@@ -32,7 +35,9 @@ class GamesController extends StateNotifier<GamesState> {
 
     try {
       final games = await _repository.fetchGames();
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         games: games,
         isLoading: false,
@@ -41,7 +46,9 @@ class GamesController extends StateNotifier<GamesState> {
         clearError: true,
       );
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         isLoading: false,
         isRefreshing: false,
@@ -53,22 +60,28 @@ class GamesController extends StateNotifier<GamesState> {
   Future<void> refresh() => load(silent: true);
 
   void setQuery(String query) {
-    state = state.copyWith(query: query.trim(), clearError: true, clearSuccess: true);
+    state = state.copyWith(
+        query: query.trim(), clearError: true, clearSuccess: true);
   }
 
   void setActiveFilter(String activeFilter) {
-    state = state.copyWith(activeFilter: activeFilter, clearError: true, clearSuccess: true);
+    state = state.copyWith(
+        activeFilter: activeFilter, clearError: true, clearSuccess: true);
   }
 
   void setFeaturedFilter(String featuredFilter) {
-    state = state.copyWith(featuredFilter: featuredFilter, clearError: true, clearSuccess: true);
+    state = state.copyWith(
+        featuredFilter: featuredFilter, clearError: true, clearSuccess: true);
   }
 
   Future<void> toggleActive(GameModel game) async {
-    state = state.copyWith(actionGameId: game.id, clearError: true, clearSuccess: true);
+    state = state.copyWith(
+        actionGameId: game.id, clearError: true, clearSuccess: true);
     try {
       await _repository.setGameActive(game.id, !game.active);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         actionGameId: null,
         successMessage: !game.active
@@ -77,49 +90,70 @@ class GamesController extends StateNotifier<GamesState> {
       );
       await load(silent: true);
     } catch (error) {
-      if (!mounted) return;
-      state = state.copyWith(actionGameId: null, errorMessage: _messageFromError(error));
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(
+          actionGameId: null, errorMessage: _messageFromError(error));
     }
   }
 
   Future<void> deleteGame(GameModel game) async {
-    state = state.copyWith(actionGameId: game.id, clearError: true, clearSuccess: true);
+    state = state.copyWith(
+        actionGameId: game.id, clearError: true, clearSuccess: true);
     try {
       final result = await _repository.deleteGame(game.id);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       final message = result.deleted
           ? '${game.safeName} was deleted.'
           : '${game.safeName} has products/orders, so it was disabled instead of deleted.';
       state = state.copyWith(actionGameId: null, successMessage: message);
       await load(silent: true);
     } catch (error) {
-      if (!mounted) return;
-      state = state.copyWith(actionGameId: null, errorMessage: _messageFromError(error));
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(
+          actionGameId: null, errorMessage: _messageFromError(error));
     }
   }
 
   Future<void> reorder(GameModel game, String direction) async {
-    state = state.copyWith(actionGameId: game.id, clearError: true, clearSuccess: true);
+    state = state.copyWith(
+        actionGameId: game.id, clearError: true, clearSuccess: true);
     try {
       await _repository.reorderGame(game.id, direction);
-      if (!mounted) return;
-      state = state.copyWith(actionGameId: null, successMessage: '${game.safeName} order updated.');
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(
+          actionGameId: null,
+          successMessage: '${game.safeName} order updated.');
       await load(silent: true);
     } catch (error) {
-      if (!mounted) return;
-      state = state.copyWith(actionGameId: null, errorMessage: _messageFromError(error));
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(
+          actionGameId: null, errorMessage: _messageFromError(error));
     }
   }
 
   void startAutoRefresh() {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = Timer.periodic(RefreshIntervals.contentManagement, (_) {
-      if (mounted) load(silent: true);
+      if (mounted) {
+        load(silent: true);
+      }
     });
   }
 
   String _messageFromError(Object error) {
-    if (error is AppException) return error.message;
+    if (error is AppException) {
+      return error.message;
+    }
     return 'Games refresh failed. Please try again.';
   }
 
@@ -160,10 +194,16 @@ class GamesState {
   List<GameModel> get filteredGames {
     final text = query.trim().toLowerCase();
     return games.where((game) {
-      final matchesActive = activeFilter == 'ALL' || (activeFilter == 'ACTIVE' ? game.active : !game.active);
-      final matchesFeatured = featuredFilter == 'ALL' || (featuredFilter == 'FEATURED' ? game.featured : !game.featured);
-      if (!matchesActive || !matchesFeatured) return false;
-      if (text.isEmpty) return true;
+      final matchesActive = activeFilter == 'ALL' ||
+          (activeFilter == 'ACTIVE' ? game.active : !game.active);
+      final matchesFeatured = featuredFilter == 'ALL' ||
+          (featuredFilter == 'FEATURED' ? game.featured : !game.featured);
+      if (!matchesActive || !matchesFeatured) {
+        return false;
+      }
+      if (text.isEmpty) {
+        return true;
+      }
       final haystack = [
         game.name,
         game.slug,
@@ -199,20 +239,24 @@ class GamesState {
       isRefreshing: isRefreshing ?? this.isRefreshing,
       actionGameId: actionGameId,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
-      successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
+      successMessage:
+          clearSuccess ? null : successMessage ?? this.successMessage,
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
     );
   }
 }
 
-final gameEditorProvider = StateNotifierProvider.autoDispose.family<GameEditorController, GameEditorState, String?>((ref, gameId) {
-  final controller = GameEditorController(ref.watch(gamesRepositoryProvider), gameId);
+final gameEditorProvider = StateNotifierProvider.autoDispose
+    .family<GameEditorController, GameEditorState, String?>((ref, gameId) {
+  final controller =
+      GameEditorController(ref.watch(gamesRepositoryProvider), gameId);
   controller.load();
   return controller;
 });
 
 class GameEditorController extends StateNotifier<GameEditorState> {
-  GameEditorController(this._repository, this.gameId) : super(const GameEditorState());
+  GameEditorController(this._repository, this.gameId)
+      : super(const GameEditorState());
 
   final GamesRepository _repository;
   final String? gameId;
@@ -220,40 +264,64 @@ class GameEditorController extends StateNotifier<GameEditorState> {
   bool get isEditing => gameId != null && gameId!.trim().isNotEmpty;
 
   Future<void> load() async {
-    if (!mounted) return;
-    state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
+    if (!mounted) {
+      return;
+    }
+    state =
+        state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
     try {
       GameModel? game;
-      if (isEditing) game = await _repository.fetchGame(gameId!);
-      if (!mounted) return;
+      if (isEditing) {
+        game = await _repository.fetchGame(gameId!);
+      }
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(game: game, isLoading: false, clearError: true);
     } catch (error) {
-      if (!mounted) return;
-      state = state.copyWith(isLoading: false, errorMessage: _messageFromError(error));
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(
+          isLoading: false, errorMessage: _messageFromError(error));
     }
   }
 
   Future<GameModel?> save(GamePayload payload) async {
-    if (!mounted) return null;
-    state = state.copyWith(isSaving: true, clearError: true, clearSuccess: true);
+    if (!mounted) {
+      return null;
+    }
+    state =
+        state.copyWith(isSaving: true, clearError: true, clearSuccess: true);
     try {
-      final result = isEditing ? await _repository.updateGame(gameId!, payload) : await _repository.createGame(payload);
-      if (!mounted) return result;
+      final result = isEditing
+          ? await _repository.updateGame(gameId!, payload)
+          : await _repository.createGame(payload);
+      if (!mounted) {
+        return result;
+      }
       state = state.copyWith(
         game: result,
         isSaving: false,
-        successMessage: isEditing ? 'Game updated. Website will refresh shortly.' : 'Game created. Website will refresh shortly.',
+        successMessage: isEditing
+            ? 'Game updated. Website will refresh shortly.'
+            : 'Game created. Website will refresh shortly.',
       );
       return result;
     } catch (error) {
-      if (!mounted) return null;
-      state = state.copyWith(isSaving: false, errorMessage: _messageFromError(error));
+      if (!mounted) {
+        return null;
+      }
+      state = state.copyWith(
+          isSaving: false, errorMessage: _messageFromError(error));
       return null;
     }
   }
 
   String _messageFromError(Object error) {
-    if (error is AppException) return error.message;
+    if (error is AppException) {
+      return error.message;
+    }
     return 'Game action failed. Please try again.';
   }
 }
@@ -287,7 +355,8 @@ class GameEditorState {
       isLoading: isLoading ?? this.isLoading,
       isSaving: isSaving ?? this.isSaving,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
-      successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
+      successMessage:
+          clearSuccess ? null : successMessage ?? this.successMessage,
     );
   }
 }

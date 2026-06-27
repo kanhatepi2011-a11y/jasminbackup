@@ -24,13 +24,15 @@ class OrderDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final decodedOrderNumber = Uri.decodeComponent(orderNumber);
     final state = ref.watch(orderDetailProvider(decodedOrderNumber));
-    final controller = ref.read(orderDetailProvider(decodedOrderNumber).notifier);
+    final controller =
+        ref.read(orderDetailProvider(decodedOrderNumber).notifier);
     final order = state.order;
 
     ref.listen(orderDetailProvider(decodedOrderNumber), (previous, next) {
       final success = next.successMessage;
       if (success != null && success != previous?.successMessage) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(success)));
         ref.invalidate(ordersProvider);
       }
     });
@@ -41,9 +43,13 @@ class OrderDetailScreen extends ConsumerWidget {
       actions: [
         IconButton(
           tooltip: 'Refresh order',
-          onPressed: state.isRefreshing ? null : () => controller.load(silent: true),
+          onPressed:
+              state.isRefreshing ? null : () => controller.load(silent: true),
           icon: state.isRefreshing
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.3))
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2.3))
               : const Icon(Icons.refresh_rounded),
         ),
       ],
@@ -66,7 +72,10 @@ class OrderDetailScreen extends ConsumerWidget {
                     decodedOrderNumber,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w900),
                   ),
                 ),
               ],
@@ -85,7 +94,8 @@ class OrderDetailScreen extends ConsumerWidget {
               const EmptyState(
                 icon: Icons.receipt_long_rounded,
                 title: 'Order not found',
-                message: 'This order may have been deleted or the order number is invalid.',
+                message:
+                    'This order may have been deleted or the order number is invalid.',
               )
             else ...[
               _OrderSummaryCard(
@@ -97,7 +107,9 @@ class OrderDetailScreen extends ConsumerWidget {
                     context: context,
                     builder: (context) => _UpdateOrderDialog(order: order),
                   );
-                  if (result == null) return;
+                  if (result == null) {
+                    return;
+                  }
                   await controller.updateOrder(
                     status: result.status,
                     deliveryNote: result.deliveryNote,
@@ -113,9 +125,16 @@ class OrderDetailScreen extends ConsumerWidget {
                   final left = _OrderCustomerCard(order: order);
                   final right = _OrderPaymentCard(order: order);
                   if (!twoColumns) {
-                    return Column(children: [left, const SizedBox(height: 16), right]);
+                    return Column(
+                        children: [left, const SizedBox(height: 16), right]);
                   }
-                  return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: left), const SizedBox(width: 16), Expanded(child: right)]);
+                  return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(child: left),
+                        const SizedBox(width: 16),
+                        Expanded(child: right)
+                      ]);
                 },
               ),
               const SizedBox(height: 16),
@@ -127,10 +146,12 @@ class OrderDetailScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _copyOrderNumber(BuildContext context, String orderNumber) async {
+  Future<void> _copyOrderNumber(
+      BuildContext context, String orderNumber) async {
     await Clipboard.setData(ClipboardData(text: orderNumber));
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order number copied.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Order number copied.')));
     }
   }
 }
@@ -150,9 +171,10 @@ class _OrderSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final amount = order.amountKhr != null && order.currency.toUpperCase() == 'KHR'
-        ? Formatters.moneyKhr(order.amountKhr!)
-        : Formatters.moneyUsd(order.amountUsd);
+    final amount =
+        order.amountKhr != null && order.currency.toUpperCase() == 'KHR'
+            ? Formatters.moneyKhr(order.amountKhr!)
+            : Formatters.moneyUsd(order.amountUsd);
 
     return Card(
       child: Padding(
@@ -167,21 +189,32 @@ class _OrderSummaryCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(order.orderNumber, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+                      Text(order.orderNumber,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w900)),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: [
                           OrderStatusPill(status: order.status),
-                          _SoftChip(icon: Icons.payments_rounded, label: amount),
-                          _SoftChip(icon: Icons.schedule_rounded, label: Formatters.dateTimeOrDash(order.createdAt)),
+                          _SoftChip(
+                              icon: Icons.payments_rounded, label: amount),
+                          _SoftChip(
+                              icon: Icons.schedule_rounded,
+                              label:
+                                  Formatters.dateTimeOrDash(order.createdAt)),
                         ],
                       ),
                     ],
                   ),
                 ),
-                IconButton.filledTonal(onPressed: onCopy, tooltip: 'Copy order number', icon: const Icon(Icons.copy_rounded)),
+                IconButton.filledTonal(
+                    onPressed: onCopy,
+                    tooltip: 'Copy order number',
+                    icon: const Icon(Icons.copy_rounded)),
               ],
             ),
             const SizedBox(height: 18),
@@ -194,7 +227,10 @@ class _OrderSummaryCard extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: isSaving ? null : onUpdate,
                 icon: isSaving
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2))
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2.2))
                     : const Icon(Icons.edit_note_rounded),
                 label: Text(isSaving ? 'Saving...' : 'Update status / notes'),
               ),
@@ -237,12 +273,21 @@ class _OrderPaymentCard extends StatelessWidget {
       icon: Icons.account_balance_wallet_rounded,
       title: 'Payment / timeline',
       children: [
-        _InfoRow(label: 'Payment method', value: order.paymentMethod.isEmpty ? '—' : order.paymentMethod),
+        _InfoRow(
+            label: 'Payment method',
+            value: order.paymentMethod.isEmpty ? '—' : order.paymentMethod),
         _InfoRow(label: 'Payment ref', value: order.paymentRef ?? '—'),
-        _InfoRow(label: 'Created', value: Formatters.dateTimeOrDash(order.createdAt)),
-        _InfoRow(label: 'Paid at', value: Formatters.dateTimeOrDash(order.paidAt)),
-        _InfoRow(label: 'Delivered at', value: Formatters.dateTimeOrDash(order.deliveredAt)),
-        _InfoRow(label: 'Last update', value: Formatters.dateTimeOrDash(order.updatedAt)),
+        _InfoRow(
+            label: 'Created',
+            value: Formatters.dateTimeOrDash(order.createdAt)),
+        _InfoRow(
+            label: 'Paid at', value: Formatters.dateTimeOrDash(order.paidAt)),
+        _InfoRow(
+            label: 'Delivered at',
+            value: Formatters.dateTimeOrDash(order.deliveredAt)),
+        _InfoRow(
+            label: 'Last update',
+            value: Formatters.dateTimeOrDash(order.updatedAt)),
       ],
     );
   }
@@ -265,7 +310,10 @@ class _OrderNotesCard extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           'Admin note entered during updates is saved to audit logs only. It is not shown to customers.',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black45),
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.copyWith(color: Colors.black45),
         ),
       ],
     );
@@ -290,9 +338,13 @@ class _UpdateOrderDialogState extends State<_UpdateOrderDialog> {
   @override
   void initState() {
     super.initState();
-    _status = widget.order.status.toUpperCase() == 'COMPLETED' ? 'DELIVERED' : widget.order.status.toUpperCase();
-    _deliveryNoteController = TextEditingController(text: widget.order.deliveryNote ?? '');
-    _failureReasonController = TextEditingController(text: widget.order.failureReason ?? '');
+    _status = widget.order.status.toUpperCase() == 'COMPLETED'
+        ? 'DELIVERED'
+        : widget.order.status.toUpperCase();
+    _deliveryNoteController =
+        TextEditingController(text: widget.order.deliveryNote ?? '');
+    _failureReasonController =
+        TextEditingController(text: widget.order.failureReason ?? '');
   }
 
   @override
@@ -312,13 +364,17 @@ class _UpdateOrderDialogState extends State<_UpdateOrderDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.order.orderNumber, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54, fontWeight: FontWeight.w800)),
+            Text(widget.order.orderNumber,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.black54, fontWeight: FontWeight.w800)),
             const SizedBox(height: 14),
             DropdownButtonFormField<String>(
-              value: _status,
+              initialValue: _status,
               decoration: const InputDecoration(labelText: 'Status'),
               items: [
-                for (final option in OrderStatuses.editable) DropdownMenuItem(value: option.value, child: Text(option.label)),
+                for (final option in OrderStatuses.editable)
+                  DropdownMenuItem(
+                      value: option.value, child: Text(option.label)),
               ],
               onChanged: (value) => setState(() => _status = value ?? _status),
             ),
@@ -358,13 +414,18 @@ class _UpdateOrderDialogState extends State<_UpdateOrderDialog> {
             const SizedBox(height: 8),
             Text(
               'Payment-sensitive status changes should only be used after you verify the real transaction/order manually.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: Colors.black54),
             ),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel')),
         FilledButton(
           onPressed: () {
             Navigator.of(context).pop(
@@ -384,7 +445,11 @@ class _UpdateOrderDialogState extends State<_UpdateOrderDialog> {
 }
 
 class _OrderUpdateResult {
-  const _OrderUpdateResult({required this.status, required this.deliveryNote, required this.failureReason, required this.adminNote});
+  const _OrderUpdateResult(
+      {required this.status,
+      required this.deliveryNote,
+      required this.failureReason,
+      required this.adminNote});
 
   final String status;
   final String deliveryNote;
@@ -393,7 +458,8 @@ class _OrderUpdateResult {
 }
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.icon, required this.title, required this.children});
+  const _SectionCard(
+      {required this.icon, required this.title, required this.children});
 
   final IconData icon;
   final String title;
@@ -411,7 +477,11 @@ class _SectionCard extends StatelessWidget {
               children: [
                 Icon(icon, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 10),
-                Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+                Text(title,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w900)),
               ],
             ),
             const SizedBox(height: 14),
@@ -438,10 +508,16 @@ class _InfoRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 118,
-            child: Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black45, fontWeight: FontWeight.w800)),
+            child: Text(label,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.black45, fontWeight: FontWeight.w800)),
           ),
           Expanded(
-            child: Text(value.isEmpty ? '—' : value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+            child: Text(value.isEmpty ? '—' : value,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -460,16 +536,21 @@ class _BlockText extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black45, fontWeight: FontWeight.w900)),
+        Text(label,
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: Colors.black45, fontWeight: FontWeight.w900)),
         const SizedBox(height: 6),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.035),
+            color: Colors.black.withValues(alpha: 0.035),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Text(value == null || value!.trim().isEmpty ? '—' : value!.trim()),
+          child: Text(
+              value == null || value!.trim().isEmpty ? '—' : value!.trim()),
         ),
       ],
     );
@@ -487,7 +568,7 @@ class _SoftChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.045),
+        color: Colors.black.withValues(alpha: 0.045),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -495,7 +576,11 @@ class _SoftChip extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: Colors.black45),
           const SizedBox(width: 6),
-          Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800)),
+          Text(label,
+              style: Theme.of(context)
+                  .textTheme
+                  .labelMedium
+                  ?.copyWith(fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -503,7 +588,11 @@ class _SoftChip extends StatelessWidget {
 }
 
 class _NoticeCard extends StatelessWidget {
-  const _NoticeCard({required this.icon, required this.title, required this.message, required this.color});
+  const _NoticeCard(
+      {required this.icon,
+      required this.title,
+      required this.message,
+      required this.color});
 
   final IconData icon;
   final String title;
@@ -525,7 +614,11 @@ class _NoticeCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900)),
+                    Text(title,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w900)),
                     const SizedBox(height: 3),
                     Text(message),
                   ],
@@ -554,11 +647,26 @@ class _DetailLoading extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(height: 18, width: 180, decoration: BoxDecoration(color: Colors.black.withOpacity(0.06), borderRadius: BorderRadius.circular(999))),
+                Container(
+                    height: 18,
+                    width: 180,
+                    decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(999))),
                 const SizedBox(height: 16),
-                Container(height: 12, width: double.infinity, decoration: BoxDecoration(color: Colors.black.withOpacity(0.04), borderRadius: BorderRadius.circular(999))),
+                Container(
+                    height: 12,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        borderRadius: BorderRadius.circular(999))),
                 const SizedBox(height: 10),
-                Container(height: 12, width: 240, decoration: BoxDecoration(color: Colors.black.withOpacity(0.04), borderRadius: BorderRadius.circular(999))),
+                Container(
+                    height: 12,
+                    width: 240,
+                    decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        borderRadius: BorderRadius.circular(999))),
               ],
             ),
           ),

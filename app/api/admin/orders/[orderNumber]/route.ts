@@ -5,6 +5,8 @@ import { writeAuditForAdmin } from "@/lib/audit";
 import { notifyTelegram, escapeHtml } from "@/lib/telegram";
 import { createAdminNotification } from "@/lib/adminNotifications";
 import { revalidateAdminChange } from "@/lib/adminRevalidate";
+import { logSecurityEvent } from "@/lib/secureLogger";
+import { normalizeAdminRole } from "@/lib/adminPermissions";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withAdminAuth } from "@/lib/withAdminAuth";
@@ -25,6 +27,8 @@ const updateSchema = z.object({
   deliveryNote: z.string().max(2000).optional(),
   failureReason: z.string().max(2000).optional(),
   adminNote: z.string().max(2000).optional(),
+  // Security: manual PAID requires explicit confirmation
+  confirmManualPaid: z.boolean().optional(),
 });
 
 function normalizeStatus(status?: string) {
@@ -68,6 +72,34 @@ export const PATCH = withAdminAuth(
     if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const nextStatus = normalizeStatus(parsed.data.status);
+
+    // ── Security: Manual PAID requires explicit confirmation + OWNER role ──
+    // This prevents fake payment confirmations from screenshots/messages.
+    // Only gateway webhooks or OWNER with explicit confirm can mark PAID.
+    if (nextStatus === "PAID" && order.status !== "PAID") {
+      const role = normalizeAdminRole(admin.role);
+
+      if (role !== "OWNER") {
+        return NextResponse.json(
+          { error: "Only the site owner can manually mark orders as PAID. Use the KHPay refresh button for gateway-verified payments." },
+          { status: 403, headers: { "Cache-Control": "no-store" } }
+        );
+      }
+
+      if (parsed.data.confirmManualPaid !== true) {
+        return NextResponse.json(
+          { error: "Manual PAID requires confirmManualPaid:true. Use the KHPay refresh button for gateway-verified payments." },
+          { status: 400, headers: { "Cache-Control": "no-store" } }
+        );
+      }
+
+      logSecurityEvent({
+        event: "admin_settings_changed",
+        adminId: admin.id,
+        detail: `Manual PAID override: order=${orderNumber}, amount=$${order.amountUsd}`,
+      });
+    }
+
     const data: any = {
       ...(parsed.data.deliveryNote !== undefined ? { deliveryNote: parsed.data.deliveryNote } : {}),
       ...(parsed.data.failureReason !== undefined ? { failureReason: parsed.data.failureReason } : {}),
@@ -89,30 +121,37 @@ export const PATCH = withAdminAuth(
     });
 
     if (nextStatus && nextStatus !== order.status) {
+      const isManualPaid = nextStatus === "PAID" && parsed.data.confirmManualPaid === true;
+
       await writeAuditForAdmin(admin, req, {
-        action: "order.status.update",
+        action: isManualPaid ? "order.manual_paid" : "order.status.update",
         targetType: "order",
         targetId: order.orderNumber,
         details: {
           from: order.status,
           to: nextStatus,
           adminNote: parsed.data.adminNote || null,
+          ...(isManualPaid ? { manualOverride: true } : {}),
         },
       });
 
       await createAdminNotification({
         type: "order.updated",
-        title: "Order status updated",
-        message: `${order.orderNumber}: ${order.status} → ${nextStatus}`,
+        title: isManualPaid ? "⚠️ Order manually marked PAID" : "Order status updated",
+        message: `${order.orderNumber}: ${order.status} → ${nextStatus}${isManualPaid ? " (MANUAL OVERRIDE)" : ""}`,
         targetType: "order",
         targetId: order.orderNumber,
       });
 
       if (nextStatus === "DELIVERED" || nextStatus === "PAID") {
+        const prefix = isManualPaid
+          ? `⚠️ <b>MANUAL PAID (admin override)</b>`
+          : `✅ <b>Order ${escapeHtml(nextStatus)}</b>`;
         await notifyTelegram(
-          `✅ <b>Order ${escapeHtml(nextStatus)}</b>\n` +
+          `${prefix}\n` +
             `#${escapeHtml(order.orderNumber)} — $${order.amountUsd.toFixed(2)}\n` +
-            `UID: <code>${escapeHtml(order.playerUid)}</code>`
+            `UID: <code>${escapeHtml(order.playerUid)}</code>\n` +
+            `Admin: ${escapeHtml(admin.email)}`
         );
       }
     } else if (parsed.data.deliveryNote || parsed.data.failureReason || parsed.data.adminNote) {

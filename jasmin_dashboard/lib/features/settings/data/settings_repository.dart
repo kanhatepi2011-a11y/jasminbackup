@@ -34,7 +34,8 @@ class SettingsRepository {
   AppException _exceptionFromDio(DioException error, String fallback) {
     final data = error.response?.data;
     if (data is Map && data['error'] != null) {
-      return AppException(data['error'].toString(), statusCode: error.response?.statusCode);
+      return AppException(data['error'].toString(),
+          statusCode: error.response?.statusCode);
     }
     return AppException(fallback, statusCode: error.response?.statusCode);
   }

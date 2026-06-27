@@ -46,17 +46,23 @@ class AuthInterceptor extends Interceptor {
 
   bool _shouldAttachBearer(RequestOptions options) {
     final path = _pathFrom(options);
-    if (!path.contains('/api/admin')) return false;
+    if (!path.contains('/api/admin')) {
+      return false;
+    }
 
     return !path.endsWith(ApiPaths.login) && !path.endsWith(ApiPaths.twoFactor);
   }
 
   String _pathFrom(RequestOptions options) {
     final uriPath = options.uri.path;
-    if (uriPath.isNotEmpty) return uriPath;
+    if (uriPath.isNotEmpty) {
+      return uriPath;
+    }
     final parsed = Uri.tryParse(options.path);
     final parsedPath = parsed?.path;
-    if (parsedPath != null && parsedPath.isNotEmpty) return parsedPath;
+    if (parsedPath != null && parsedPath.isNotEmpty) {
+      return parsedPath;
+    }
     return options.path;
   }
 }

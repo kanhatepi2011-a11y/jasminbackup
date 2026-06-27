@@ -23,7 +23,11 @@ class RecentOrdersCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text('Recent orders', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                  child: Text('Recent orders',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w800)),
                 ),
                 TextButton.icon(
                   onPressed: () => context.go('/orders'),
@@ -54,13 +58,15 @@ class _RecentOrderTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final amount = order.amountKhr != null && order.currency.toUpperCase() == 'KHR'
-        ? Formatters.moneyKhr(order.amountKhr!)
-        : Formatters.moneyUsd(order.amountUsd);
+    final amount =
+        order.amountKhr != null && order.currency.toUpperCase() == 'KHR'
+            ? Formatters.moneyKhr(order.amountKhr!)
+            : Formatters.moneyUsd(order.amountUsd);
 
     return InkWell(
       borderRadius: BorderRadius.circular(18),
-      onTap: () => context.go('/orders/${Uri.encodeComponent(order.orderNumber)}'),
+      onTap: () =>
+          context.go('/orders/${Uri.encodeComponent(order.orderNumber)}'),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
@@ -69,10 +75,12 @@ class _RecentOrderTile extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: _statusColor(context, order.status).withOpacity(0.12),
+                color:
+                    _statusColor(context, order.status).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(Icons.receipt_long_rounded, color: _statusColor(context, order.status), size: 20),
+              child: Icon(Icons.receipt_long_rounded,
+                  color: _statusColor(context, order.status), size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -80,24 +88,35 @@ class _RecentOrderTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    order.orderNumber.isEmpty ? 'Unknown order' : order.orderNumber,
+                    order.orderNumber.isEmpty
+                        ? 'Unknown order'
+                        : order.orderNumber,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '${order.game.name} • ${order.product.name}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: Colors.black54),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '${order.customerLabel} • ${Formatters.dateTimeOrDash(order.createdAt)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black45),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: Colors.black45),
                   ),
                 ],
               ),
@@ -106,7 +125,11 @@ class _RecentOrderTile extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(amount, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900)),
+                Text(amount,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w900)),
                 const SizedBox(height: 6),
                 _StatusPill(status: order.status),
               ],
@@ -147,12 +170,15 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         Formatters.statusLabel(status),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w800),
+        style: Theme.of(context)
+            .textTheme
+            .labelSmall
+            ?.copyWith(color: color, fontWeight: FontWeight.w800),
       ),
     );
   }

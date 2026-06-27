@@ -386,8 +386,10 @@ export function verifyWebhook(
       .update(signedPayload)
       .digest("hex");
 
-    const a = Buffer.from(receivedHmac.padEnd(expectedHmac.length, "\0"));
-    const b = Buffer.from(expectedHmac);
-    return a.length === b.length && crypto.timingSafeEqual(a, b);
+    // Security: reject length-mismatched signatures outright instead of padding
+    const a = Buffer.from(receivedHmac, "hex");
+    const b = Buffer.from(expectedHmac, "hex");
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
   });
 }

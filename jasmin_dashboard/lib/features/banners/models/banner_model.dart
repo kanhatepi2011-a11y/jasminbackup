@@ -23,7 +23,8 @@ class BannerModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  String get safeTitle => title.trim().isEmpty ? 'Untitled banner' : title.trim();
+  String get safeTitle =>
+      title.trim().isEmpty ? 'Untitled banner' : title.trim();
   bool get hasLink => linkUrl != null && linkUrl!.trim().isNotEmpty;
   bool get hasCta => ctaLabel != null && ctaLabel!.trim().isNotEmpty;
 
@@ -48,8 +49,12 @@ class BannerModel {
   }
 
   static int _intFrom(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 }

@@ -10,7 +10,9 @@ class DashboardGameSummary {
   final String slug;
 
   factory DashboardGameSummary.fromJson(Map<String, dynamic>? json) {
-    if (json == null) return const DashboardGameSummary(id: '', name: 'Unknown game', slug: '');
+    if (json == null) {
+      return const DashboardGameSummary(id: '', name: 'Unknown game', slug: '');
+    }
     return DashboardGameSummary(
       id: (json['id'] ?? '').toString(),
       name: (json['name'] ?? 'Unknown game').toString(),

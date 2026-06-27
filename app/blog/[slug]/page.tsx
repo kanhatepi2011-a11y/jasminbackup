@@ -29,16 +29,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * Minimal text-to-safe-HTML: escapes tags, preserves paragraphs and line breaks.
- * Keeps admin-authored content free of XSS without needing a rich-text sanitizer.
+ * Strict HTML entity escaping — prevents XSS even if admin content contains
+ * script tags, event handlers, or encoded payloads.
  */
-function renderContent(raw: string) {
-  const escaped = raw
+function escapeHtml(text: string): string {
+  return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/**
+ * Render blog content safely: full HTML entity escape, then only allow <br/>
+ * for line breaks within paragraphs. No other HTML is permitted.
+ */
+function renderContent(raw: string) {
+  const escaped = escapeHtml(raw);
   return escaped.split(/\n{2,}/).map((block, i) => (
-    <p key={i} className="mb-4 leading-relaxed text-pink-800/90" dangerouslySetInnerHTML={{ __html: block.replace(/\n/g, "<br/>") }} />
+    <p
+      key={i}
+      className="mb-4 leading-relaxed text-pink-800/90"
+      dangerouslySetInnerHTML={{ __html: block.replace(/\n/g, "<br/>") }}
+    />
   ));
 }
 

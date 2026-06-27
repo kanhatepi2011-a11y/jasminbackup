@@ -147,19 +147,27 @@ class _AdminTwoFactorScreenState extends ConsumerState<AdminTwoFactorScreen> {
 
   String? _validateCode(String? value) {
     final code = value?.trim() ?? '';
-    if (code.isEmpty) return '2FA code is required.';
-    if (!RegExp(r'^\d{6}$').hasMatch(code)) return 'Enter exactly 6 digits.';
+    if (code.isEmpty) {
+      return '2FA code is required.';
+    }
+    if (!RegExp(r'^\d{6}$').hasMatch(code)) {
+      return 'Enter exactly 6 digits.';
+    }
     return null;
   }
 
   Future<void> _verify() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
     final success = await ref
         .read(authProvider.notifier)
         .verifyTwoFactor(_codeController.text);
     if (success) {
       _codeController.clear();
-      if (mounted) FocusScope.of(context).unfocus();
+      if (mounted) {
+        FocusScope.of(context).unfocus();
+      }
       return;
     }
 

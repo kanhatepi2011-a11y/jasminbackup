@@ -25,29 +25,39 @@ class FaqFiltersBar extends StatelessWidget {
         SizedBox(
           width: 220,
           child: DropdownButtonFormField<String>(
-            value: selectedCategory,
-            decoration: const InputDecoration(labelText: 'Category', prefixIcon: Icon(Icons.category_rounded)),
+            initialValue: selectedCategory,
+            decoration: const InputDecoration(
+                labelText: 'Category',
+                prefixIcon: Icon(Icons.category_rounded)),
             items: [
-              const DropdownMenuItem(value: 'ALL', child: Text('All categories')),
-              for (final category in categories) DropdownMenuItem(value: category, child: Text(category)),
+              const DropdownMenuItem(
+                  value: 'ALL', child: Text('All categories')),
+              for (final category in categories)
+                DropdownMenuItem(value: category, child: Text(category)),
             ],
             onChanged: (value) {
-              if (value != null) onCategoryChanged(value);
+              if (value != null) {
+                onCategoryChanged(value);
+              }
             },
           ),
         ),
         SizedBox(
           width: 190,
           child: DropdownButtonFormField<String>(
-            value: selectedActiveFilter,
-            decoration: const InputDecoration(labelText: 'Visibility', prefixIcon: Icon(Icons.visibility_rounded)),
+            initialValue: selectedActiveFilter,
+            decoration: const InputDecoration(
+                labelText: 'Visibility',
+                prefixIcon: Icon(Icons.visibility_rounded)),
             items: const [
               DropdownMenuItem(value: 'ALL', child: Text('All')),
               DropdownMenuItem(value: 'ACTIVE', child: Text('Visible')),
               DropdownMenuItem(value: 'INACTIVE', child: Text('Hidden')),
             ],
             onChanged: (value) {
-              if (value != null) onActiveChanged(value);
+              if (value != null) {
+                onActiveChanged(value);
+              }
             },
           ),
         ),

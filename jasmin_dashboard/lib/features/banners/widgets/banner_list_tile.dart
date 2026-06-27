@@ -44,7 +44,10 @@ class BannerListTile extends StatelessWidget {
                             banner.safeTitle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w900),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -57,7 +60,10 @@ class BannerListTile extends StatelessWidget {
                         banner.subtitle!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: Colors.black54),
                       ),
                     ],
                     const SizedBox(height: 8),
@@ -65,10 +71,19 @@ class BannerListTile extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 6,
                       children: [
-                        _MiniInfo(icon: Icons.sort_rounded, label: 'Order ${banner.sortOrder}'),
-                        if (banner.hasCta) _MiniInfo(icon: Icons.touch_app_rounded, label: banner.ctaLabel!),
-                        if (banner.hasLink) const _MiniInfo(icon: Icons.link_rounded, label: 'Has link'),
-                        _MiniInfo(icon: Icons.update_rounded, label: Formatters.dateTimeOrDash(banner.updatedAt)),
+                        _MiniInfo(
+                            icon: Icons.sort_rounded,
+                            label: 'Order ${banner.sortOrder}'),
+                        if (banner.hasCta)
+                          _MiniInfo(
+                              icon: Icons.touch_app_rounded,
+                              label: banner.ctaLabel!),
+                        if (banner.hasLink)
+                          const _MiniInfo(
+                              icon: Icons.link_rounded, label: 'Has link'),
+                        _MiniInfo(
+                            icon: Icons.update_rounded,
+                            label: Formatters.dateTimeOrDash(banner.updatedAt)),
                       ],
                     ),
                   ],
@@ -78,27 +93,47 @@ class BannerListTile extends StatelessWidget {
               if (isBusy)
                 const Padding(
                   padding: EdgeInsets.all(12),
-                  child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.3)),
+                  child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.3)),
                 )
               else
                 PopupMenuButton<String>(
                   tooltip: 'Banner actions',
                   onSelected: (value) {
-                    if (value == 'edit') context.go('/banners/${Uri.encodeComponent(banner.id)}');
-                    if (value == 'toggle') onToggleActive();
-                    if (value == 'delete') onDelete();
+                    if (value == 'edit') {
+                      context.go('/banners/${Uri.encodeComponent(banner.id)}');
+                    }
+                    if (value == 'toggle') {
+                      onToggleActive();
+                    }
+                    if (value == 'delete') {
+                      onDelete();
+                    }
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem(value: 'edit', child: _MenuRow(icon: Icons.edit_rounded, label: 'Edit')),
+                    const PopupMenuItem(
+                        value: 'edit',
+                        child:
+                            _MenuRow(icon: Icons.edit_rounded, label: 'Edit')),
                     PopupMenuItem(
                       value: 'toggle',
                       child: _MenuRow(
-                        icon: banner.active ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                        label: banner.active ? 'Hide from homepage' : 'Show on homepage',
+                        icon: banner.active
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
+                        label: banner.active
+                            ? 'Hide from homepage'
+                            : 'Show on homepage',
                       ),
                     ),
                     const PopupMenuDivider(),
-                    const PopupMenuItem(value: 'delete', child: _MenuRow(icon: Icons.delete_outline_rounded, label: 'Delete')),
+                    const PopupMenuItem(
+                        value: 'delete',
+                        child: _MenuRow(
+                            icon: Icons.delete_outline_rounded,
+                            label: 'Delete')),
                   ],
                 ),
             ],
@@ -116,12 +151,13 @@ class _BannerPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = banner.active ? Theme.of(context).colorScheme.primary : Colors.black45;
+    final color =
+        banner.active ? Theme.of(context).colorScheme.primary : Colors.black45;
     return Container(
       width: 74,
       height: 54,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(18),
       ),
       clipBehavior: Clip.antiAlias,
@@ -129,7 +165,8 @@ class _BannerPreview extends StatelessWidget {
           ? Image.network(
               banner.imageUrl,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Icon(Icons.view_carousel_rounded, color: color),
+              errorBuilder: (context, error, stackTrace) =>
+                  Icon(Icons.view_carousel_rounded, color: color),
             )
           : Icon(Icons.view_carousel_rounded, color: color),
     );
@@ -146,13 +183,17 @@ class _MiniInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(color: Colors.black.withOpacity(0.04), borderRadius: BorderRadius.circular(999)),
+      decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(999)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: Colors.black45),
           const SizedBox(width: 5),
-          Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700, color: Colors.black54)),
+          Text(label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w700, color: Colors.black54)),
         ],
       ),
     );
@@ -164,5 +205,6 @@ class _MenuRow extends StatelessWidget {
   final IconData icon;
   final String label;
   @override
-  Widget build(BuildContext context) => Row(children: [Icon(icon), const SizedBox(width: 10), Text(label)]);
+  Widget build(BuildContext context) =>
+      Row(children: [Icon(icon), const SizedBox(width: 10), Text(label)]);
 }

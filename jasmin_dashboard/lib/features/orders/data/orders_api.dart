@@ -31,11 +31,13 @@ class OrdersApi {
       },
     );
 
-    return OrderListResponse.fromJson(response.data ?? const <String, dynamic>{});
+    return OrderListResponse.fromJson(
+        response.data ?? const <String, dynamic>{});
   }
 
   Future<OrderModel> fetchOrder(String orderNumber) async {
-    final response = await _dio.get<Map<String, dynamic>>(ApiPaths.orderDetail(orderNumber));
+    final response =
+        await _dio.get<Map<String, dynamic>>(ApiPaths.orderDetail(orderNumber));
     return OrderModel.fromJson(response.data ?? const <String, dynamic>{});
   }
 
@@ -50,7 +52,8 @@ class OrdersApi {
       if (status != null && status.trim().isNotEmpty) 'status': status.trim(),
       if (deliveryNote != null) 'deliveryNote': deliveryNote.trim(),
       if (failureReason != null) 'failureReason': failureReason.trim(),
-      if (adminNote != null && adminNote.trim().isNotEmpty) 'adminNote': adminNote.trim(),
+      if (adminNote != null && adminNote.trim().isNotEmpty)
+        'adminNote': adminNote.trim(),
     };
 
     final response = await _dio.patch<Map<String, dynamic>>(

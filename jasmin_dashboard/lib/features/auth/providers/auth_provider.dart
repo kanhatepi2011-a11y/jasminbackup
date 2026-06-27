@@ -123,19 +123,25 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> handleUnauthorized() async {
-    if (_isConfirmingUnauthorized) return;
+    if (_isConfirmingUnauthorized) {
+      return;
+    }
     _isConfirmingUnauthorized = true;
 
     try {
       final admin = await _repository.restoreSession();
       final expiresAt = await _repository.readLocalExpiry();
       _scheduleSessionExpiry(expiresAt);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = AuthState(status: AuthStatus.authenticated, admin: admin);
     } catch (_) {
       _cancelTimers();
       await _repository.clearLocalSession();
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = AuthState.unauthenticated(
         errorMessage: 'Session expired. Please login again.',
       );
@@ -150,7 +156,9 @@ class AuthController extends StateNotifier<AuthState> {
         current.copyWith(isLoading: true, clearError: true, clearInfo: true);
     await _repository.logout();
     _cancelTimers();
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     state = AuthState.unauthenticated(
         infoMessage: 'You have been logged out safely.');
   }
@@ -160,7 +168,9 @@ class AuthController extends StateNotifier<AuthState> {
     final duration = expiresAt.difference(DateTime.now().toUtc());
     if (!duration.isNegative && duration > Duration.zero) {
       _challengeTimer = Timer(duration, () {
-        if (!mounted || state.status != AuthStatus.awaitingTwoFactor) return;
+        if (!mounted || state.status != AuthStatus.awaitingTwoFactor) {
+          return;
+        }
         state = AuthState.unauthenticated(
             errorMessage: '2FA session expired. Please login again.');
       });
@@ -170,7 +180,9 @@ class AuthController extends StateNotifier<AuthState> {
     // If the backend omits expiry or sends an unexpected date format, let the
     // backend decide validity when /2fa is called instead of failing locally.
     _challengeTimer = Timer(const Duration(minutes: 5), () {
-      if (!mounted || state.status != AuthStatus.awaitingTwoFactor) return;
+      if (!mounted || state.status != AuthStatus.awaitingTwoFactor) {
+        return;
+      }
       state = AuthState.unauthenticated(
           errorMessage: '2FA session expired. Please login again.');
     });
@@ -178,7 +190,9 @@ class AuthController extends StateNotifier<AuthState> {
 
   void _scheduleSessionExpiry(DateTime? expiresAt) {
     _sessionExpiryTimer?.cancel();
-    if (expiresAt == null) return;
+    if (expiresAt == null) {
+      return;
+    }
 
     final duration = expiresAt.difference(DateTime.now().toUtc());
     if (duration.isNegative) {
@@ -197,7 +211,9 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   String _messageFromError(Object error, {required String fallback}) {
-    if (error is AppException) return error.message;
+    if (error is AppException) {
+      return error.message;
+    }
     return fallback;
   }
 

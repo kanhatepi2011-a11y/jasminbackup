@@ -62,7 +62,8 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final gameId = widget.gameId == null ? null : Uri.decodeComponent(widget.gameId!);
+    final gameId =
+        widget.gameId == null ? null : Uri.decodeComponent(widget.gameId!);
     final provider = gameEditorProvider(gameId);
     final state = ref.watch(provider);
     final controller = ref.read(provider.notifier);
@@ -104,12 +105,18 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
                     children: [
                       Text(
                         widget.isEditing ? 'Edit game' : 'Create game',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Game changes are saved through the secure admin API and reflected on JASMINTOPUP automatically.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: Colors.black54),
                       ),
                     ],
                   ),
@@ -145,10 +152,14 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
                         TextFormField(
                           controller: _nameController,
                           textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(labelText: 'Game name', hintText: 'Mobile Legends', prefixIcon: Icon(Icons.sports_esports_rounded)),
+                          decoration: const InputDecoration(
+                              labelText: 'Game name',
+                              hintText: 'Mobile Legends',
+                              prefixIcon: Icon(Icons.sports_esports_rounded)),
                           validator: _required('Game name'),
                           onChanged: (value) {
-                            if (!widget.isEditing && _slugController.text.trim().isEmpty) {
+                            if (!widget.isEditing &&
+                                _slugController.text.trim().isEmpty) {
                               _slugController.text = _slugFromName(value);
                             }
                           },
@@ -157,12 +168,22 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
                         TextFormField(
                           controller: _slugController,
                           textInputAction: TextInputAction.next,
-                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9-]'))],
-                          decoration: const InputDecoration(labelText: 'Slug', hintText: 'mobile-legends', prefixIcon: Icon(Icons.link_rounded)),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'[a-z0-9-]'))
+                          ],
+                          decoration: const InputDecoration(
+                              labelText: 'Slug',
+                              hintText: 'mobile-legends',
+                              prefixIcon: Icon(Icons.link_rounded)),
                           validator: (value) {
                             final text = value?.trim() ?? '';
-                            if (text.length < 2) return 'Slug must be at least 2 characters.';
-                            if (!RegExp(r'^[a-z0-9-]+$').hasMatch(text)) return 'Use lowercase letters, numbers, and hyphens only.';
+                            if (text.length < 2) {
+                              return 'Slug must be at least 2 characters.';
+                            }
+                            if (!RegExp(r'^[a-z0-9-]+$').hasMatch(text)) {
+                              return 'Use lowercase letters, numbers, and hyphens only.';
+                            }
                             return null;
                           },
                         ),
@@ -182,7 +203,9 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
                           controller: _descriptionController,
                           minLines: 3,
                           maxLines: 5,
-                          decoration: const InputDecoration(labelText: 'Description', prefixIcon: Icon(Icons.description_rounded)),
+                          decoration: const InputDecoration(
+                              labelText: 'Description',
+                              prefixIcon: Icon(Icons.description_rounded)),
                         ),
                       ],
                     );
@@ -193,37 +216,52 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
                         TextFormField(
                           controller: _imageUrlController,
                           textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(labelText: 'Game image URL/path', hintText: '/uploads/game.png or https://...', prefixIcon: Icon(Icons.image_rounded)),
+                          decoration: const InputDecoration(
+                              labelText: 'Game image URL/path',
+                              hintText: '/uploads/game.png or https://...',
+                              prefixIcon: Icon(Icons.image_rounded)),
                           validator: _required('Game image'),
                         ),
                         const SizedBox(height: 14),
                         TextFormField(
                           controller: _bannerUrlController,
                           textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(labelText: 'Banner URL/path optional', prefixIcon: Icon(Icons.panorama_rounded)),
+                          decoration: const InputDecoration(
+                              labelText: 'Banner URL/path optional',
+                              prefixIcon: Icon(Icons.panorama_rounded)),
                         ),
                         const SizedBox(height: 14),
                         TextFormField(
                           controller: _sortOrderController,
                           keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          decoration: const InputDecoration(labelText: 'Display order', prefixIcon: Icon(Icons.sort_rounded)),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
+                          decoration: const InputDecoration(
+                              labelText: 'Display order',
+                              prefixIcon: Icon(Icons.sort_rounded)),
                           validator: _positiveOrZeroInt('Display order'),
                         ),
                         const SizedBox(height: 14),
                         SwitchListTile.adaptive(
                           contentPadding: EdgeInsets.zero,
                           title: const Text('Visible on website'),
-                          subtitle: const Text('Disabled games are hidden from public pages.'),
+                          subtitle: const Text(
+                              'Disabled games are hidden from public pages.'),
                           value: _active,
-                          onChanged: state.isSaving ? null : (value) => setState(() => _active = value),
+                          onChanged: state.isSaving
+                              ? null
+                              : (value) => setState(() => _active = value),
                         ),
                         SwitchListTile.adaptive(
                           contentPadding: EdgeInsets.zero,
                           title: const Text('Featured game'),
-                          subtitle: const Text('Used by homepage/highlight sections when supported.'),
+                          subtitle: const Text(
+                              'Used by homepage/highlight sections when supported.'),
                           value: _featured,
-                          onChanged: state.isSaving ? null : (value) => setState(() => _featured = value),
+                          onChanged: state.isSaving
+                              ? null
+                              : (value) => setState(() => _featured = value),
                         ),
                       ],
                     );
@@ -234,29 +272,41 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
                         TextFormField(
                           controller: _currencyNameController,
                           textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(labelText: 'Currency name', hintText: 'Diamonds, Shells, UC...', prefixIcon: Icon(Icons.paid_rounded)),
+                          decoration: const InputDecoration(
+                              labelText: 'Currency name',
+                              hintText: 'Diamonds, Shells, UC...',
+                              prefixIcon: Icon(Icons.paid_rounded)),
                           validator: _required('Currency name'),
                         ),
                         const SizedBox(height: 14),
                         TextFormField(
                           controller: _uidLabelController,
                           textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(labelText: 'UID label', hintText: 'Player ID', prefixIcon: Icon(Icons.badge_rounded)),
+                          decoration: const InputDecoration(
+                              labelText: 'UID label',
+                              hintText: 'Player ID',
+                              prefixIcon: Icon(Icons.badge_rounded)),
                           validator: _required('UID label'),
                         ),
                         const SizedBox(height: 14),
                         TextFormField(
                           controller: _uidExampleController,
                           textInputAction: TextInputAction.next,
-                          decoration: const InputDecoration(labelText: 'UID example optional', prefixIcon: Icon(Icons.info_outline_rounded)),
+                          decoration: const InputDecoration(
+                              labelText: 'UID example optional',
+                              prefixIcon: Icon(Icons.info_outline_rounded)),
                         ),
                         const SizedBox(height: 14),
                         SwitchListTile.adaptive(
                           contentPadding: EdgeInsets.zero,
                           title: const Text('Requires server/zone'),
-                          subtitle: const Text('Enable for games that need server ID or zone ID.'),
+                          subtitle: const Text(
+                              'Enable for games that need server ID or zone ID.'),
                           value: _requiresServer,
-                          onChanged: state.isSaving ? null : (value) => setState(() => _requiresServer = value),
+                          onChanged: state.isSaving
+                              ? null
+                              : (value) =>
+                                  setState(() => _requiresServer = value),
                         ),
                         const SizedBox(height: 8),
                         TextFormField(
@@ -278,14 +328,18 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
                       children: [
                         TextFormField(
                           controller: _seoTitleController,
-                          decoration: const InputDecoration(labelText: 'SEO title', prefixIcon: Icon(Icons.title_rounded)),
+                          decoration: const InputDecoration(
+                              labelText: 'SEO title',
+                              prefixIcon: Icon(Icons.title_rounded)),
                         ),
                         const SizedBox(height: 14),
                         TextFormField(
                           controller: _seoDescriptionController,
                           minLines: 2,
                           maxLines: 4,
-                          decoration: const InputDecoration(labelText: 'SEO description', prefixIcon: Icon(Icons.search_rounded)),
+                          decoration: const InputDecoration(
+                              labelText: 'SEO description',
+                              prefixIcon: Icon(Icons.search_rounded)),
                         ),
                         const SizedBox(height: 16),
                         GameStatusPill(active: _active, featured: _featured),
@@ -328,7 +382,9 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
                           children: [
                             Expanded(
                               child: OutlinedButton.icon(
-                                onPressed: state.isSaving ? null : () => context.go('/games'),
+                                onPressed: state.isSaving
+                                    ? null
+                                    : () => context.go('/games'),
                                 icon: const Icon(Icons.arrow_back_rounded),
                                 label: const Text('Cancel'),
                               ),
@@ -336,11 +392,18 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: FilledButton.icon(
-                                onPressed: state.isSaving ? null : () => _save(controller),
+                                onPressed: state.isSaving
+                                    ? null
+                                    : () => _save(controller),
                                 icon: state.isSaving
-                                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2))
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2.2))
                                     : const Icon(Icons.save_rounded),
-                                label: Text(state.isSaving ? 'Saving...' : 'Save game'),
+                                label: Text(
+                                    state.isSaving ? 'Saving...' : 'Save game'),
                               ),
                             ),
                           ],
@@ -358,7 +421,9 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
   }
 
   void _hydrate(GameEditorState state) {
-    if (!mounted || _hydrated) return;
+    if (!mounted || _hydrated) {
+      return;
+    }
     final game = state.game;
     if (game != null) {
       _slugController.text = game.slug;
@@ -370,7 +435,8 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
       _currencyNameController.text = game.currencyName;
       _uidLabelController.text = game.uidLabel;
       _uidExampleController.text = game.uidExample ?? '';
-      _serversController.text = game.servers.trim().isEmpty ? '[]' : game.servers;
+      _serversController.text =
+          game.servers.trim().isEmpty ? '[]' : game.servers;
       _sortOrderController.text = game.sortOrder.toString();
       _seoTitleController.text = game.seoTitle ?? '';
       _seoDescriptionController.text = game.seoDescription ?? '';
@@ -383,7 +449,9 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
 
   Future<void> _save(GameEditorController controller) async {
     final form = _formKey.currentState;
-    if (form == null || !form.validate()) return;
+    if (form == null || !form.validate()) {
+      return;
+    }
 
     final payload = GamePayload(
       slug: _slugController.text,
@@ -407,31 +475,41 @@ class _GameEditorScreenState extends ConsumerState<GameEditorScreen> {
     final result = await controller.save(payload);
     if (result != null && mounted) {
       _hydrated = false;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Game saved. Website will refresh shortly.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Game saved. Website will refresh shortly.')));
       context.go('/games');
     }
   }
 
   FormFieldValidator<String> _required(String label) {
-    return (value) => value == null || value.trim().isEmpty ? '$label is required.' : null;
+    return (value) =>
+        value == null || value.trim().isEmpty ? '$label is required.' : null;
   }
 
   FormFieldValidator<String> _positiveOrZeroInt(String label) {
     return (value) {
       final text = value?.trim() ?? '';
-      if (text.isEmpty) return '$label is required.';
+      if (text.isEmpty) {
+        return '$label is required.';
+      }
       final number = int.tryParse(text);
-      if (number == null || number < 0) return '$label must be 0 or higher.';
+      if (number == null || number < 0) {
+        return '$label must be 0 or higher.';
+      }
       return null;
     };
   }
 
   String? _serversJson(String? value) {
     final text = value?.trim() ?? '';
-    if (text.isEmpty) return null;
+    if (text.isEmpty) {
+      return null;
+    }
     try {
       final decoded = jsonDecode(text);
-      if (decoded is! List) return 'Servers must be a JSON array.';
+      if (decoded is! List) {
+        return 'Servers must be a JSON array.';
+      }
     } catch (_) {
       return 'Servers must be valid JSON, for example: []';
     }
@@ -461,7 +539,11 @@ class _FormCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+            Text(title,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w900)),
             const SizedBox(height: 14),
             ...children,
           ],
@@ -472,7 +554,11 @@ class _FormCard extends StatelessWidget {
 }
 
 class _NoticeCard extends StatelessWidget {
-  const _NoticeCard({required this.icon, required this.title, required this.message, required this.color});
+  const _NoticeCard(
+      {required this.icon,
+      required this.title,
+      required this.message,
+      required this.color});
 
   final IconData icon;
   final String title;
@@ -494,7 +580,11 @@ class _NoticeCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900)),
+                  Text(title,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w900)),
                   const SizedBox(height: 3),
                   Text(message),
                 ],
@@ -523,7 +613,9 @@ class _EditorLoading extends StatelessWidget {
               child: Container(
                 height: 18,
                 width: double.infinity,
-                decoration: BoxDecoration(color: Colors.black.withOpacity(0.06), borderRadius: BorderRadius.circular(999)),
+                decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(999)),
               ),
             ),
           ),

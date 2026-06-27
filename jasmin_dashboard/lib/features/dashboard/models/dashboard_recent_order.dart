@@ -37,10 +37,18 @@ class DashboardRecentOrder {
   final DashboardProductSummary product;
 
   String get customerLabel {
-    if (playerNickname != null && playerNickname!.trim().isNotEmpty) return playerNickname!.trim();
-    if (customerEmail != null && customerEmail!.trim().isNotEmpty) return customerEmail!.trim();
-    if (customerPhone != null && customerPhone!.trim().isNotEmpty) return customerPhone!.trim();
-    if (playerUid.isNotEmpty) return playerUid;
+    if (playerNickname != null && playerNickname!.trim().isNotEmpty) {
+      return playerNickname!.trim();
+    }
+    if (customerEmail != null && customerEmail!.trim().isNotEmpty) {
+      return customerEmail!.trim();
+    }
+    if (customerPhone != null && customerPhone!.trim().isNotEmpty) {
+      return customerPhone!.trim();
+    }
+    if (playerUid.isNotEmpty) {
+      return playerUid;
+    }
     return 'Unknown customer';
   }
 
@@ -70,24 +78,34 @@ class DashboardRecentOrder {
   }
 
   static double _double(dynamic value) {
-    if (value is num) return value.toDouble();
+    if (value is num) {
+      return value.toDouble();
+    }
     return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   static double? _nullableDouble(dynamic value) {
-    if (value == null) return null;
-    if (value is num) return value.toDouble();
+    if (value == null) {
+      return null;
+    }
+    if (value is num) {
+      return value.toDouble();
+    }
     return double.tryParse(value.toString());
   }
 
   static Map<String, dynamic>? _mapOrNull(dynamic value) {
-    if (value is Map) return Map<String, dynamic>.from(value);
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
     return null;
   }
 
   static DateTime? _date(dynamic value) {
     final text = value?.toString();
-    if (text == null || text.isEmpty) return null;
+    if (text == null || text.isEmpty) {
+      return null;
+    }
     return DateTime.tryParse(text)?.toLocal();
   }
 }

@@ -51,7 +51,9 @@ class SettingsModel {
   }
 
   static double _doubleFrom(dynamic value, {required double fallback}) {
-    if (value is num) return value.toDouble();
+    if (value is num) {
+      return value.toDouble();
+    }
     return double.tryParse(value?.toString() ?? '') ?? fallback;
   }
 

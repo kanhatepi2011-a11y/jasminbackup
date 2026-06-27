@@ -13,7 +13,9 @@ class PublicDataVersion {
     return PublicDataVersion(
       scope: json['scope']?.toString() ?? 'home',
       version: json['version']?.toString() ?? '',
-      checkedAt: DateTime.tryParse(json['checkedAt']?.toString() ?? '')?.toUtc() ?? DateTime.now().toUtc(),
+      checkedAt:
+          DateTime.tryParse(json['checkedAt']?.toString() ?? '')?.toUtc() ??
+              DateTime.now().toUtc(),
     );
   }
 }

@@ -39,11 +39,16 @@ class _FaqsScreenState extends ConsumerState<FaqsScreen> {
     ref.listen(faqsProvider, (previous, next) {
       final success = next.successMessage;
       if (success != null && success != previous?.successMessage) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(success)));
       }
       final error = next.errorMessage;
-      if (error != null && error != previous?.errorMessage && previous?.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Theme.of(context).colorScheme.error));
+      if (error != null &&
+          error != previous?.errorMessage &&
+          previous?.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(error),
+            backgroundColor: Theme.of(context).colorScheme.error));
       }
     });
 
@@ -54,7 +59,12 @@ class _FaqsScreenState extends ConsumerState<FaqsScreen> {
         IconButton(
           tooltip: 'Refresh FAQ',
           onPressed: state.isRefreshing ? null : () => controller.refresh(),
-          icon: state.isRefreshing ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2)) : const Icon(Icons.refresh_rounded),
+          icon: state.isRefreshing
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2.2))
+              : const Icon(Icons.refresh_rounded),
         ),
       ],
       child: RefreshIndicator(
@@ -63,14 +73,21 @@ class _FaqsScreenState extends ConsumerState<FaqsScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(20),
           children: [
-            _Header(total: state.faqs.length, visible: state.faqs.where((faq) => faq.active).length, lastUpdatedAt: state.lastUpdatedAt),
+            _Header(
+                total: state.faqs.length,
+                visible: state.faqs.where((faq) => faq.active).length,
+                lastUpdatedAt: state.lastUpdatedAt),
             const SizedBox(height: 16),
             TextField(
               controller: _searchController,
-              decoration: const InputDecoration(labelText: 'Search FAQ', hintText: 'Question, answer, category...', prefixIcon: Icon(Icons.search_rounded)),
+              decoration: const InputDecoration(
+                  labelText: 'Search FAQ',
+                  hintText: 'Question, answer, category...',
+                  prefixIcon: Icon(Icons.search_rounded)),
               onChanged: (value) {
                 _searchDebounce?.cancel();
-                _searchDebounce = Timer(const Duration(milliseconds: 250), () => controller.setQuery(value));
+                _searchDebounce = Timer(const Duration(milliseconds: 250),
+                    () => controller.setQuery(value));
               },
             ),
             const SizedBox(height: 12),
@@ -82,11 +99,16 @@ class _FaqsScreenState extends ConsumerState<FaqsScreen> {
               onActiveChanged: controller.setActiveFilter,
             ),
             const SizedBox(height: 16),
-            if (state.errorMessage != null && state.faqs.isEmpty) _ErrorCard(message: state.errorMessage!, onRetry: controller.refresh),
+            if (state.errorMessage != null && state.faqs.isEmpty)
+              _ErrorCard(
+                  message: state.errorMessage!, onRetry: controller.refresh),
             if (state.isLoading)
               const _LoadingList()
             else if (faqs.isEmpty)
-              const EmptyState(icon: Icons.help_outline_rounded, title: 'No FAQ items found', message: 'Create a FAQ item or adjust your filters.')
+              const EmptyState(
+                  icon: Icons.help_outline_rounded,
+                  title: 'No FAQ items found',
+                  message: 'Create a FAQ item or adjust your filters.')
             else
               for (final faq in faqs)
                 FaqListTile(
@@ -101,22 +123,36 @@ class _FaqsScreenState extends ConsumerState<FaqsScreen> {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, FaqsController controller, FaqModel faq) async {
+  Future<void> _confirmDelete(
+      BuildContext context, FaqsController controller, FaqModel faq) async {
     final ok = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Delete FAQ item?'),
-            content: Text('This removes “${faq.safeQuestion}” from the FAQ page.'),
-            actions: [TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete'))],
+            content:
+                Text('This removes “${faq.safeQuestion}” from the FAQ page.'),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel')),
+              FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Delete'))
+            ],
           ),
         ) ??
         false;
-    if (ok) await controller.deleteFaq(faq);
+    if (ok) {
+      await controller.deleteFaq(faq);
+    }
   }
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.total, required this.visible, required this.lastUpdatedAt});
+  const _Header(
+      {required this.total,
+      required this.visible,
+      required this.lastUpdatedAt});
   final int total;
   final int visible;
   final DateTime? lastUpdatedAt;
@@ -126,10 +162,33 @@ class _Header extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Row(children: [
-          CircleAvatar(backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.12), child: Icon(Icons.help_outline_rounded, color: Theme.of(context).colorScheme.primary)),
+          CircleAvatar(
+              backgroundColor:
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+              child: Icon(Icons.help_outline_rounded,
+                  color: Theme.of(context).colorScheme.primary)),
           const SizedBox(width: 14),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('FAQ content', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 4), Text('$visible visible • $total total • Updated ${Formatters.dateTimeOrDash(lastUpdatedAt)}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54))])),
-          FilledButton.icon(onPressed: () => context.go('/faqs/new'), icon: const Icon(Icons.add_rounded), label: const Text('New FAQ')),
+          Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text('FAQ content',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w900)),
+                const SizedBox(height: 4),
+                Text(
+                    '$visible visible • $total total • Updated ${Formatters.dateTimeOrDash(lastUpdatedAt)}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: Colors.black54))
+              ])),
+          FilledButton.icon(
+              onPressed: () => context.go('/faqs/new'),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('New FAQ')),
         ]),
       ),
     );
@@ -141,11 +200,35 @@ class _ErrorCard extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
   @override
-  Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Could not load FAQ', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 8), Text(message), const SizedBox(height: 12), FilledButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh_rounded), label: const Text('Retry'))])));
+  Widget build(BuildContext context) => Card(
+      child: Padding(
+          padding: const EdgeInsets.all(18),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Could not load FAQ',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w900)),
+            const SizedBox(height: 8),
+            Text(message),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Retry'))
+          ])));
 }
 
 class _LoadingList extends StatelessWidget {
   const _LoadingList();
   @override
-  Widget build(BuildContext context) => Column(children: List.generate(4, (index) => const Card(margin: EdgeInsets.only(bottom: 12), child: SizedBox(height: 110, child: Center(child: CircularProgressIndicator())))));
+  Widget build(BuildContext context) => Column(
+      children: List.generate(
+          4,
+          (index) => const Card(
+              margin: EdgeInsets.only(bottom: 12),
+              child: SizedBox(
+                  height: 110,
+                  child: Center(child: CircularProgressIndicator())))));
 }

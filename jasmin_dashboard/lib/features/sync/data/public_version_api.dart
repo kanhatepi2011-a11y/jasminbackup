@@ -5,7 +5,8 @@ import '../../../core/constants/api_paths.dart';
 import '../../../core/network/api_client.dart';
 import '../models/public_data_version.dart';
 
-final publicVersionApiProvider = Provider<PublicVersionApi>((ref) => PublicVersionApi(ref.watch(dioProvider)));
+final publicVersionApiProvider = Provider<PublicVersionApi>(
+    (ref) => PublicVersionApi(ref.watch(dioProvider)));
 
 class PublicVersionApi {
   const PublicVersionApi(this._dio);
@@ -22,10 +23,12 @@ class PublicVersionApi {
       queryParameters: <String, dynamic>{
         'scope': scope,
         if (slug != null && slug.trim().isNotEmpty) 'slug': slug.trim(),
-        if (orderNumber != null && orderNumber.trim().isNotEmpty) 'orderNumber': orderNumber.trim(),
+        if (orderNumber != null && orderNumber.trim().isNotEmpty)
+          'orderNumber': orderNumber.trim(),
       },
     );
 
-    return PublicDataVersion.fromJson(response.data ?? const <String, dynamic>{});
+    return PublicDataVersion.fromJson(
+        response.data ?? const <String, dynamic>{});
   }
 }

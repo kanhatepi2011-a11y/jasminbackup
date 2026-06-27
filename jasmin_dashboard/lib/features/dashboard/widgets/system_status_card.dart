@@ -18,7 +18,11 @@ class SystemStatusCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('System status', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+            Text('System status',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w800)),
             const SizedBox(height: 14),
             _StatusTile(label: 'Database', value: status.database),
             const SizedBox(height: 10),
@@ -45,12 +49,16 @@ class _StatusTile extends StatelessWidget {
 
     return Row(
       children: [
-        Icon(ok ? Icons.check_circle_rounded : Icons.warning_rounded, size: 20, color: color),
+        Icon(ok ? Icons.check_circle_rounded : Icons.warning_rounded,
+            size: 20, color: color),
         const SizedBox(width: 10),
         Expanded(child: Text(label)),
         Text(
           ok ? 'OK' : value.toUpperCase(),
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color, fontWeight: FontWeight.w900),
+          style: Theme.of(context)
+              .textTheme
+              .labelLarge
+              ?.copyWith(color: color, fontWeight: FontWeight.w900),
         ),
       ],
     );

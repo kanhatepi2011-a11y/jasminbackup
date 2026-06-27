@@ -15,7 +15,7 @@ class BannerFiltersBar extends StatelessWidget {
     return SizedBox(
       width: 190,
       child: DropdownButtonFormField<String>(
-        value: selectedActiveFilter,
+        initialValue: selectedActiveFilter,
         decoration: const InputDecoration(
           labelText: 'Visibility',
           prefixIcon: Icon(Icons.visibility_rounded),
@@ -26,7 +26,9 @@ class BannerFiltersBar extends StatelessWidget {
           DropdownMenuItem(value: 'INACTIVE', child: Text('Hidden')),
         ],
         onChanged: (value) {
-          if (value != null) onActiveChanged(value);
+          if (value != null) {
+            onActiveChanged(value);
+          }
         },
       ),
     );

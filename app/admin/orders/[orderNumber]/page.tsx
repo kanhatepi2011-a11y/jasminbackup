@@ -45,16 +45,34 @@ export default function AdminOrderDetailPage() {
   }, [orderNumber]);
 
   async function updateStatus(newStatus: string) {
+    // Security: manual PAID requires explicit confirmation + server-side OWNER check
+    if (newStatus === "PAID" && order?.status !== "PAID") {
+      const confirmed = window.confirm(
+        "⚠️ Manual PAID override\n\n" +
+        "This marks the order as paid WITHOUT payment gateway verification.\n\n" +
+        "Only use this if you have personally verified the payment through other means.\n\n" +
+        "Continue?"
+      );
+      if (!confirmed) return;
+    }
+
     setUpdating(true);
-    await fetch(`/api/admin/orders/${orderNumber}`, {
+    const res = await fetch(`/api/admin/orders/${orderNumber}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         status: newStatus,
         deliveryNote: note,
         failureReason: newStatus === "FAILED" ? reason : undefined,
+        ...(newStatus === "PAID" ? { confirmManualPaid: true } : {}),
       }),
     });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      alert(data?.error || "Update failed");
+    }
+
     await load();
     setUpdating(false);
   }

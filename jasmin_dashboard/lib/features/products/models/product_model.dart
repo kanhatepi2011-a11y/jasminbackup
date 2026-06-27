@@ -38,7 +38,9 @@ class ProductModel {
   final int ordersCount;
 
   String get amountLabel {
-    if (bonus <= 0) return amount.toString();
+    if (bonus <= 0) {
+      return amount.toString();
+    }
     return '$amount + $bonus bonus';
   }
 
@@ -66,7 +68,9 @@ class ProductModel {
   }
 
   static int _ordersCount(dynamic value) {
-    if (value is Map && value['orders'] != null) return _int(value['orders']);
+    if (value is Map && value['orders'] != null) {
+      return _int(value['orders']);
+    }
     return 0;
   }
 
@@ -76,30 +80,44 @@ class ProductModel {
   }
 
   static int _int(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   static double _double(dynamic value) {
-    if (value is num) return value.toDouble();
+    if (value is num) {
+      return value.toDouble();
+    }
     return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   static double? _nullableDouble(dynamic value) {
-    if (value == null) return null;
-    if (value is num) return value.toDouble();
+    if (value == null) {
+      return null;
+    }
+    if (value is num) {
+      return value.toDouble();
+    }
     return double.tryParse(value.toString());
   }
 
   static DateTime? _date(dynamic value) {
     final text = value?.toString();
-    if (text == null || text.isEmpty) return null;
+    if (text == null || text.isEmpty) {
+      return null;
+    }
     return DateTime.tryParse(text)?.toLocal();
   }
 
   static Map<String, dynamic>? _mapOrNull(dynamic value) {
-    if (value is Map) return Map<String, dynamic>.from(value);
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
     return null;
   }
 }

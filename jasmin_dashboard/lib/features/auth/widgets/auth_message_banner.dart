@@ -14,9 +14,13 @@ class AuthMessageBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isError = type == AuthMessageType.error;
-    final background = isError ? colorScheme.errorContainer : colorScheme.primaryContainer;
-    final foreground = isError ? colorScheme.onErrorContainer : colorScheme.onPrimaryContainer;
-    final icon = isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded;
+    final background =
+        isError ? colorScheme.errorContainer : colorScheme.primaryContainer;
+    final foreground =
+        isError ? colorScheme.onErrorContainer : colorScheme.onPrimaryContainer;
+    final icon = isError
+        ? Icons.error_outline_rounded
+        : Icons.check_circle_outline_rounded;
 
     return Container(
       width: double.infinity,

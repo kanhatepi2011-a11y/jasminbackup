@@ -41,7 +41,9 @@ class AuthSession {
     }
 
     final session = json['session'];
-    if (session is Map) return session.cast<String, dynamic>();
+    if (session is Map) {
+      return session.cast<String, dynamic>();
+    }
 
     return json;
   }
@@ -49,18 +51,26 @@ class AuthSession {
   static String _stringFrom(Map<String, dynamic> json, List<String> keys) {
     for (final key in keys) {
       final value = json[key];
-      if (value is String && value.trim().isNotEmpty) return value.trim();
-      if (value is num || value is bool) return value.toString();
+      if (value is String && value.trim().isNotEmpty) {
+        return value.trim();
+      }
+      if (value is num || value is bool) {
+        return value.toString();
+      }
     }
     return '';
   }
 
   static Map<String, dynamic> _adminFrom(Map<String, dynamic> json) {
     final admin = json['admin'];
-    if (admin is Map) return admin.cast<String, dynamic>();
+    if (admin is Map) {
+      return admin.cast<String, dynamic>();
+    }
 
     final user = json['user'];
-    if (user is Map) return user.cast<String, dynamic>();
+    if (user is Map) {
+      return user.cast<String, dynamic>();
+    }
 
     return <String, dynamic>{};
   }
@@ -68,40 +78,58 @@ class AuthSession {
   static DateTime _dateFrom(Map<String, dynamic> json, List<String> keys) {
     for (final key in keys) {
       final parsed = _parseDateOrDuration(json[key]);
-      if (parsed != null) return parsed;
+      if (parsed != null) {
+        return parsed;
+      }
     }
 
     final expiresIn = json['expiresIn'] ?? json['expires_in'];
     final parsedExpiresIn = _parseDuration(expiresIn);
-    if (parsedExpiresIn != null) return parsedExpiresIn;
+    if (parsedExpiresIn != null) {
+      return parsedExpiresIn;
+    }
 
     return DateTime.now().toUtc().add(const Duration(hours: 12));
   }
 
   static DateTime? _parseDateOrDuration(Object? value) {
-    if (value == null) return null;
-    if (value is num) return _parseNumber(value);
+    if (value == null) {
+      return null;
+    }
+    if (value is num) {
+      return _parseNumber(value);
+    }
 
     final text = value.toString().trim();
-    if (text.isEmpty) return null;
+    if (text.isEmpty) {
+      return null;
+    }
 
     final numeric = num.tryParse(text);
-    if (numeric != null) return _parseNumber(numeric);
+    if (numeric != null) {
+      return _parseNumber(numeric);
+    }
 
     return DateTime.tryParse(text)?.toUtc();
   }
 
   static DateTime? _parseDuration(Object? value) {
-    if (value == null) return null;
+    if (value == null) {
+      return null;
+    }
     final seconds =
         value is num ? value.toInt() : int.tryParse(value.toString());
-    if (seconds == null || seconds <= 0) return null;
+    if (seconds == null || seconds <= 0) {
+      return null;
+    }
     return DateTime.now().toUtc().add(Duration(seconds: seconds));
   }
 
   static DateTime? _parseNumber(num value) {
     final rounded = value.round();
-    if (rounded <= 0) return null;
+    if (rounded <= 0) {
+      return null;
+    }
 
     if (rounded < 86400) {
       return DateTime.now().toUtc().add(Duration(seconds: rounded));

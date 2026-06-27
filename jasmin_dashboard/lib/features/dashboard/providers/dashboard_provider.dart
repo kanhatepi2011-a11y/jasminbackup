@@ -7,8 +7,11 @@ import '../../../core/constants/refresh_intervals.dart';
 import '../data/dashboard_repository.dart';
 import '../models/dashboard_data.dart';
 
-final dashboardProvider = StateNotifierProvider.autoDispose<DashboardController, DashboardState>((ref) {
-  final controller = DashboardController(ref.watch(dashboardRepositoryProvider));
+final dashboardProvider =
+    StateNotifierProvider.autoDispose<DashboardController, DashboardState>(
+        (ref) {
+  final controller =
+      DashboardController(ref.watch(dashboardRepositoryProvider));
   controller.load();
   controller.startAutoRefresh();
   return controller;
@@ -21,7 +24,9 @@ class DashboardController extends StateNotifier<DashboardState> {
   Timer? _autoRefreshTimer;
 
   Future<void> load({bool silent = false}) async {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     state = state.copyWith(
       isLoading: !silent && state.data == null,
       isRefreshing: silent || state.data != null,
@@ -30,13 +35,17 @@ class DashboardController extends StateNotifier<DashboardState> {
 
     try {
       final data = await _repository.fetchDashboard();
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = DashboardState(
         data: data,
         lastUpdatedAt: DateTime.now(),
       );
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         isLoading: false,
         isRefreshing: false,
@@ -50,12 +59,16 @@ class DashboardController extends StateNotifier<DashboardState> {
   void startAutoRefresh() {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = Timer.periodic(RefreshIntervals.dashboard, (_) {
-      if (mounted) load(silent: true);
+      if (mounted) {
+        load(silent: true);
+      }
     });
   }
 
   String _messageFromError(Object error) {
-    if (error is AppException) return error.message;
+    if (error is AppException) {
+      return error.message;
+    }
     return 'Dashboard refresh failed. Please try again.';
   }
 

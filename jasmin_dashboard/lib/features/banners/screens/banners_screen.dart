@@ -39,11 +39,16 @@ class _BannersScreenState extends ConsumerState<BannersScreen> {
     ref.listen(bannersProvider, (previous, next) {
       final success = next.successMessage;
       if (success != null && success != previous?.successMessage) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(success)));
       }
       final error = next.errorMessage;
-      if (error != null && error != previous?.errorMessage && previous?.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error), backgroundColor: Theme.of(context).colorScheme.error));
+      if (error != null &&
+          error != previous?.errorMessage &&
+          previous?.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(error),
+            backgroundColor: Theme.of(context).colorScheme.error));
       }
     });
 
@@ -55,7 +60,10 @@ class _BannersScreenState extends ConsumerState<BannersScreen> {
           tooltip: 'Refresh banners',
           onPressed: state.isRefreshing ? null : () => controller.refresh(),
           icon: state.isRefreshing
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2))
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2.2))
               : const Icon(Icons.refresh_rounded),
         ),
       ],
@@ -80,7 +88,8 @@ class _BannersScreenState extends ConsumerState<BannersScreen> {
               ),
               onChanged: (value) {
                 _searchDebounce?.cancel();
-                _searchDebounce = Timer(const Duration(milliseconds: 250), () => controller.setQuery(value));
+                _searchDebounce = Timer(const Duration(milliseconds: 250),
+                    () => controller.setQuery(value));
               },
             ),
             const SizedBox(height: 12),
@@ -90,7 +99,8 @@ class _BannersScreenState extends ConsumerState<BannersScreen> {
             ),
             const SizedBox(height: 16),
             if (state.errorMessage != null && state.banners.isEmpty)
-              _ErrorCard(message: state.errorMessage!, onRetry: controller.refresh),
+              _ErrorCard(
+                  message: state.errorMessage!, onRetry: controller.refresh),
             if (state.isLoading)
               const _LoadingList()
             else if (banners.isEmpty)
@@ -110,29 +120,39 @@ class _BannersScreenState extends ConsumerState<BannersScreen> {
           ],
         ),
       ),
-      
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, BannersController controller, BannerModel banner) async {
+  Future<void> _confirmDelete(BuildContext context,
+      BannersController controller, BannerModel banner) async {
     final ok = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Delete banner?'),
-            content: Text('This removes “${banner.safeTitle}” from homepage banners.'),
+            content: Text(
+                'This removes “${banner.safeTitle}” from homepage banners.'),
             actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-              FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel')),
+              FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Delete')),
             ],
           ),
         ) ??
         false;
-    if (ok) await controller.deleteBanner(banner);
+    if (ok) {
+      await controller.deleteBanner(banner);
+    }
   }
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.total, required this.visible, required this.lastUpdatedAt});
+  const _Header(
+      {required this.total,
+      required this.visible,
+      required this.lastUpdatedAt});
 
   final int total;
   final int visible;
@@ -145,19 +165,37 @@ class _Header extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         child: Row(
           children: [
-            CircleAvatar(backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.12), child: Icon(Icons.view_carousel_rounded, color: Theme.of(context).colorScheme.primary)),
+            CircleAvatar(
+                backgroundColor: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.12),
+                child: Icon(Icons.view_carousel_rounded,
+                    color: Theme.of(context).colorScheme.primary)),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Homepage banners', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+                  Text('Homepage banners',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w900)),
                   const SizedBox(height: 4),
-                  Text('$visible visible • $total total • Updated ${Formatters.dateTimeOrDash(lastUpdatedAt)}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54)),
+                  Text(
+                      '$visible visible • $total total • Updated ${Formatters.dateTimeOrDash(lastUpdatedAt)}',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.black54)),
                 ],
               ),
             ),
-            FilledButton.icon(onPressed: () => context.go('/banners/new'), icon: const Icon(Icons.add_rounded), label: const Text('New Banner')),
+            FilledButton.icon(
+                onPressed: () => context.go('/banners/new'),
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('New Banner')),
           ],
         ),
       ),
@@ -171,12 +209,36 @@ class _ErrorCard extends StatelessWidget {
   final VoidCallback onRetry;
   @override
   Widget build(BuildContext context) {
-    return Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Could not load banners', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)), const SizedBox(height: 8), Text(message), const SizedBox(height: 12), FilledButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh_rounded), label: const Text('Retry'))])));
+    return Card(
+        child: Padding(
+            padding: const EdgeInsets.all(18),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Could not load banners',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w900)),
+              const SizedBox(height: 8),
+              Text(message),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Retry'))
+            ])));
   }
 }
 
 class _LoadingList extends StatelessWidget {
   const _LoadingList();
   @override
-  Widget build(BuildContext context) => Column(children: List.generate(4, (index) => const Card(margin: EdgeInsets.only(bottom: 12), child: SizedBox(height: 92, child: Center(child: CircularProgressIndicator())))));
+  Widget build(BuildContext context) => Column(
+      children: List.generate(
+          4,
+          (index) => const Card(
+              margin: EdgeInsets.only(bottom: 12),
+              child: SizedBox(
+                  height: 92,
+                  child: Center(child: CircularProgressIndicator())))));
 }

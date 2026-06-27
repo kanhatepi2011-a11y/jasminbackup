@@ -8,7 +8,9 @@ class DashboardProductSummary {
   final String name;
 
   factory DashboardProductSummary.fromJson(Map<String, dynamic>? json) {
-    if (json == null) return const DashboardProductSummary(id: '', name: 'Unknown package');
+    if (json == null) {
+      return const DashboardProductSummary(id: '', name: 'Unknown package');
+    }
     return DashboardProductSummary(
       id: (json['id'] ?? '').toString(),
       name: (json['name'] ?? 'Unknown package').toString(),

@@ -24,7 +24,10 @@ class SplashScreen extends ConsumerWidget {
               const SizedBox(height: 20),
               Text(
                 AppConstants.appName,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 8),
               Text('Connected to ${AppConstants.websiteName} admin backend'),

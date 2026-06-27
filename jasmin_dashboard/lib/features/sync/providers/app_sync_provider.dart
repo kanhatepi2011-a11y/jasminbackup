@@ -7,7 +7,8 @@ import '../../../core/errors/app_exception.dart';
 import '../../notifications/data/notifications_repository.dart';
 import '../data/public_version_repository.dart';
 
-final appSyncProvider = StateNotifierProvider<AppSyncController, AppSyncState>((ref) {
+final appSyncProvider =
+    StateNotifierProvider<AppSyncController, AppSyncState>((ref) {
   return AppSyncController(
     ref.watch(publicVersionRepositoryProvider),
     ref.watch(notificationsRepositoryProvider),
@@ -15,7 +16,9 @@ final appSyncProvider = StateNotifierProvider<AppSyncController, AppSyncState>((
 });
 
 class AppSyncController extends StateNotifier<AppSyncState> {
-  AppSyncController(this._publicVersionRepository, this._notificationsRepository) : super(const AppSyncState());
+  AppSyncController(
+      this._publicVersionRepository, this._notificationsRepository)
+      : super(const AppSyncState());
 
   final PublicVersionRepository _publicVersionRepository;
   final NotificationsRepository _notificationsRepository;
@@ -35,7 +38,9 @@ class AppSyncController extends StateNotifier<AppSyncState> {
   ];
 
   void start() {
-    if (_started) return;
+    if (_started) {
+      return;
+    }
     _started = true;
     unawaited(pollNow(reason: 'start'));
     _websiteVersionTimer = Timer.periodic(RefreshIntervals.websiteVersion, (_) {
@@ -58,7 +63,9 @@ class AppSyncController extends StateNotifier<AppSyncState> {
   }
 
   Future<void> pollNow({String reason = 'manual'}) async {
-    if (!_started && reason != 'resume') return;
+    if (!_started && reason != 'resume') {
+      return;
+    }
     await Future.wait<void>([
       _checkWebsiteVersions(),
       _refreshUnreadNotifications(),
@@ -75,7 +82,9 @@ class AppSyncController extends StateNotifier<AppSyncState> {
   }
 
   Future<void> _checkWebsiteVersions() async {
-    if (_polling) return;
+    if (_polling) {
+      return;
+    }
     _polling = true;
     if (mounted) {
       state = state.copyWith(isCheckingWebsite: true, clearError: true);
@@ -83,7 +92,8 @@ class AppSyncController extends StateNotifier<AppSyncState> {
 
     try {
       final versions = await Future.wait(
-        _publicScopes.map((scope) => _publicVersionRepository.fetchVersion(scope: scope)),
+        _publicScopes.map(
+            (scope) => _publicVersionRepository.fetchVersion(scope: scope)),
       );
 
       final changedScopes = <String>[];
@@ -95,9 +105,12 @@ class AppSyncController extends StateNotifier<AppSyncState> {
         _knownVersions[item.scope] = item.version;
       }
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       final pendingScope = state.pendingWebsiteSyncScope;
-      final hasMatchedPending = pendingScope != null && changedScopes.contains(pendingScope);
+      final hasMatchedPending =
+          pendingScope != null && changedScopes.contains(pendingScope);
       state = state.copyWith(
         isCheckingWebsite: false,
         websiteVersionReady: true,
@@ -105,12 +118,16 @@ class AppSyncController extends StateNotifier<AppSyncState> {
         changedScopes: changedScopes,
         pendingWebsiteSyncScope: hasMatchedPending ? null : pendingScope,
         clearPendingWebsiteSync: hasMatchedPending,
-        syncNotice: changedScopes.isEmpty ? null : 'Website refreshed: ${changedScopes.join(', ')}',
+        syncNotice: changedScopes.isEmpty
+            ? null
+            : 'Website refreshed: ${changedScopes.join(', ')}',
         clearNotice: changedScopes.isEmpty,
         clearError: true,
       );
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         isCheckingWebsite: false,
         errorMessage: _messageFromError(error),
@@ -122,21 +139,28 @@ class AppSyncController extends StateNotifier<AppSyncState> {
 
   Future<void> _refreshUnreadNotifications() async {
     try {
-      final response = await _notificationsRepository.fetchNotifications(page: 1, perPage: 1);
-      if (!mounted) return;
+      final response = await _notificationsRepository.fetchNotifications(
+          page: 1, perPage: 1);
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         unreadNotifications: response.unreadCount,
         lastNotificationCheckAt: DateTime.now(),
         clearError: true,
       );
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(errorMessage: _messageFromError(error));
     }
   }
 
   String _messageFromError(Object error) {
-    if (error is AppException) return error.message;
+    if (error is AppException) {
+      return error.message;
+    }
     return 'Auto-update sync failed.';
   }
 
@@ -194,11 +218,14 @@ class AppSyncState {
       websiteVersionReady: websiteVersionReady ?? this.websiteVersionReady,
       isCheckingWebsite: isCheckingWebsite ?? this.isCheckingWebsite,
       changedScopes: changedScopes ?? this.changedScopes,
-      pendingWebsiteSyncScope: clearPendingWebsiteSync ? null : pendingWebsiteSyncScope ?? this.pendingWebsiteSyncScope,
+      pendingWebsiteSyncScope: clearPendingWebsiteSync
+          ? null
+          : pendingWebsiteSyncScope ?? this.pendingWebsiteSyncScope,
       syncNotice: clearNotice ? null : syncNotice ?? this.syncNotice,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
       lastWebsiteCheckAt: lastWebsiteCheckAt ?? this.lastWebsiteCheckAt,
-      lastNotificationCheckAt: lastNotificationCheckAt ?? this.lastNotificationCheckAt,
+      lastNotificationCheckAt:
+          lastNotificationCheckAt ?? this.lastNotificationCheckAt,
     );
   }
 }

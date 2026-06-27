@@ -19,7 +19,8 @@ class JasminDashboardApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
       routerConfig: router,
-      builder: (context, child) => AppSyncHost(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) =>
+          AppSyncHost(child: child ?? const SizedBox.shrink()),
     );
   }
 }

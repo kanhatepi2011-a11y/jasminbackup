@@ -62,7 +62,9 @@ class DashboardStats {
       );
 
   factory DashboardStats.fromJson(Map<String, dynamic>? json) {
-    if (json == null) return DashboardStats.empty();
+    if (json == null) {
+      return DashboardStats.empty();
+    }
     return DashboardStats(
       totalOrders: _int(json['totalOrders']),
       pendingOrders: _int(json['pendingOrders']),
@@ -85,13 +87,19 @@ class DashboardStats {
   }
 
   static int _int(dynamic value) {
-    if (value is int) return value;
-    if (value is double) return value.round();
+    if (value is int) {
+      return value;
+    }
+    if (value is double) {
+      return value.round();
+    }
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   static double _double(dynamic value) {
-    if (value is num) return value.toDouble();
+    if (value is num) {
+      return value.toDouble();
+    }
     return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 }

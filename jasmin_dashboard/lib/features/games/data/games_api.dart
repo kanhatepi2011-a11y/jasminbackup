@@ -24,7 +24,8 @@ class GamesApi {
   }
 
   Future<GameModel> fetchGame(String id) async {
-    final response = await _dio.get<Map<String, dynamic>>(ApiPaths.gameDetail(id));
+    final response =
+        await _dio.get<Map<String, dynamic>>(ApiPaths.gameDetail(id));
     return GameModel.fromJson(response.data ?? const <String, dynamic>{});
   }
 
@@ -53,13 +54,15 @@ class GamesApi {
   }
 
   Future<GameDeleteResult> deleteGame(String id) async {
-    final response = await _dio.delete<Map<String, dynamic>>(ApiPaths.gameDetail(id));
+    final response =
+        await _dio.delete<Map<String, dynamic>>(ApiPaths.gameDetail(id));
     final data = response.data ?? const <String, dynamic>{};
     return GameDeleteResult(
       ok: data['ok'] == true,
       deleted: data['deleted'] == true,
       disabled: data['disabled'] is Map
-          ? GameModel.fromJson(Map<String, dynamic>.from(data['disabled'] as Map))
+          ? GameModel.fromJson(
+              Map<String, dynamic>.from(data['disabled'] as Map))
           : null,
     );
   }

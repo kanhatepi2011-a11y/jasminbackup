@@ -20,7 +20,8 @@ class GameStatusPill extends StatelessWidget {
       runSpacing: 6,
       children: [
         _Pill(
-          icon: active ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+          icon:
+              active ? Icons.visibility_rounded : Icons.visibility_off_rounded,
           label: active ? 'Visible' : 'Hidden',
           color: color,
           compact: compact,
@@ -38,7 +39,11 @@ class GameStatusPill extends StatelessWidget {
 }
 
 class _Pill extends StatelessWidget {
-  const _Pill({required this.icon, required this.label, required this.color, required this.compact});
+  const _Pill(
+      {required this.icon,
+      required this.label,
+      required this.color,
+      required this.compact});
 
   final IconData icon;
   final String label;
@@ -48,11 +53,12 @@ class _Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 10, vertical: compact ? 4 : 6),
+      padding: EdgeInsets.symmetric(
+          horizontal: compact ? 8 : 10, vertical: compact ? 4 : 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.22)),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -61,7 +67,10 @@ class _Pill extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w900),
+            style: Theme.of(context)
+                .textTheme
+                .labelSmall
+                ?.copyWith(color: color, fontWeight: FontWeight.w900),
           ),
         ],
       ),

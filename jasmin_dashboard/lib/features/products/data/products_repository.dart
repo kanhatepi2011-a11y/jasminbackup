@@ -16,11 +16,13 @@ class ProductsRepository {
 
   final ProductsApi _api;
 
-  Future<List<ProductModel>> fetchProducts({String? gameId, bool? active}) async {
+  Future<List<ProductModel>> fetchProducts(
+      {String? gameId, bool? active}) async {
     try {
       return await _api.fetchProducts(gameId: gameId, active: active);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not load products. Check your connection and try again.');
+      throw _exceptionFromDio(error,
+          'Could not load products. Check your connection and try again.');
     }
   }
 
@@ -28,7 +30,8 @@ class ProductsRepository {
     try {
       return await _api.fetchGames();
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not load games for product management.');
+      throw _exceptionFromDio(
+          error, 'Could not load games for product management.');
     }
   }
 
@@ -36,7 +39,8 @@ class ProductsRepository {
     try {
       return await _api.fetchProduct(id);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not load this product. Pull to refresh and try again.');
+      throw _exceptionFromDio(
+          error, 'Could not load this product. Pull to refresh and try again.');
     }
   }
 
@@ -44,7 +48,8 @@ class ProductsRepository {
     try {
       return await _api.createProduct(payload);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not create this package. Please check the fields and try again.');
+      throw _exceptionFromDio(error,
+          'Could not create this package. Please check the fields and try again.');
     }
   }
 
@@ -52,7 +57,8 @@ class ProductsRepository {
     try {
       return await _api.updateProduct(id, payload);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not update this package. Please check the fields and try again.');
+      throw _exceptionFromDio(error,
+          'Could not update this package. Please check the fields and try again.');
     }
   }
 
@@ -60,7 +66,8 @@ class ProductsRepository {
     try {
       return await _api.deleteProduct(id);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not delete this package. It may already be linked to orders.');
+      throw _exceptionFromDio(error,
+          'Could not delete this package. It may already be linked to orders.');
     }
   }
 
@@ -68,7 +75,8 @@ class ProductsRepository {
     try {
       return await _api.setProductActive(id, active);
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not update product visibility. Please try again.');
+      throw _exceptionFromDio(
+          error, 'Could not update product visibility. Please try again.');
     }
   }
 
@@ -76,7 +84,10 @@ class ProductsRepository {
     final data = error.response?.data;
     if (data is Map<String, dynamic>) {
       final message = data['error'] ?? data['message'];
-      if (message != null) return AppException(message.toString(), statusCode: error.response?.statusCode);
+      if (message != null) {
+        return AppException(message.toString(),
+            statusCode: error.response?.statusCode);
+      }
     }
     return AppException(fallback, statusCode: error.response?.statusCode);
   }

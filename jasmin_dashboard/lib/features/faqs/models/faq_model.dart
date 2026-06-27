@@ -19,7 +19,8 @@ class FaqModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  String get safeQuestion => question.trim().isEmpty ? 'Untitled FAQ' : question.trim();
+  String get safeQuestion =>
+      question.trim().isEmpty ? 'Untitled FAQ' : question.trim();
 
   factory FaqModel.fromJson(Map<String, dynamic> json) {
     return FaqModel(
@@ -35,8 +36,12 @@ class FaqModel {
   }
 
   static int _intFrom(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 }

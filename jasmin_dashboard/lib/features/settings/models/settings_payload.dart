@@ -42,7 +42,8 @@ class SettingsPayload {
       'logoUrl': _clean(logoUrl),
       'logoText': _clean(logoText),
       'logoTagline': _clean(logoTagline),
-      if (telegramBotToken != null && telegramBotToken!.trim().isNotEmpty) 'telegramBotToken': telegramBotToken!.trim(),
+      if (telegramBotToken != null && telegramBotToken!.trim().isNotEmpty)
+        'telegramBotToken': telegramBotToken!.trim(),
       'telegramChatId': _clean(telegramChatId),
     };
   }

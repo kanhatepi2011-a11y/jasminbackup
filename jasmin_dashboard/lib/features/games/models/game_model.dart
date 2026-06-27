@@ -80,7 +80,9 @@ class GameModel {
   }
 
   static int _count(dynamic value, String key) {
-    if (value is Map && value[key] != null) return _int(value[key]);
+    if (value is Map && value[key] != null) {
+      return _int(value[key]);
+    }
     return 0;
   }
 
@@ -90,14 +92,20 @@ class GameModel {
   }
 
   static int _int(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   static DateTime? _date(dynamic value) {
     final text = value?.toString();
-    if (text == null || text.isEmpty) return null;
+    if (text == null || text.isEmpty) {
+      return null;
+    }
     return DateTime.tryParse(text)?.toLocal();
   }
 }

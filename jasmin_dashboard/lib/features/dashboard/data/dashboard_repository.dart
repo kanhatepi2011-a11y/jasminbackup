@@ -21,9 +21,12 @@ class DashboardRepository {
       final data = error.response?.data;
       if (data is Map<String, dynamic>) {
         final message = data['error'] ?? data['message'];
-        if (message != null) throw AppException(message.toString());
+        if (message != null) {
+          throw AppException(message.toString());
+        }
       }
-      throw const AppException('Could not load dashboard. Check your connection and try again.');
+      throw const AppException(
+          'Could not load dashboard. Check your connection and try again.');
     }
   }
 }

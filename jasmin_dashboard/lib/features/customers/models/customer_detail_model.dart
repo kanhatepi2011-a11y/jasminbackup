@@ -3,17 +3,28 @@ class CustomerDetailModel {
   final CustomerDetail customer;
   final List<CustomerOrderModel> orders;
 
-  factory CustomerDetailModel.fromJson(Map<String, dynamic> json) => CustomerDetailModel(
-        customer: CustomerDetail.fromJson(Map<String, dynamic>.from(json['customer'] as Map? ?? const {})),
+  factory CustomerDetailModel.fromJson(Map<String, dynamic> json) =>
+      CustomerDetailModel(
+        customer: CustomerDetail.fromJson(
+            Map<String, dynamic>.from(json['customer'] as Map? ?? const {})),
         orders: (json['orders'] as List? ?? const <dynamic>[])
             .whereType<Map>()
-            .map((item) => CustomerOrderModel.fromJson(Map<String, dynamic>.from(item)))
+            .map((item) =>
+                CustomerOrderModel.fromJson(Map<String, dynamic>.from(item)))
             .toList(),
       );
 }
 
 class CustomerDetail {
-  const CustomerDetail({required this.key, this.email, this.phone, required this.totalOrders, required this.paidOrders, required this.lifetimeUsd, required this.banned, this.banReason});
+  const CustomerDetail(
+      {required this.key,
+      this.email,
+      this.phone,
+      required this.totalOrders,
+      required this.paidOrders,
+      required this.lifetimeUsd,
+      required this.banned,
+      this.banReason});
   final String key;
   final String? email;
   final String? phone;
@@ -38,7 +49,15 @@ class CustomerDetail {
 }
 
 class CustomerOrderModel {
-  const CustomerOrderModel({required this.orderNumber, required this.status, required this.amountUsd, required this.playerUid, required this.playerNickname, required this.createdAt, required this.gameName, required this.productName});
+  const CustomerOrderModel(
+      {required this.orderNumber,
+      required this.status,
+      required this.amountUsd,
+      required this.playerUid,
+      required this.playerNickname,
+      required this.createdAt,
+      required this.gameName,
+      required this.productName});
   final String orderNumber;
   final String status;
   final double amountUsd;
@@ -64,6 +83,18 @@ class CustomerOrderModel {
   }
 }
 
-String? _nullable(dynamic value) { final text = value?.toString().trim() ?? ''; return text.isEmpty ? null : text; }
-int _intFrom(dynamic value) => value is int ? value : value is num ? value.toInt() : int.tryParse(value?.toString() ?? '') ?? 0;
-double _doubleFrom(dynamic value) => value is double ? value : value is num ? value.toDouble() : double.tryParse(value?.toString() ?? '') ?? 0;
+String? _nullable(dynamic value) {
+  final text = value?.toString().trim() ?? '';
+  return text.isEmpty ? null : text;
+}
+
+int _intFrom(dynamic value) => value is int
+    ? value
+    : value is num
+        ? value.toInt()
+        : int.tryParse(value?.toString() ?? '') ?? 0;
+double _doubleFrom(dynamic value) => value is double
+    ? value
+    : value is num
+        ? value.toDouble()
+        : double.tryParse(value?.toString() ?? '') ?? 0;

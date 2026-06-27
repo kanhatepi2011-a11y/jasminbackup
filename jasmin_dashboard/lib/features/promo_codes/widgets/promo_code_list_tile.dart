@@ -34,14 +34,14 @@ class PromoCodeListTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
-                backgroundColor:
-                    Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                backgroundColor: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.12),
                 foregroundColor: Theme.of(context).colorScheme.primary,
                 child: const Icon(Icons.discount_rounded),
               ),
-
               const SizedBox(width: 14),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,18 +60,14 @@ class PromoCodeListTile extends StatelessWidget {
                         PromoCodeStatusPill(code: code),
                       ],
                     ),
-
                     const SizedBox(height: 6),
-
                     Text(
                       '${code.discountLabel} ${code.isPercent ? 'discount' : 'off'} • Min order ${Formatters.moneyUsd(code.minOrderUsd)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.black54,
                           ),
                     ),
-
                     const SizedBox(height: 8),
-
                     Wrap(
                       spacing: 8,
                       runSpacing: 6,
@@ -95,9 +91,7 @@ class PromoCodeListTile extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(width: 8),
-
               if (isBusy)
                 const Padding(
                   padding: EdgeInsets.all(12),
@@ -174,7 +168,7 @@ class _MiniInfo extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.04),
+        color: Colors.black.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(

@@ -4,14 +4,18 @@ import '../../../core/errors/app_exception.dart';
 import '../data/orders_repository.dart';
 import '../models/order_model.dart';
 
-final orderDetailProvider = StateNotifierProvider.autoDispose.family<OrderDetailController, OrderDetailState, String>((ref, orderNumber) {
-  final controller = OrderDetailController(ref.watch(ordersRepositoryProvider), orderNumber);
+final orderDetailProvider = StateNotifierProvider.autoDispose
+    .family<OrderDetailController, OrderDetailState, String>(
+        (ref, orderNumber) {
+  final controller =
+      OrderDetailController(ref.watch(ordersRepositoryProvider), orderNumber);
   controller.load();
   return controller;
 });
 
 class OrderDetailController extends StateNotifier<OrderDetailState> {
-  OrderDetailController(this._repository, this._orderNumber) : super(const OrderDetailState());
+  OrderDetailController(this._repository, this._orderNumber)
+      : super(const OrderDetailState());
 
   final OrdersRepository _repository;
   final String _orderNumber;
@@ -26,7 +30,9 @@ class OrderDetailController extends StateNotifier<OrderDetailState> {
 
     try {
       final order = await _repository.fetchOrder(_orderNumber);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         order: order,
         isLoading: false,
@@ -35,7 +41,9 @@ class OrderDetailController extends StateNotifier<OrderDetailState> {
         clearError: true,
       );
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         isLoading: false,
         isRefreshing: false,
@@ -50,7 +58,8 @@ class OrderDetailController extends StateNotifier<OrderDetailState> {
     String? failureReason,
     String? adminNote,
   }) async {
-    state = state.copyWith(isSaving: true, clearError: true, clearSuccess: true);
+    state =
+        state.copyWith(isSaving: true, clearError: true, clearSuccess: true);
     try {
       final order = await _repository.updateOrder(
         orderNumber: _orderNumber,
@@ -59,7 +68,9 @@ class OrderDetailController extends StateNotifier<OrderDetailState> {
         failureReason: failureReason,
         adminNote: adminNote,
       );
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       state = state.copyWith(
         order: order,
         isSaving: false,
@@ -67,13 +78,18 @@ class OrderDetailController extends StateNotifier<OrderDetailState> {
         lastUpdatedAt: DateTime.now(),
       );
     } catch (error) {
-      if (!mounted) return;
-      state = state.copyWith(isSaving: false, errorMessage: _messageFromError(error));
+      if (!mounted) {
+        return;
+      }
+      state = state.copyWith(
+          isSaving: false, errorMessage: _messageFromError(error));
     }
   }
 
   String _messageFromError(Object error) {
-    if (error is AppException) return error.message;
+    if (error is AppException) {
+      return error.message;
+    }
     return 'Could not update this order. Please try again.';
   }
 }
@@ -114,7 +130,8 @@ class OrderDetailState {
       isRefreshing: isRefreshing ?? this.isRefreshing,
       isSaving: isSaving ?? this.isSaving,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
-      successMessage: clearSuccess ? null : successMessage ?? this.successMessage,
+      successMessage:
+          clearSuccess ? null : successMessage ?? this.successMessage,
       lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
     );
   }

@@ -1,5 +1,15 @@
 class AuditLogModel {
-  const AuditLogModel({required this.id, this.adminId, this.adminEmail, required this.action, this.targetType, this.targetId, this.details, this.ipAddress, this.userAgent, this.createdAt});
+  const AuditLogModel(
+      {required this.id,
+      this.adminId,
+      this.adminEmail,
+      required this.action,
+      this.targetType,
+      this.targetId,
+      this.details,
+      this.ipAddress,
+      this.userAgent,
+      this.createdAt});
   final String id;
   final String? adminId;
   final String? adminEmail;
@@ -23,5 +33,8 @@ class AuditLogModel {
         userAgent: _nullable(json['userAgent']),
         createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
       );
-  static String? _nullable(dynamic value) { final text = value?.toString().trim() ?? ''; return text.isEmpty ? null : text; }
+  static String? _nullable(dynamic value) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? null : text;
+  }
 }

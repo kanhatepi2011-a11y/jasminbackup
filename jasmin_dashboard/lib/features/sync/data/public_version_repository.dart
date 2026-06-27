@@ -14,15 +14,19 @@ class PublicVersionRepository {
 
   final PublicVersionApi _api;
 
-  Future<PublicDataVersion> fetchVersion({required String scope, String? slug, String? orderNumber}) async {
+  Future<PublicDataVersion> fetchVersion(
+      {required String scope, String? slug, String? orderNumber}) async {
     try {
-      return await _api.fetchVersion(scope: scope, slug: slug, orderNumber: orderNumber);
+      return await _api.fetchVersion(
+          scope: scope, slug: slug, orderNumber: orderNumber);
     } on DioException catch (error) {
       final data = error.response?.data;
       if (data is Map && data['error'] != null) {
-        throw AppException(data['error'].toString(), statusCode: error.response?.statusCode);
+        throw AppException(data['error'].toString(),
+            statusCode: error.response?.statusCode);
       }
-      throw AppException('Could not check website update status.', statusCode: error.response?.statusCode);
+      throw AppException('Could not check website update status.',
+          statusCode: error.response?.statusCode);
     }
   }
 }

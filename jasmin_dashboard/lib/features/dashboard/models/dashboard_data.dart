@@ -18,7 +18,8 @@ class DashboardData {
     final orders = ordersRaw is List
         ? ordersRaw
             .whereType<Map>()
-            .map((item) => DashboardRecentOrder.fromJson(Map<String, dynamic>.from(item)))
+            .map((item) =>
+                DashboardRecentOrder.fromJson(Map<String, dynamic>.from(item)))
             .toList(growable: false)
         : const <DashboardRecentOrder>[];
 
@@ -30,7 +31,9 @@ class DashboardData {
   }
 
   static Map<String, dynamic>? _mapOrNull(dynamic value) {
-    if (value is Map) return Map<String, dynamic>.from(value);
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
     return null;
   }
 }

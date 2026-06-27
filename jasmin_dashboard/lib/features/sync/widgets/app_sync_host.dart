@@ -26,7 +26,8 @@ class AppSyncHost extends ConsumerStatefulWidget {
   ConsumerState<AppSyncHost> createState() => _AppSyncHostState();
 }
 
-class _AppSyncHostState extends ConsumerState<AppSyncHost> with WidgetsBindingObserver {
+class _AppSyncHostState extends ConsumerState<AppSyncHost>
+    with WidgetsBindingObserver {
   DateTime? _lastResumeRefreshAt;
 
   @override
@@ -67,10 +68,15 @@ class _AppSyncHostState extends ConsumerState<AppSyncHost> with WidgetsBindingOb
   void _refreshAfterResume() {
     final now = DateTime.now();
     final last = _lastResumeRefreshAt;
-    if (last != null && now.difference(last) < RefreshIntervals.appResumeDebounce) return;
+    if (last != null &&
+        now.difference(last) < RefreshIntervals.appResumeDebounce) {
+      return;
+    }
     _lastResumeRefreshAt = now;
 
-    if (ref.read(authProvider).status != AuthStatus.authenticated) return;
+    if (ref.read(authProvider).status != AuthStatus.authenticated) {
+      return;
+    }
 
     ref.read(appSyncProvider.notifier).pollNow(reason: 'resume');
     _invalidateVisibleAdminData();

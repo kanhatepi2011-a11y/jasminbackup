@@ -28,12 +28,15 @@ class PromoCodeModel {
   final int orderCount;
 
   bool get isPercent => discountType.toUpperCase() == 'PERCENT';
-  bool get isExpired => expiresAt != null && expiresAt!.isBefore(DateTime.now());
+  bool get isExpired =>
+      expiresAt != null && expiresAt!.isBefore(DateTime.now());
   bool get isUsageLimited => maxUses > 0;
   bool get isFullyUsed => isUsageLimited && usedCount >= maxUses;
   bool get canBeUsed => active && !isExpired && !isFullyUsed;
 
-  String get discountLabel => isPercent ? '${discountValue.toStringAsFixed(discountValue % 1 == 0 ? 0 : 2)}%' : r'$' '${discountValue.toStringAsFixed(2)}';
+  String get discountLabel => isPercent
+      ? '${discountValue.toStringAsFixed(discountValue % 1 == 0 ? 0 : 2)}%'
+      : r'$' '${discountValue.toStringAsFixed(2)}';
 
   factory PromoCodeModel.fromJson(Map<String, dynamic> json) {
     final count = json['_count'];
@@ -49,19 +52,29 @@ class PromoCodeModel {
       expiresAt: DateTime.tryParse(json['expiresAt']?.toString() ?? ''),
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
       updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? ''),
-      orderCount: count is Map ? _intFrom(count['orders']) : _intFrom(json['orderCount']),
+      orderCount: count is Map
+          ? _intFrom(count['orders'])
+          : _intFrom(json['orderCount']),
     );
   }
 
   static int _intFrom(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   static double _doubleFrom(dynamic value) {
-    if (value is double) return value;
-    if (value is num) return value.toDouble();
+    if (value is double) {
+      return value;
+    }
+    if (value is num) {
+      return value.toDouble();
+    }
     return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 }

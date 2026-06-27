@@ -1,0 +1,22 @@
+Update the JASMIN Dashboard Flutter app logo to match the JASMINTOPUP app.
+
+Use these assets:
+- assets/images/jasmin_logo_icon_opaque.png
+- assets/images/jasmin_logo_full.png
+
+Tasks:
+1. Copy both images into assets/images/.
+2. Register both images in pubspec.yaml.
+3. Add flutter_launcher_icons config so Android and iOS app icons use assets/images/jasmin_logo_icon_opaque.png.
+4. Update the admin login screen to show the logo above the login form.
+5. Update the dashboard header/AppBar to show a small logo.
+6. Keep existing login, 2FA, dashboard, API, and auth logic unchanged.
+7. Do not remove working features.
+8. Run flutter pub get.
+9. Run dart run flutter_launcher_icons.
+10. Fix any asset path or pubspec formatting errors.
+
+Design style:
+- Premium, clean, soft JASMINTOPUP branding.
+- Use rounded corners and subtle shadow for the login logo.
+- Do not make the logo too large in the AppBar.

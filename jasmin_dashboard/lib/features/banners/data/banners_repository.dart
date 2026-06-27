@@ -19,7 +19,8 @@ class BannersRepository {
     try {
       return await _api.fetchBanners();
     } on DioException catch (error) {
-      throw _exceptionFromDio(error, 'Could not load banners. Check your connection and try again.');
+      throw _exceptionFromDio(error,
+          'Could not load banners. Check your connection and try again.');
     }
   }
 
@@ -66,7 +67,8 @@ class BannersRepository {
   AppException _exceptionFromDio(DioException error, String fallback) {
     final data = error.response?.data;
     if (data is Map && data['error'] != null) {
-      return AppException(data['error'].toString(), statusCode: error.response?.statusCode);
+      return AppException(data['error'].toString(),
+          statusCode: error.response?.statusCode);
     }
     return AppException(fallback, statusCode: error.response?.statusCode);
   }

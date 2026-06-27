@@ -165,14 +165,20 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
 
   String? _validateEmail(String? value) {
     final email = value?.trim() ?? '';
-    if (email.isEmpty) return 'Email is required.';
+    if (email.isEmpty) {
+      return 'Email is required.';
+    }
     final valid = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email);
-    if (!valid) return 'Enter a valid admin email.';
+    if (!valid) {
+      return 'Enter a valid admin email.';
+    }
     return null;
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
     TextInput.finishAutofillContext();
 
     final success = await ref.read(authProvider.notifier).login(
@@ -182,7 +188,9 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
 
     if (success) {
       _passwordController.clear();
-      if (mounted) FocusScope.of(context).unfocus();
+      if (mounted) {
+        FocusScope.of(context).unfocus();
+      }
     }
   }
 }

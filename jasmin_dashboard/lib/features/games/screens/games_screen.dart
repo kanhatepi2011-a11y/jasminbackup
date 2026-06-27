@@ -39,11 +39,15 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
     ref.listen(gamesProvider, (previous, next) {
       final success = next.successMessage;
       if (success != null && success != previous?.successMessage) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(success)));
       }
       final error = next.errorMessage;
-      if (error != null && error != previous?.errorMessage && previous?.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      if (error != null &&
+          error != previous?.errorMessage &&
+          previous?.errorMessage != null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error)));
       }
     });
 
@@ -55,7 +59,10 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
           tooltip: 'Refresh games',
           onPressed: state.isRefreshing ? null : () => controller.refresh(),
           icon: state.isRefreshing
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.3))
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2.3))
               : const Icon(Icons.refresh_rounded),
         ),
         IconButton.filledTonal(
@@ -70,13 +77,17 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(20),
           children: [
-            _Header(total: games.length, allTotal: state.games.length, lastUpdatedAt: state.lastUpdatedAt),
+            _Header(
+                total: games.length,
+                allTotal: state.games.length,
+                lastUpdatedAt: state.lastUpdatedAt),
             const SizedBox(height: 16),
             TextField(
               controller: _searchController,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: 'Search game name, slug, publisher, currency, UID label...',
+                hintText:
+                    'Search game name, slug, publisher, currency, UID label...',
                 prefixIcon: const Icon(Icons.search_rounded),
                 suffixIcon: _searchController.text.isEmpty
                     ? null
@@ -97,7 +108,8 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
                   ref.read(gamesProvider.notifier).setQuery(value);
                 });
               },
-              onSubmitted: (value) => ref.read(gamesProvider.notifier).setQuery(value),
+              onSubmitted: (value) =>
+                  ref.read(gamesProvider.notifier).setQuery(value),
             ),
             const SizedBox(height: 12),
             GameFiltersBar(
@@ -110,12 +122,14 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
             if (state.isLoading)
               const _GameLoadingList()
             else if (state.errorMessage != null && !state.hasGames)
-              _ErrorCard(message: state.errorMessage!, onRetry: controller.refresh)
+              _ErrorCard(
+                  message: state.errorMessage!, onRetry: controller.refresh)
             else if (games.isEmpty)
               const EmptyState(
                 icon: Icons.sports_esports_rounded,
                 title: 'No games found',
-                message: 'Try another search/filter or create a new public game for JASMINTOPUP.',
+                message:
+                    'Try another search/filter or create a new public game for JASMINTOPUP.',
               )
             else
               ...games.map(
@@ -135,7 +149,8 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, GameModel game, GamesController controller) async {
+  Future<void> _confirmDelete(
+      BuildContext context, GameModel game, GamesController controller) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -146,17 +161,26 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
               : '${game.safeName} has products or orders. The backend will disable it instead of deleting to protect existing data.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Continue')),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Continue')),
         ],
       ),
     );
-    if (result == true) await controller.deleteGame(game);
+    if (result == true) {
+      await controller.deleteGame(game);
+    }
   }
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.total, required this.allTotal, required this.lastUpdatedAt});
+  const _Header(
+      {required this.total,
+      required this.allTotal,
+      required this.lastUpdatedAt});
 
   final int total;
   final int allTotal;
@@ -173,21 +197,32 @@ class _Header extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary
+                    .withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: Icon(Icons.sports_esports_rounded, color: Theme.of(context).colorScheme.primary),
+              child: Icon(Icons.sports_esports_rounded,
+                  color: Theme.of(context).colorScheme.primary),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Games Management', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+                  Text('Games Management',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w900)),
                   const SizedBox(height: 3),
                   Text(
                     '$total showing • $allTotal total • updated ${Formatters.dateTimeOrDash(lastUpdatedAt)}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black54),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: Colors.black54),
                   ),
                 ],
               ),
@@ -212,13 +247,21 @@ class _ErrorCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Icon(Icons.error_outline_rounded, size: 38, color: Theme.of(context).colorScheme.error),
+            Icon(Icons.error_outline_rounded,
+                size: 38, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 10),
-            Text('Could not load games', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+            Text('Could not load games',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w900)),
             const SizedBox(height: 6),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 14),
-            FilledButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh_rounded), label: const Text('Retry')),
+            FilledButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Retry')),
           ],
         ),
       ),
@@ -240,15 +283,26 @@ class _GameLoadingList extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Container(width: 56, height: 56, decoration: BoxDecoration(color: Colors.black.withOpacity(0.06), borderRadius: BorderRadius.circular(20))),
+                Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(20))),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(height: 14, width: double.infinity, color: Colors.black.withOpacity(0.06)),
+                      Container(
+                          height: 14,
+                          width: double.infinity,
+                          color: Colors.black.withValues(alpha: 0.06)),
                       const SizedBox(height: 10),
-                      Container(height: 12, width: 180, color: Colors.black.withOpacity(0.05)),
+                      Container(
+                          height: 12,
+                          width: 180,
+                          color: Colors.black.withValues(alpha: 0.05)),
                     ],
                   ),
                 ),

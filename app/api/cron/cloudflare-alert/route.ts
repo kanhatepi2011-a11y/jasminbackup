@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCambodiaDayRange } from "@/lib/dailyStats";
 import { checkCloudflareProtectionAlerts } from "@/lib/cloudflareAlert";
+import { timingSafeEqualStr } from "@/lib/secureCompare";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +15,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 500 });
   }
 
-  if (authHeader !== `Bearer ${cronSecret}` && headerSecret !== cronSecret) {
+  const authorized =
+    timingSafeEqualStr(authHeader, `Bearer ${cronSecret}`) ||
+    timingSafeEqualStr(headerSecret, cronSecret);
+
+  if (!authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -2,14 +2,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { detectProvider, parseUserAgent } from "@/lib/requestInfo";
+import { timingSafeEqualStr } from "@/lib/secureCompare";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const secret = req.headers.get("x-internal-secret");
+  const expected = process.env.INTERNAL_SECURITY_SECRET;
 
-  if (!secret || secret !== process.env.INTERNAL_SECURITY_SECRET) {
+  if (!expected || !secret || !timingSafeEqualStr(secret, expected)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

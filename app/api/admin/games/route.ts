@@ -7,6 +7,12 @@ import { withAdminAuth } from "@/lib/withAdminAuth";
 import { writeAuditForAdmin } from "@/lib/audit";
 import { revalidateAdminChange } from "@/lib/adminRevalidate";
 
+// Admin responses must never be cached by browsers/proxies.
+const ADMIN_HEADERS = {
+  "Cache-Control": "no-store",
+  "X-Content-Type-Options": "nosniff",
+} as const;
+
 const imagePath = z
   .string()
   .min(1)
@@ -33,13 +39,46 @@ const gameSchema = z.object({
   seoDescription: z.string().optional().nullable(),
 });
 
+// Explicit admin allowlist. Game has no secret columns; listing fields
+// explicitly prevents any future column from auto-leaking.
+const ADMIN_GAME_SELECT = {
+  id: true,
+  slug: true,
+  name: true,
+  publisher: true,
+  description: true,
+  imageUrl: true,
+  bannerUrl: true,
+  currencyName: true,
+  uidLabel: true,
+  uidExample: true,
+  requiresServer: true,
+  servers: true,
+  featured: true,
+  active: true,
+  sortOrder: true,
+  seoTitle: true,
+  seoDescription: true,
+  createdAt: true,
+  updatedAt: true,
+  _count: { select: { products: true, orders: true } },
+} as const;
+
 export const GET = withAdminAuth(
   async () => {
-    const games = await prisma.game.findMany({
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
-      include: { _count: { select: { products: true, orders: true } } },
-    });
-    return NextResponse.json(games);
+    try {
+      const games = await prisma.game.findMany({
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+        select: ADMIN_GAME_SELECT,
+      });
+      return NextResponse.json(games, { headers: ADMIN_HEADERS });
+    } catch (error) {
+      console.error("[ADMIN_GAMES_API_ERROR]", error);
+      return NextResponse.json(
+        { error: "Internal server error" },
+        { status: 500, headers: ADMIN_HEADERS }
+      );
+    }
   },
   { permission: "games.read" }
 );
@@ -51,7 +90,7 @@ export const POST = withAdminAuth(
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid data", details: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400, headers: ADMIN_HEADERS }
       );
     }
 
@@ -64,12 +103,19 @@ export const POST = withAdminAuth(
         details: { slug: game.slug, name: game.name },
       });
       revalidateAdminChange("games", { gameSlug: game.slug });
-      return NextResponse.json(game, { status: 201 });
+      return NextResponse.json(game, { status: 201, headers: ADMIN_HEADERS });
     } catch (err: any) {
-      if (err.code === "P2002") {
-        return NextResponse.json({ error: "Slug already exists" }, { status: 409 });
+      if (err?.code === "P2002") {
+        return NextResponse.json(
+          { error: "Slug already exists" },
+          { status: 409, headers: ADMIN_HEADERS }
+        );
       }
-      throw err;
+      console.error("[ADMIN_GAMES_API_ERROR]", err);
+      return NextResponse.json(
+        { error: "Internal server error" },
+        { status: 500, headers: ADMIN_HEADERS }
+      );
     }
   },
   { permission: "games.write" }

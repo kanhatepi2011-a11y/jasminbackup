@@ -8,6 +8,7 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/admin_login_screen.dart';
 import '../../features/auth/screens/admin_two_factor_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
+import '../network/health_service.dart';
 import '../../features/banners/screens/banner_editor_screen.dart';
 import '../../features/banners/screens/banners_screen.dart';
 import '../../features/customers/screens/customer_detail_screen.dart';
@@ -28,11 +29,19 @@ import '../../features/settings/screens/settings_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
+  final health = ref.watch(startupHealthProvider);
 
   return GoRouter(
     initialLocation: '/splash',
     redirect: (context, state) {
       final location = state.matchedLocation;
+
+      // Hold on the splash screen until the startup health check succeeds.
+      final healthOk = health.maybeWhen(data: (ok) => ok, orElse: () => false);
+      if (!healthOk) {
+        return location == '/splash' ? null : '/splash';
+      }
+
       final status = authState.status;
       final isAuthRoute = location == '/login' || location == '/two-factor';
 

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
+import '../../../core/errors/api_error_mapper.dart';
 import '../models/banner_model.dart';
 import '../models/banner_payload.dart';
 import 'banners_api.dart';
@@ -65,11 +66,6 @@ class BannersRepository {
   }
 
   AppException _exceptionFromDio(DioException error, String fallback) {
-    final data = error.response?.data;
-    if (data is Map && data['error'] != null) {
-      return AppException(data['error'].toString(),
-          statusCode: error.response?.statusCode);
-    }
-    return AppException(fallback, statusCode: error.response?.statusCode);
+    return mapDioError(error, fallback: fallback);
   }
 }

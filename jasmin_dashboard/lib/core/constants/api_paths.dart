@@ -1,6 +1,8 @@
 class ApiPaths {
   const ApiPaths._();
 
+  static const String health = '/api/health';
+
   static const String login = '/api/admin/auth/login';
   static const String twoFactor = '/api/admin/auth/2fa';
   static const String me = '/api/admin/auth/me';

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
+import '../../../core/errors/api_error_mapper.dart';
 import '../models/order_list_response.dart';
 import '../models/order_model.dart';
 import 'orders_api.dart';
@@ -61,14 +62,6 @@ class OrdersRepository {
   }
 
   AppException _exceptionFromDio(DioException error, String fallback) {
-    final data = error.response?.data;
-    if (data is Map<String, dynamic>) {
-      final message = data['error'] ?? data['message'];
-      if (message != null) {
-        return AppException(message.toString(),
-            statusCode: error.response?.statusCode);
-      }
-    }
-    return AppException(fallback, statusCode: error.response?.statusCode);
+    return mapDioError(error, fallback: fallback);
   }
 }

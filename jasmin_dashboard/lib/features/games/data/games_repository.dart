@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
+import '../../../core/errors/api_error_mapper.dart';
 import '../models/game_model.dart';
 import '../models/game_payload.dart';
 import 'games_api.dart';
@@ -79,14 +80,6 @@ class GamesRepository {
   }
 
   AppException _exceptionFromDio(DioException error, String fallback) {
-    final data = error.response?.data;
-    if (data is Map<String, dynamic>) {
-      final message = data['error'] ?? data['message'];
-      if (message != null) {
-        return AppException(message.toString(),
-            statusCode: error.response?.statusCode);
-      }
-    }
-    return AppException(fallback, statusCode: error.response?.statusCode);
+    return mapDioError(error, fallback: fallback);
   }
 }

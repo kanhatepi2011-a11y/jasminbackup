@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/api_paths.dart';
 import '../../../core/errors/app_exception.dart';
+import '../../../core/errors/api_error_mapper.dart';
 import '../../../core/network/api_client.dart';
 import '../models/admin_user.dart';
 import '../models/auth_session.dart';
@@ -74,51 +75,31 @@ class AuthApi {
       return AppException(
         'Google Authenticator is not configured for this admin.',
         statusCode: error.response?.statusCode,
+        type: ApiErrorType.badRequest,
       );
     }
 
-    if (error.response?.statusCode == 429) {
+    // Network / timeout / SSL / server -> precise differentiated messages.
+    if (error.type != DioExceptionType.badResponse) {
+      return mapDioError(error, fallback: 'Invalid email or password');
+    }
+
+    final status = error.response?.statusCode;
+    if (status == 429) {
       final retryAfter = data is Map ? data['retryAfter']?.toString() : null;
       final message = retryAfter == null || retryAfter.isEmpty
           ? 'Too many login attempts. Please try again later.'
           : 'Too many login attempts. Please try again in $retryAfter.';
-      return AppException(message, statusCode: error.response?.statusCode);
+      return AppException(message,
+          statusCode: status, type: ApiErrorType.rateLimited);
     }
 
-    if (error.type == DioExceptionType.connectionTimeout ||
-        error.type == DioExceptionType.receiveTimeout ||
-        error.type == DioExceptionType.sendTimeout) {
-      return AppException(
-          'Connection timed out. Please check internet or API URL.');
-    }
-
-    if (error.type == DioExceptionType.connectionError) {
-      return AppException(
-          'Connection timed out. Please check internet or API URL.');
-    }
-
-    // Do not reveal whether email or password is wrong.
+    // Do not reveal whether the email or the password was wrong.
     return AppException('Invalid email or password',
-        statusCode: error.response?.statusCode);
+        statusCode: status, type: ApiErrorType.badRequest);
   }
 
   AppException _toAppException(DioException error, {required String fallback}) {
-    String message = fallback;
-
-    if (error.type == DioExceptionType.connectionTimeout ||
-        error.type == DioExceptionType.receiveTimeout ||
-        error.type == DioExceptionType.sendTimeout) {
-      message = 'Connection timed out. Please check internet or API URL.';
-    }
-
-    if (error.type == DioExceptionType.connectionError) {
-      message = 'Connection timed out. Please check internet or API URL.';
-    }
-
-    if (error.response?.statusCode == 429) {
-      message = 'Too many attempts. Please try again later.';
-    }
-
-    return AppException(message, statusCode: error.response?.statusCode);
+    return mapDioError(error, fallback: fallback);
   }
 }

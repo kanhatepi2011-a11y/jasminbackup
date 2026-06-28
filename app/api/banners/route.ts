@@ -23,6 +23,19 @@ export async function GET(req: NextRequest) {
   const banners = await prisma.heroBanner.findMany({
     where: { active: true },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    // Explicit public allowlist — prevents any future sensitive column from leaking.
+    select: {
+      id: true,
+      title: true,
+      subtitle: true,
+      imageUrl: true,
+      linkUrl: true,
+      ctaLabel: true,
+      active: true,
+      sortOrder: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
 
   return safeJson(banners, undefined, API_NO_STORE);

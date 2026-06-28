@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/errors/app_exception.dart';
+import '../../../core/errors/api_error_mapper.dart';
 import '../models/settings_model.dart';
 import '../models/settings_payload.dart';
 import 'settings_api.dart';
@@ -32,11 +33,6 @@ class SettingsRepository {
   }
 
   AppException _exceptionFromDio(DioException error, String fallback) {
-    final data = error.response?.data;
-    if (data is Map && data['error'] != null) {
-      return AppException(data['error'].toString(),
-          statusCode: error.response?.statusCode);
-    }
-    return AppException(fallback, statusCode: error.response?.statusCode);
+    return mapDioError(error, fallback: fallback);
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/api_config.dart';
 import '../storage/secure_token_storage.dart';
 import 'auth_interceptor.dart';
+import 'logging_interceptor.dart';
 
 final dioProvider = Provider<Dio>((ref) {
   final tokenStorage = ref.watch(secureTokenStorageProvider);
@@ -13,6 +14,7 @@ final dioProvider = Provider<Dio>((ref) {
       baseUrl: ApiConfig.baseUrl,
       connectTimeout: ApiConfig.connectTimeout,
       receiveTimeout: ApiConfig.receiveTimeout,
+      sendTimeout: ApiConfig.sendTimeout,
       headers: const {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -29,5 +31,11 @@ final dioProvider = Provider<Dio>((ref) {
       },
     ),
   );
+
+  // Debug-only logging; added last so it observes the final request.
+  if (ApiConfig.enableDebugLogs) {
+    dio.interceptors.add(LoggingInterceptor());
+  }
+
   return dio;
 });

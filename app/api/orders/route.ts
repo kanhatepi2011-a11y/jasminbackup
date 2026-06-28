@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { applyRateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/getIp";
+import { withAdminAuth } from "@/lib/withAdminAuth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -258,3 +259,34 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+/**
+ * Admin-only order list. The public site/app never lists all orders — they
+ * track a single order via GET /api/orders/[orderNumber]. Without a valid admin
+ * session this returns 401 (JSON); without the orders.read permission, 403.
+ * Returns an explicit safe-field allowlist (no ipAddress, userAgent, customer
+ * PII, adminNote, cost/profit, or secrets).
+ */
+export const GET = withAdminAuth(
+  async () => {
+    const orders = await prisma.order.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      select: {
+        orderNumber: true,
+        status: true,
+        amountUsd: true,
+        amountKhr: true,
+        currency: true,
+        paymentMethod: true,
+        createdAt: true,
+        paidAt: true,
+        deliveredAt: true,
+        game: { select: { name: true, slug: true } },
+        product: { select: { name: true } },
+      },
+    });
+    return NextResponse.json(orders, { headers: { "Cache-Control": "no-store" } });
+  },
+  { permission: "orders.read" }
+);

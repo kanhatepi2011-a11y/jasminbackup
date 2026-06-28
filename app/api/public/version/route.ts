@@ -45,7 +45,6 @@ export async function GET(req: NextRequest) {
       ok: true,
       scope,
       version,
-      checkedAt: new Date().toISOString(),
     },
     undefined,
     "no-store"
